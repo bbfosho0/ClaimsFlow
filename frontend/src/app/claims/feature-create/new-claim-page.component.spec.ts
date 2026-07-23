@@ -35,4 +35,19 @@ describe('NewClaimPageComponent', () => {
     });
     expect(component.form.valid).toBeTrue();
   });
+
+  it('updates reactive form controls through claim type and evidence cards', () => {
+    const fixture = TestBed.createComponent(NewClaimPageComponent);
+    fixture.detectChanges();
+
+    const autoType = fixture.nativeElement.querySelector('input[type="radio"][value="AUTO"]') as HTMLInputElement;
+    const photos = fixture.nativeElement.querySelector('input[formcontrolname="photosPresent"]') as HTMLInputElement;
+    autoType.click();
+    photos.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.claimType.value).toBe('AUTO');
+    expect(fixture.componentInstance.form.controls.photosPresent.value).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('1 evidence item selected');
+  });
 });
