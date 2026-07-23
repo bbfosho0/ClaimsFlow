@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { AppShellComponent } from './core/layout/app-shell.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  template: `<header class="brand"><strong>ClaimsFlow</strong></header><main><router-outlet /></main>`,
+  imports: [AppShellComponent],
+  template: `<app-shell />`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {}
