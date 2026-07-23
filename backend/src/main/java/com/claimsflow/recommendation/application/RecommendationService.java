@@ -9,7 +9,9 @@ import com.claimsflow.shared.error.*;
 import java.time.Clock;
 import java.util.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class RecommendationService {
@@ -18,20 +20,31 @@ public class RecommendationService {
     private final ClaimInsightProvider provider;
     private final AuditService audit;
     private final Clock clock;
+    private final TransactionTemplate transactions;
 
-    public RecommendationService(RecommendationJpaRepository recommendations, ClaimApplicationService claims, ClaimInsightProvider provider, AuditService audit) {
+    public RecommendationService(
+            RecommendationJpaRepository recommendations,
+            ClaimApplicationService claims,
+            ClaimInsightProvider provider,
+            AuditService audit,
+            PlatformTransactionManager transactionManager) {
         this.recommendations = recommendations;
         this.claims = claims;
         this.provider = provider;
         this.audit = audit;
         this.clock = Clock.systemUTC();
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
-    @Transactional
     public Recommendation generate(UUID claimId) {
         Claim claim = claims.get(claimId);
         var completeness = claims.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
         ClaimInsight insight = provider.analyze(ClaimAnalysisRequest.from(claim, completeness));
+        return Objects.requireNonNull(transactions.execute(status -> persistGenerated(claimId, insight)));
+    }
+
+    private Recommendation persistGenerated(UUID claimId, ClaimInsight insight) {
+        Claim claim = claims.get(claimId);
         var recommendation = Recommendation.pending(claim, insight.action(), insight.explanation(), insight.confidence(), String.join("|", insight.missingInformation()), clock.instant());
         recommendations.save(recommendation);
         audit.record(claim, "system", "RECOMMENDATION_GENERATED", "Decision-support recommendation generated", null, insight.action(), clock.instant());

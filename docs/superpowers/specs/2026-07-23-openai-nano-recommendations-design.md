@@ -24,17 +24,17 @@ Add an OpenAI-backed advisory recommendation provider for ClaimsFlow. It uses `g
 
 ## Architecture
 
-`RecommendationService` continues to construct an immutable analysis request and persist a pending recommendation inside its transaction. The selected `ClaimInsightProvider` supplies advisory content only.
+`RecommendationService` constructs an immutable analysis request, invokes the selected `ClaimInsightProvider` without an active database transaction, then opens a transaction to reload the claim and atomically persist the pending recommendation and audit event. The provider supplies advisory content only.
 
 When AI is configured, `OpenAiClaimInsightProvider` sends redacted operational facts to `POST /v1/responses` with model `gpt-5-nano`, a short timeout, and a strict JSON schema. The prompt permits only the current action vocabulary: `REQUEST_INFORMATION`, `ASSIGN_ADJUSTER`, `BEGIN_REVIEW`, and `PREPARE_DECISION`.
 
-The request includes claim type, status, priority, assignment state, completeness percentage, required evidence gaps, estimated loss, incident date, and the claim description. It excludes claimant name and claimant email. The provider never receives a mutable entity and cannot invoke application services or repositories.
+The request includes only claim type, status, priority, assignment state, completeness percentage, and controlled required-evidence labels. It excludes claimant identity, claim number, description, estimated loss, incident date, and all other entity fields. The provider never receives a mutable entity and cannot invoke application services or repositories.
 
-The provider validates every result before returning it. If the response is refused, incomplete, non-JSON, schema-invalid, contains an unsupported action, or the request fails, it delegates to the existing rule-based provider. The fallback is internal and does not change the public API contract.
+The provider validates every result before returning it. It accepts only a completed response envelope with null `error` and `incomplete_details`, exactly one completed message, and exactly one `output_text` content part. If the response is refused, mixed, incomplete, non-JSON, schema-invalid, contains an unsupported action, or the request fails, it delegates to the existing rule-based provider. The fallback is internal and does not change the public API contract.
 
 ## Configuration and security
 
-`OPENAI_API_KEY` is read from the process environment into a configuration properties class. The key is never committed, exposed through an endpoint, included in exceptions, or written to logs. The configured model defaults to `gpt-5-nano`; its name and HTTP timeout may be configurable through non-secret application properties.
+`OPENAI_API_KEY` is read directly from the exact process environment variable by a dedicated secret holder. It is not a Spring configuration property, and alternate property names cannot activate the provider. The key is never committed, exposed through an endpoint, included in exceptions, or written to logs. The configured model defaults to `gpt-5-nano`; its name and HTTP timeout may be configurable through non-secret application properties.
 
 Operational logs record only that AI was used or that deterministic fallback occurred, plus safe failure category and request ID where available. They do not log authorization headers, claimant data, full prompts, or raw model output.
 
@@ -46,8 +46,9 @@ The user-facing recommendation endpoint remains successful when fallback is used
 
 - Unit-test the provider's request construction to prove claimant name and email are absent.
 - Unit-test strict structured-result parsing and action allow-list validation.
-- Unit-test fallback for no key, HTTP failure, timeout, refusal, malformed JSON, and unsupported action.
-- Verify the recommendation service still persists a pending recommendation and audit event.
+- Unit-test fallback for no key, HTTP failure, timeout, every non-completed envelope state, response errors, incomplete details, non-completed messages, refusal or mixed content, malformed JSON, and unsupported actions.
+- Unit-test that alternate Spring properties and lookalike environment names cannot activate the provider.
+- Verify the provider call runs outside a transaction and the claim reload, recommendation save, and audit event run transactionally.
 - Run `mvn verify`, `npm ci`, `npm run test:ci`, and `npm run build` after implementation.
 
 ## Acceptance criteria

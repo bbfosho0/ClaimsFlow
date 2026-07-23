@@ -5,8 +5,6 @@ import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.claim.domain.ClaimType;
 import com.claimsflow.claim.domain.CompletenessPolicy.CompletenessResult;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 public record ClaimAnalysisRequest(
@@ -15,10 +13,7 @@ public record ClaimAnalysisRequest(
         ClaimPriority priority,
         boolean assigned,
         int completenessPercentage,
-        List<String> missingInformation,
-        BigDecimal estimatedLoss,
-        LocalDate incidentDate,
-        String description) {
+        List<String> missingInformation) {
 
     public ClaimAnalysisRequest {
         missingInformation = List.copyOf(missingInformation);
@@ -31,9 +26,6 @@ public record ClaimAnalysisRequest(
                 claim.getPriority(),
                 claim.getAssignedAdjuster() != null,
                 completeness.percentage(),
-                completeness.missingEvidence(),
-                claim.getEstimatedLoss(),
-                claim.getIncidentDate(),
-                claim.getDescription());
+                completeness.missingEvidence());
     }
 }

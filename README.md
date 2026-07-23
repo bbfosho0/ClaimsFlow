@@ -218,7 +218,7 @@ mvn spring-boot:run
 
 Changing the backend port also requires changing the target in `frontend/proxy.conf.json` for local Angular development.
 
-`OPENAI_API_KEY` is optional and must be supplied through the environment; never commit a key. Leave it unset or blank to use deterministic recommendations. The integration uses the `gpt-5-nano` model by default, sends only redacted operational claim fields, and falls back automatically when the provider fails or its response does not pass local validation.
+`OPENAI_API_KEY` is optional and must be supplied as that exact process environment variable; never commit a key. Spring properties such as `claimsflow.openai.api-key` and command-line property overrides cannot enable the provider. Leave the environment variable unset or blank to use deterministic recommendations. The integration uses the `gpt-5-nano` model by default, sends only claim type, status, priority, assignment state, completeness percentage, and controlled missing-evidence labels, and falls back automatically when the provider fails or its response does not pass local validation.
 
 ## Database operations
 

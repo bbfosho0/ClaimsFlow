@@ -34,6 +34,7 @@
 
 **Files:**
 - Create: `backend/src/main/java/com/claimsflow/recommendation/config/OpenAiProperties.java`
+- Create: `backend/src/main/java/com/claimsflow/recommendation/config/OpenAiApiKey.java`
 - Modify: `backend/src/main/java/com/claimsflow/recommendation/domain/ClaimAnalysisRequest.java`
 - Modify: `backend/src/main/java/com/claimsflow/recommendation/application/RecommendationService.java`
 - Modify: `backend/src/main/resources/application.yml`
@@ -41,8 +42,8 @@
 
 **Interfaces:**
 - Consumes: `Claim` getters and `CompletenessResult` from the claims capability.
-- Produces: `ClaimAnalysisRequest(ClaimType claimType, ClaimStatus status, ClaimPriority priority, boolean assigned, int completenessPercentage, List<String> missingInformation, BigDecimal estimatedLoss, LocalDate incidentDate, String description)` with no claimant fields.
-- Produces: `OpenAiProperties(String apiKey, String model, Duration timeout)` bound to `claimsflow.openai`.
+- Produces: `ClaimAnalysisRequest(ClaimType claimType, ClaimStatus status, ClaimPriority priority, boolean assigned, int completenessPercentage, List<String> missingInformation)` with no free text or claimant fields.
+- Produces: `OpenAiProperties(String model, Duration timeout)` bound to non-secret `claimsflow.openai` properties and `OpenAiApiKey` read directly from the exact `OPENAI_API_KEY` process environment variable.
 
 - [ ] **Step 1: Write failing redaction test**
 
@@ -50,10 +51,10 @@
 @Test
 void analysisRequestContainsOperationalFactsButNoClaimantIdentity() {
     var request = ClaimAnalysisRequest.from(claim, completeness);
-    assertThat(request.description()).isEqualTo("Vehicle damage after collision");
     assertThat(ClaimAnalysisRequest.class.getRecordComponents())
         .extracting(RecordComponent::getName)
-        .doesNotContain("claimantName", "claimantEmail");
+        .containsExactly("claimType", "status", "priority", "assigned",
+            "completenessPercentage", "missingInformation");
 }
 ```
 
@@ -68,18 +69,17 @@ Expected: FAIL because `from` and the expanded request shape do not exist.
 ```java
 public record ClaimAnalysisRequest(
     ClaimType claimType, ClaimStatus status, ClaimPriority priority,
-    boolean assigned, int completenessPercentage, List<String> missingInformation,
-    BigDecimal estimatedLoss, LocalDate incidentDate, String description) {
+    boolean assigned, int completenessPercentage, List<String> missingInformation) {
   public static ClaimAnalysisRequest from(Claim claim, CompletenessResult completeness) { /* copy only safe fields */ }
 }
 
 @ConfigurationProperties("claimsflow.openai")
-public record OpenAiProperties(String apiKey, String model, Duration timeout) {
+public record OpenAiProperties(String model, Duration timeout) {
   public OpenAiProperties { model = model == null || model.isBlank() ? "gpt-5-nano" : model; timeout = timeout == null ? Duration.ofSeconds(10) : timeout; }
 }
 ```
 
-Update `RecommendationService.generate` to call `ClaimAnalysisRequest.from(claim, completeness)` and add `claimsflow.openai.model`, `timeout`, and `${OPENAI_API_KEY:}` property bindings in `application.yml`.
+Update `RecommendationService.generate` to call `ClaimAnalysisRequest.from(claim, completeness)`. Keep only `claimsflow.openai.model` and `timeout` in `application.yml`; obtain the API key directly from `System.getenv("OPENAI_API_KEY")` through the dedicated secret holder.
 
 - [ ] **Step 4: Run the focused test**
 
@@ -139,7 +139,7 @@ Build a request with `model`, redacted `input`, and `text.format` set to:
 {"type":"json_schema","name":"claim_insight","strict":true,"schema":{"type":"object","properties":{"action":{"type":"string","enum":["REQUEST_INFORMATION","ASSIGN_ADJUSTER","BEGIN_REVIEW","PREPARE_DECISION"]},"explanation":{"type":"string","minLength":1,"maxLength":500},"confidence":{"type":"integer","minimum":0,"maximum":100},"missingInformation":{"type":"array","items":{"type":"string"}}},"required":["action","explanation","confidence","missingInformation"],"additionalProperties":false}}
 ```
 
-Extract only `output[].content[]` items whose `type` is `output_text`, parse their text with Jackson, validate the allow-listed action, explanation bounds, confidence range, and missing-information values. Catch `RestClientException`, parsing/validation exceptions, and non-2xx responses; call `fallback.analyze(request)` in each case. Do not log headers, prompt, raw response, or exception body.
+Require a completed response envelope with null `error` and `incomplete_details`, exactly one completed message, and exactly one `output_text` content part. Parse its text with Jackson, validate the allow-listed action, explanation bounds, confidence range, and missing-information values. Catch `RestClientException`, parsing/validation exceptions, and non-2xx responses; call `fallback.analyze(request)` in each case. Do not log headers, prompt, raw response, or exception body.
 
 Wire the provider with a `RestClient` rooted at `https://api.openai.com`, and make it the injected `ClaimInsightProvider`; when the key is blank it must immediately delegate without making HTTP requests.
 

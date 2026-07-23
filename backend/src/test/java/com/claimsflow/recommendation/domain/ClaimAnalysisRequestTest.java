@@ -46,12 +46,15 @@ class ClaimAnalysisRequestTest {
         assertThat(request.assigned()).isFalse();
         assertThat(request.completenessPercentage()).isEqualTo(50);
         assertThat(request.missingInformation()).containsExactly("Damage photos");
-        assertThat(request.estimatedLoss()).isEqualByComparingTo("1250.00");
-        assertThat(request.incidentDate()).isEqualTo(LocalDate.of(2026, 7, 1));
-        assertThat(request.description()).isEqualTo("Vehicle damage after collision");
         assertThat(ClaimAnalysisRequest.class.getRecordComponents())
                 .extracting(RecordComponent::getName)
-                .doesNotContain("claimantName", "claimantEmail", "claimNumber");
+                .containsExactly(
+                        "claimType",
+                        "status",
+                        "priority",
+                        "assigned",
+                        "completenessPercentage",
+                        "missingInformation");
     }
 
     @Test

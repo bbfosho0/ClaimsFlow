@@ -16,6 +16,11 @@ import org.springframework.web.client.RestClient;
 public class RecommendationProviderConfiguration {
 
     @Bean
+    OpenAiApiKey openAiApiKey() {
+        return OpenAiApiKey.fromProcessEnvironment();
+    }
+
+    @Bean
     RestClient openAiRestClient(OpenAiProperties properties) {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(properties.timeout());
@@ -35,9 +40,10 @@ public class RecommendationProviderConfiguration {
     @Primary
     ClaimInsightProvider claimInsightProvider(
             RestClient openAiRestClient,
+            OpenAiApiKey apiKey,
             OpenAiProperties properties,
             RuleBasedClaimInsightProvider fallback,
             ObjectMapper objectMapper) {
-        return new OpenAiClaimInsightProvider(openAiRestClient, properties, fallback, objectMapper);
+        return new OpenAiClaimInsightProvider(openAiRestClient, apiKey, properties, fallback, objectMapper);
     }
 }

@@ -1,5 +1,6 @@
 package com.claimsflow.recommendation.domain;
 
+import com.claimsflow.recommendation.config.OpenAiApiKey;
 import com.claimsflow.recommendation.config.OpenAiProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,16 +31,19 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
             "additionalProperties", false);
 
     private final RestClient restClient;
+    private final OpenAiApiKey apiKey;
     private final OpenAiProperties properties;
     private final ClaimInsightProvider fallback;
     private final ObjectMapper objectMapper;
 
     public OpenAiClaimInsightProvider(
             RestClient restClient,
+            OpenAiApiKey apiKey,
             OpenAiProperties properties,
             ClaimInsightProvider fallback,
             ObjectMapper objectMapper) {
         this.restClient = restClient;
+        this.apiKey = apiKey;
         this.properties = properties;
         this.fallback = fallback;
         this.objectMapper = objectMapper;
@@ -47,7 +51,7 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
 
     @Override
     public ClaimInsight analyze(ClaimAnalysisRequest request) {
-        if (properties.apiKey() == null || properties.apiKey().isBlank()) {
+        if (!apiKey.isConfigured()) {
             return fallback.analyze(request);
         }
 
@@ -55,7 +59,7 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
             String response = restClient.post()
                     .uri("/v1/responses")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header("Authorization", "Bearer " + properties.apiKey())
+                    .header("Authorization", apiKey.authorizationHeader())
                     .body(requestBody(request))
                     .retrieve()
                     .body(String.class);
@@ -101,7 +105,8 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
             throw new IllegalArgumentException("Response must contain output text.");
         }
 
-        JsonNode insight = objectMapper.readTree(outputText(response));
+        JsonNode responseNode = objectMapper.readTree(response);
+        JsonNode insight = objectMapper.readTree(outputText(responseNode));
         if (!insight.isObject() || insight.size() != REQUIRED_FIELDS.size()) {
             throw new IllegalArgumentException("Response is not a complete insight.");
         }
@@ -125,29 +130,46 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
         return new ClaimInsight(action, explanation, confidenceNode.intValue(), missingInformation(insight.get("missingInformation")));
     }
 
-    private String outputText(String response) throws JsonProcessingException {
-        JsonNode responseNode = objectMapper.readTree(response);
+    private String outputText(JsonNode responseNode) {
+        if (!responseNode.isObject()
+                || !"completed".equals(responseNode.path("status").asText())
+                || responseNode.hasNonNull("error")
+                || responseNode.hasNonNull("incomplete_details")) {
+            throw new IllegalArgumentException("Response envelope is not completed.");
+        }
+
         JsonNode output = responseNode.path("output");
         if (!output.isArray()) {
             throw new IllegalArgumentException("Response does not contain output.");
         }
 
-        var outputText = new StringBuilder();
+        String outputText = null;
+        int messageCount = 0;
         for (JsonNode item : output) {
-            JsonNode content = item.path("content");
-            if (!content.isArray()) {
+            if ("reasoning".equals(item.path("type").asText())) {
                 continue;
             }
-            for (JsonNode part : content) {
-                if ("output_text".equals(part.path("type").asText()) && part.path("text").isTextual()) {
-                    outputText.append(part.path("text").textValue());
-                }
+            if (!"message".equals(item.path("type").asText())) {
+                throw new IllegalArgumentException("Response contains unsupported output.");
             }
+            messageCount++;
+            if (!"completed".equals(item.path("status").asText())) {
+                throw new IllegalArgumentException("Response message is not completed.");
+            }
+            JsonNode content = item.path("content");
+            if (!content.isArray() || content.size() != 1) {
+                throw new IllegalArgumentException("Response message content is invalid.");
+            }
+            JsonNode part = content.get(0);
+            if (!"output_text".equals(part.path("type").asText()) || !part.path("text").isTextual()) {
+                throw new IllegalArgumentException("Response message content is invalid.");
+            }
+            outputText = part.path("text").textValue();
         }
-        if (outputText.isEmpty()) {
+        if (messageCount != 1 || outputText == null || outputText.isBlank()) {
             throw new IllegalArgumentException("Response does not contain output text.");
         }
-        return outputText.toString();
+        return outputText;
     }
 
     private String requiredText(JsonNode insight, String field, int minimumLength, int maximumLength) {

@@ -15,6 +15,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.claim.domain.ClaimType;
+import com.claimsflow.recommendation.config.OpenAiApiKeyTestFactory;
 import com.claimsflow.recommendation.config.OpenAiProperties;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseCreator;
@@ -36,10 +38,7 @@ class OpenAiClaimInsightProviderTest {
             ClaimPriority.HIGH,
             false,
             50,
-            List.of("Damage photos"),
-            null,
-            null,
-            "Claimant claimant@example.test said their vehicle was damaged.");
+            List.of("Damage photos"));
 
     private RestClient.Builder restClientBuilder;
     private MockRestServiceServer server;
@@ -65,8 +64,9 @@ class OpenAiClaimInsightProviderTest {
                 .andExpect(content().string(containsString("\"strict\":true")))
                 .andExpect(content().string(containsString("\"REQUEST_INFORMATION\"")))
                 .andExpect(content().string(containsString("\"PREPARE_DECISION\"")))
-                .andExpect(content().string(not(containsString("claimant@example.test"))))
-                .andExpect(content().string(not(containsString("vehicle was damaged"))))
+                .andExpect(content().string(not(containsString("description"))))
+                .andExpect(content().string(not(containsString("estimatedLoss"))))
+                .andExpect(content().string(not(containsString("incidentDate"))))
                 .andRespond(withSuccess(validResponse("BEGIN_REVIEW"), APPLICATION_JSON));
 
         var insight = provider.analyze(REQUEST);
@@ -104,6 +104,21 @@ class OpenAiClaimInsightProviderTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"failed", "in_progress", "cancelled", "queued", "incomplete"})
+    void fallsBackWhenResponseEnvelopeIsNotCompleted(String status) {
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andRespond(withSuccess(responseEnvelope(
+                        status,
+                        "null",
+                        "null",
+                        "completed",
+                        outputTextContent(validInsight("BEGIN_REVIEW"))), APPLICATION_JSON));
+
+        assertThat(provider.analyze(REQUEST)).isEqualTo(ruleBased.analyze(REQUEST));
+        server.verify();
+    }
+
+    @ParameterizedTest
     @MethodSource("invalidOrFailedResponses")
     void fallsBackForInvalidOrUnavailableModelOutput(ResponseCreator response) {
         server.expect(requestTo("https://api.openai.com/v1/responses")).andRespond(response);
@@ -115,7 +130,8 @@ class OpenAiClaimInsightProviderTest {
     private OpenAiClaimInsightProvider providerFor(String apiKey) {
         return new OpenAiClaimInsightProvider(
                 restClientBuilder.build(),
-                new OpenAiProperties(apiKey, "gpt-5-nano", Duration.ofSeconds(2)),
+                OpenAiApiKeyTestFactory.fromValue(apiKey),
+                new OpenAiProperties("gpt-5-nano", Duration.ofSeconds(2)),
                 ruleBased,
                 new com.fasterxml.jackson.databind.ObjectMapper());
     }
@@ -126,14 +142,50 @@ class OpenAiClaimInsightProviderTest {
                 request -> {
                     throw new SocketTimeoutException("Timed out");
                 },
-                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"refusal\",\"refusal\":\"I cannot help\"}]}]}", APPLICATION_JSON),
-                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"not-json\"}]}]}", APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "{\"code\":\"server_error\",\"message\":\"failed\"}",
+                        "null",
+                        "completed",
+                        outputTextContent(validInsight("BEGIN_REVIEW"))), APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "null",
+                        "{\"reason\":\"max_output_tokens\"}",
+                        "completed",
+                        outputTextContent(validInsight("BEGIN_REVIEW"))), APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "null",
+                        "null",
+                        "incomplete",
+                        outputTextContent(validInsight("BEGIN_REVIEW"))), APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "null",
+                        "null",
+                        "completed",
+                        "[{\"type\":\"refusal\",\"refusal\":\"I cannot help\"}]"), APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "null",
+                        "null",
+                        "completed",
+                        "[%s,{\"type\":\"refusal\",\"refusal\":\"I cannot help\"}]"
+                                .formatted(outputTextPart(validInsight("BEGIN_REVIEW")))), APPLICATION_JSON),
+                withSuccess(responseEnvelope(
+                        "completed",
+                        "null",
+                        "null",
+                        "completed",
+                        outputTextContent("not-json")), APPLICATION_JSON),
                 withSuccess(validResponse("ESCALATE_EXTERNALLY"), APPLICATION_JSON),
                 withSuccess(responseWithInsight("BEGIN_REVIEW", "", 82, List.of()), APPLICATION_JSON),
                 withSuccess(responseWithInsight("BEGIN_REVIEW", "x".repeat(501), 82, List.of()), APPLICATION_JSON),
                 withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 101, List.of()), APPLICATION_JSON),
                 withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 82, List.of("  ")), APPLICATION_JSON),
-                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"{\\\"action\\\":\\\"BEGIN_REVIEW\\\",\\\"explanation\\\":\\\"The claim is ready for review.\\\",\\\"confidence\\\":82,\\\"missingInformation\\\":[null]}\"}]}]}", APPLICATION_JSON));
+                withSuccess(responseWithContent(
+                        outputTextContent("{\"action\":\"BEGIN_REVIEW\",\"explanation\":\"The claim is ready for review.\",\"confidence\":82,\"missingInformation\":[null]}")), APPLICATION_JSON));
     }
 
     private static String validResponse(String action) {
@@ -143,7 +195,35 @@ class OpenAiClaimInsightProviderTest {
     private static String responseWithInsight(String action, String explanation, int confidence, List<String> missingInformation) {
         String insight = "{\"action\":\"%s\",\"explanation\":\"%s\",\"confidence\":%d,\"missingInformation\":[%s]}"
                 .formatted(action, explanation, confidence, missingInformation.stream().map(value -> "\"%s\"".formatted(value)).collect(java.util.stream.Collectors.joining(",")));
-        return "{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":%s}]}]}"
-                .formatted(new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(insight));
+        return responseWithContent(outputTextContent(insight));
+    }
+
+    private static String validInsight(String action) {
+        return "{\"action\":\"%s\",\"explanation\":\"The claim is ready for review.\",\"confidence\":82,\"missingInformation\":[\"Damage photos\"]}"
+                .formatted(action);
+    }
+
+    private static String outputTextContent(String text) {
+        return "[%s]".formatted(outputTextPart(text));
+    }
+
+    private static String outputTextPart(String text) {
+        return "{\"type\":\"output_text\",\"text\":%s}"
+                .formatted(new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(text));
+    }
+
+    private static String responseWithContent(String content) {
+        return responseEnvelope("completed", "null", "null", "completed", content);
+    }
+
+    private static String responseEnvelope(
+            String status,
+            String error,
+            String incompleteDetails,
+            String messageStatus,
+            String content) {
+        return """
+                {"status":"%s","error":%s,"incomplete_details":%s,"output":[{"type":"message","status":"%s","content":%s}]}
+                """.formatted(status, error, incompleteDetails, messageStatus, content).trim();
     }
 }
