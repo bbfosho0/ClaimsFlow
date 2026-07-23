@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 import { ClaimsQueuePageComponent } from './claims-queue-page.component';
@@ -16,23 +17,23 @@ describe('ClaimsQueuePageComponent', () => {
     }));
 
     await TestBed.configureTestingModule({
-      imports: [ClaimsQueuePageComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'claims', component: ClaimsQueuePageComponent }]),
         { provide: ClaimsApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { queryParams: of({ status: 'NEW', priority: 'HIGH' }) } },
       ],
     }).compileComponents();
 
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/claims?status=NEW&priority=HIGH', ClaimsQueuePageComponent);
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.resolveTo(true);
-    const fixture = TestBed.createComponent(ClaimsQueuePageComponent);
-    fixture.detectChanges();
+    harness.detectChanges();
 
-    const chips = Array.from(fixture.nativeElement.querySelectorAll('.filter-chip')) as HTMLButtonElement[];
+    const root = harness.routeNativeElement!;
+    const chips = Array.from(root.querySelectorAll('.filter-chip')) as HTMLButtonElement[];
     expect(chips.length).toBe(2);
-    expect(fixture.nativeElement.textContent).toContain('New');
-    expect(fixture.nativeElement.textContent).toContain('High priority');
+    expect(root.textContent).toContain('New');
+    expect(root.textContent).toContain('High priority');
 
     const statusChip = chips.find(button => button.textContent?.includes('New'));
     statusChip?.click();
