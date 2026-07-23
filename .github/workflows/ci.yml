@@ -21,7 +21,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Verify backend
-        run: mvn verify
+        run: mvn -q verify
         working-directory: backend
 
   frontend:
@@ -32,10 +32,10 @@ jobs:
         with:
           node-version: '22'
       - name: Generate dependency lock
-        run: npm install --package-lock-only
+        run: npm install --package-lock-only --silent
         working-directory: frontend
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --silent
         working-directory: frontend
       - name: Run frontend tests
         run: npm run test:ci
