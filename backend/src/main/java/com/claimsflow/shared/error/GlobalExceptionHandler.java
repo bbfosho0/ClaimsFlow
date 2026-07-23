@@ -7,6 +7,7 @@ import java.net.URI;
 import java.util.*;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     ResponseEntity<ProblemDetail> constraint(ConstraintViolationException exception, HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ProblemDetail> malformedRequest(HttpMessageNotReadableException exception, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "The request body is malformed or contains an unsupported value.", request, null);
     }
 
     @ExceptionHandler(Exception.class)
