@@ -35,4 +35,26 @@ describe('NewClaimPageComponent', () => {
     });
     expect(component.form.valid).toBeTrue();
   });
+
+  it('updates reactive form controls through claim type and evidence cards', () => {
+    const fixture = TestBed.createComponent(NewClaimPageComponent);
+    fixture.detectChanges();
+
+    const autoTypeCard = Array.from(
+      fixture.nativeElement.querySelectorAll('label.claim-type-card') as NodeListOf<HTMLLabelElement>,
+    ).find(card => card.textContent?.includes('Auto'));
+    const autoType = autoTypeCard?.querySelector<HTMLInputElement>('input[type="radio"][formcontrolname="claimType"]');
+    const photos = fixture.nativeElement.querySelector('input[formcontrolname="photosPresent"]') as HTMLInputElement;
+
+    expect(autoType).withContext('AUTO claim type radio').not.toBeNull();
+    expect(photos).withContext('Damage photos evidence checkbox').not.toBeNull();
+
+    autoType!.click();
+    photos.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.claimType.value).toBe('AUTO');
+    expect(fixture.componentInstance.form.controls.photosPresent.value).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('1 evidence item selected');
+  });
 });

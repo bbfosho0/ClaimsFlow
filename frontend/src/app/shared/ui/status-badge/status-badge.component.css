@@ -1,0 +1,7 @@
+:host { display: inline-flex; }
+.status-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .34rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 800; white-space: nowrap; background: var(--color-surface-secondary); color: var(--color-neutral); }
+.status-badge[data-tone="info"] { background: #e8f0ff; color: var(--color-info); }
+.status-badge[data-tone="success"] { background: #e6f6ef; color: var(--color-success); }
+.status-badge[data-tone="warning"] { background: #fff2de; color: var(--color-warning); }
+.status-badge[data-tone="critical"] { background: #ffeae8; color: var(--color-critical); }
+.status-icon { font-size: .68rem; line-height: 1; }

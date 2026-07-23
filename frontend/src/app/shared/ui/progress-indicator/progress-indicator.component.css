@@ -1,0 +1,12 @@
+:host { display: block; min-width: 5rem; }
+.progress-indicator { display: grid; gap: .38rem; }
+.progress-label { display: flex; justify-content: space-between; gap: .75rem; color: var(--color-text-muted); font-size: .72rem; }
+.progress-label strong { color: var(--color-text); }
+.progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--color-surface-secondary); }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-info); transition: width 220ms ease; }
+.progress-indicator[data-tone="success"] .progress-track span { background: var(--color-success); }
+.progress-indicator[data-tone="warning"] .progress-track span { background: var(--color-warning); }
+.progress-indicator[data-tone="critical"] .progress-track span { background: var(--color-critical); }
+.progress-indicator.compact { gap: .25rem; }
+.progress-indicator.compact .progress-label span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.progress-indicator.compact .progress-track { height: 6px; }

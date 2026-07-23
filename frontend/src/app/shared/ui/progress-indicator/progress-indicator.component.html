@@ -1,0 +1,13 @@
+<div
+  class="progress-indicator"
+  [class.compact]="compact()"
+  [attr.data-tone]="tone()"
+  role="progressbar"
+  aria-valuemin="0"
+  aria-valuemax="100"
+  [attr.aria-valuenow]="clampedValue()"
+  [attr.aria-label]="label() + ' ' + clampedValue() + '%'"
+>
+  <div class="progress-label"><span>{{ label() }}</span><strong>{{ clampedValue() }}%</strong></div>
+  <div class="progress-track" aria-hidden="true"><span [style.width.%]="clampedValue()"></span></div>
+</div>
