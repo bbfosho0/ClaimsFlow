@@ -50,6 +50,12 @@ const recommendation: Recommendation = {
   reviewState: 'PENDING',
 };
 
+const approvedRecommendation: Recommendation = {
+  ...recommendation,
+  reviewState: 'APPROVED',
+  reviewerName: 'Interview User',
+};
+
 describe('ClaimDetailPageComponent', () => {
   it('presents advisory decision support and preserves human approval', async () => {
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', [
@@ -67,7 +73,7 @@ describe('ClaimDetailPageComponent', () => {
       { id: 'audit-1', actor: 'System', actionType: 'CLAIM_CREATED', summary: 'Claim created', occurredAt: '2026-07-23T09:32:00Z' },
       { id: 'audit-2', actor: 'Interview User', actionType: 'ASSIGNED', summary: 'Assigned to Maya Chen', occurredAt: '2026-07-23T09:41:00Z' },
     ]));
-    api.reviewRecommendation.and.returnValue(of({ ...recommendation, reviewState: 'APPROVED', reviewerName: 'Interview User' }));
+    api.reviewRecommendation.and.returnValue(of(approvedRecommendation));
 
     await TestBed.configureTestingModule({
       providers: [
