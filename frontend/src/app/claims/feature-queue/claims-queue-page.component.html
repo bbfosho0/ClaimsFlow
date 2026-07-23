@@ -1,0 +1,64 @@
+<div class="page-enter queue-page">
+  <header class="page-header">
+    <div><p class="eyebrow">Work queue</p><h1>Claims</h1><p>Scan, filter, and open the cases that need attention.</p></div>
+    <a class="button primary" routerLink="/claims/new"><span aria-hidden="true">+</span> New claim</a>
+  </header>
+
+  <form class="filter-panel panel" (ngSubmit)="apply()">
+    <div class="filter-grid">
+      <label class="search-field">Search<input [formControl]="q" placeholder="Claim number or claimant"></label>
+      <label>Status<select [formControl]="status"><option value="">All statuses</option><option *ngFor="let item of statuses" [value]="item">{{ label(item) }}</option></select></label>
+      <label>Priority<select [formControl]="priority"><option value="">All priorities</option><option *ngFor="let item of priorities" [value]="item">{{ label(item) }}</option></select></label>
+      <label>Assignment<select [formControl]="assignment"><option value="">All claims</option><option value="unassigned">Unassigned</option></select></label>
+      <div class="filter-actions"><button class="button primary" type="submit">Apply</button><button class="button secondary" type="button" (click)="reset()">Reset</button></div>
+    </div>
+    <div class="filter-chips" *ngIf="activeFilters().length" aria-label="Applied filters">
+      <span>Applied:</span>
+      <button class="filter-chip" type="button" *ngFor="let filter of activeFilters()" (click)="removeFilter(filter.key)" [attr.aria-label]="'Remove filter ' + filter.label">
+        {{ filter.label }} <span aria-hidden="true">×</span>
+      </button>
+    </div>
+  </form>
+
+  <div *ngIf="loading()" class="panel loading-state" role="status">Loading claims…</div>
+  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+
+  <section *ngIf="data() as page" class="panel table-panel">
+    <div class="table-meta"><strong>{{ page.totalElements }} claims</strong><span>{{ resultRange(page) }} · Page {{ page.page + 1 }} of {{ page.totalPages || 1 }}</span></div>
+    <div *ngIf="!page.content.length" class="empty">No claims match the selected filters.</div>
+
+    <div class="table-wrap" *ngIf="page.content.length">
+      <table aria-label="Claims work queue">
+        <thead><tr><th>Claim</th><th>Claimant</th><th>Type</th><th>Priority</th><th>Status</th><th>Assignment</th><th>SLA</th><th>Complete</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let claim of page.content">
+            <td><a [routerLink]="['/claims', claim.id]">{{ claim.claimNumber }}</a><small>{{ claim.slaDeadline | date:'mediumDate' }} deadline</small></td>
+            <td><strong>{{ claim.claimantName }}</strong></td>
+            <td>{{ label(claim.claimType) }}</td>
+            <td><app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="priorityIcon(claim.priority)" /></td>
+            <td><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /></td>
+            <td [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</td>
+            <td><span class="sla-label" [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</span><small>{{ sla(claim.slaDeadline).detail }}</small></td>
+            <td><app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" compact /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-claims" *ngIf="page.content.length">
+      <article class="claim-card" *ngFor="let claim of page.content">
+        <div class="claim-card-top"><a [routerLink]="['/claims', claim.id]">{{ claim.claimNumber }}</a><app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="priorityIcon(claim.priority)" /></div>
+        <h2>{{ claim.claimantName }}</h2>
+        <div class="claim-card-meta"><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /><span>{{ label(claim.claimType) }}</span></div>
+        <div class="claim-card-row"><span [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</span><span class="sla-label" [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</span></div>
+        <app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" />
+      </article>
+    </div>
+
+    <div class="pagination" *ngIf="page.content.length">
+      <button class="button secondary" [disabled]="page.page === 0" (click)="goTo(page.page - 1)">← Previous</button>
+      <span>Page {{ page.page + 1 }} of {{ page.totalPages || 1 }}</span>
+      <button class="button secondary" [disabled]="page.page + 1 >= page.totalPages" (click)="goTo(page.page + 1)">Next →</button>
+    </div>
+  </section>
+</div>
