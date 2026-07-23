@@ -1,0 +1,44 @@
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="app-shell">
+  <aside class="app-sidebar" aria-label="Primary navigation">
+    <div class="brand-block">
+      <span class="brand-mark" aria-hidden="true">CF</span>
+      <span class="brand-copy">
+        <strong>ClaimsFlow</strong>
+        <small>Operations Intelligence</small>
+      </span>
+    </div>
+
+    <nav class="primary-nav" aria-label="ClaimsFlow destinations">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">⌂</span>
+        <span>Overview</span>
+      </a>
+      <a routerLink="/claims" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="nav-icon" aria-hidden="true">≡</span>
+        <span>Claims</span>
+      </a>
+      <a routerLink="/claims/new" routerLinkActive="active">
+        <span class="nav-icon" aria-hidden="true">+</span>
+        <span>New claim</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+
+    <section class="system-status" aria-label="System status">
+      <div class="status-heading"><span aria-hidden="true">✓</span><strong>System healthy</strong></div>
+      <span>Decision support available</span>
+      <small>API · Database · Audit</small>
+    </section>
+
+    <div class="operator-block" aria-label="Current demo operator">
+      <span class="operator-avatar" aria-hidden="true">YG</span>
+      <span><strong>Interview User</strong><small>Claims operator</small></span>
+    </div>
+  </aside>
+
+  <main id="main-content" tabindex="-1" class="app-workspace">
+    <router-outlet />
+  </main>
+</div>
