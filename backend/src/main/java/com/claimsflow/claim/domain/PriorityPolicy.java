@@ -16,7 +16,8 @@ public final class PriorityPolicy {
 
         if (type == ClaimType.PERSONAL_INJURY) { score += 2; factors.add("Personal injury claim"); }
         if (completenessPercentage < 100) { score += 1; factors.add("Required evidence is missing"); }
-        if (ChronoUnit.DAYS.between(incidentDate, LocalDate.now(ZoneOffset.UTC)) <= 2) { score += 1; factors.add("Incident is recent"); }
+        LocalDate evaluationDate = LocalDate.ofInstant(now, ZoneOffset.UTC);
+        if (ChronoUnit.DAYS.between(incidentDate, evaluationDate) <= 2) { score += 1; factors.add("Incident is recent"); }
         if (slaDeadline != null && Duration.between(now, slaDeadline).toHours() <= 24) { score += 2; factors.add("SLA is due within 24 hours"); }
 
         ClaimPriority priority = score >= 6 ? ClaimPriority.CRITICAL : score >= 4 ? ClaimPriority.HIGH : score >= 2 ? ClaimPriority.MEDIUM : ClaimPriority.LOW;
