@@ -116,7 +116,27 @@ Wait until the `db` service reports `healthy`. The first backend startup runs Fl
 
 ### 2. Start the Spring Boot backend
 
-Open a terminal in the repository root:
+Open a terminal in the repository root. Use the commands that match your terminal:
+
+**Windows Command Prompt (`cmd`)**
+
+```cmd
+cd backend
+set "MAVEN_HOME=C:\Users\braul\tools\apache-maven-3.9.16"
+set "PATH=%MAVEN_HOME%\bin;%PATH%"
+mvn spring-boot:run
+```
+
+**Windows PowerShell**
+
+```powershell
+Set-Location backend
+$env:MAVEN_HOME = 'C:\Users\braul\tools\apache-maven-3.9.16'
+$env:PATH = "$env:MAVEN_HOME\bin;$env:PATH"
+mvn spring-boot:run
+```
+
+**macOS, Linux, or Git Bash**
 
 ```bash
 cd backend
@@ -124,6 +144,8 @@ mvn spring-boot:run
 ```
 
 The backend is ready when the console reports that the application started on port `8080`.
+
+If Maven is installed globally, you can omit the `MAVEN_HOME` and `PATH` lines. To verify the backend, open `http://localhost:8080/actuator/health`; it should return `{"status":"UP"}`.
 
 ### Optional AI-assisted recommendations
 
@@ -157,7 +179,25 @@ Expected status:
 
 ### 3. Start the Angular frontend
 
-Open a second terminal in the repository root:
+Open a second terminal in the repository root. Keep the backend terminal running.
+
+**Windows Command Prompt (`cmd`)**
+
+```cmd
+cd frontend
+npm ci
+npm start
+```
+
+**Windows PowerShell**
+
+```powershell
+Set-Location frontend
+npm ci
+npm start
+```
+
+**macOS, Linux, or Git Bash**
 
 ```bash
 cd frontend
