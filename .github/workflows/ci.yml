@@ -21,7 +21,11 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Verify backend
-        run: mvn -q verify
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn -q verify > maven-verify.log 2>&1 || { tail -n 180 maven-verify.log; exit 1; }
+          tail -n 40 maven-verify.log
         working-directory: backend
 
   frontend:
@@ -38,10 +42,18 @@ jobs:
         run: npm ci --silent
         working-directory: frontend
       - name: Run frontend tests
-        run: npm run test:ci
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:ci > frontend-test.log 2>&1 || { tail -n 180 frontend-test.log; exit 1; }
+          tail -n 40 frontend-test.log
         working-directory: frontend
       - name: Build frontend
-        run: npm run build
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build > frontend-build.log 2>&1 || { tail -n 180 frontend-build.log; exit 1; }
+          tail -n 40 frontend-build.log
         working-directory: frontend
       - name: Preserve generated lockfile
         uses: actions/upload-artifact@v4
