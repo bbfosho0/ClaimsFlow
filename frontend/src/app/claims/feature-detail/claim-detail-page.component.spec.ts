@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ClaimDetail, Recommendation } from '../../shared/models/claim.models';
 import { ClaimsApiService } from '../data-access/claims-api.service';
@@ -69,27 +70,26 @@ describe('ClaimDetailPageComponent', () => {
     api.reviewRecommendation.and.returnValue(of({ ...recommendation, reviewState: 'APPROVED', reviewerName: 'Interview User' }));
 
     await TestBed.configureTestingModule({
-      imports: [ClaimDetailPageComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'claims/:id', component: ClaimDetailPageComponent }]),
         { provide: ClaimsApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'claim-1' }) } } },
       ],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(ClaimDetailPageComponent);
-    fixture.detectChanges();
-    fixture.componentInstance.recommendation.set(recommendation);
-    fixture.detectChanges();
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/claims/claim-1', ClaimDetailPageComponent);
+    component.recommendation.set(recommendation);
+    harness.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Decision support');
-    expect(fixture.nativeElement.textContent).toContain('Advisory only');
-    expect(fixture.nativeElement.textContent).not.toContain('OpenAI recommendation');
-    expect(fixture.nativeElement.querySelector('[aria-label="Claim completeness 50%"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.audit-event').length).toBe(2);
+    const root = harness.routeNativeElement!;
+    expect(root.textContent).toContain('Decision support');
+    expect(root.textContent).toContain('Advisory only');
+    expect(root.textContent).not.toContain('OpenAI recommendation');
+    expect(root.querySelector('[aria-label="Claim completeness 50%"]')).not.toBeNull();
+    expect(root.querySelectorAll('.audit-event').length).toBe(2);
 
-    const approve = Array.from(fixture.nativeElement.querySelectorAll('button'))
-      .find((button: Element) => button.textContent?.includes('Approve')) as HTMLButtonElement | undefined;
+    const approve = Array.from(root.querySelectorAll('button'))
+      .find(button => button.textContent?.includes('Approve')) as HTMLButtonElement | undefined;
     approve?.click();
 
     expect(api.reviewRecommendation).toHaveBeenCalledWith('claim-1', 'recommendation-1', 'APPROVED', 'Interview User');
