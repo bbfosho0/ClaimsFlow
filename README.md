@@ -125,6 +125,18 @@ mvn spring-boot:run
 
 The backend is ready when the console reports that the application started on port `8080`.
 
+### Optional AI-assisted recommendations
+
+OpenAI recommendations are opt-in. To enable them locally, set `OPENAI_API_KEY` to your own key using a placeholder in documentation or your local shell, then start the backend:
+
+```powershell
+$env:OPENAI_API_KEY = 'your-api-key'
+cd backend
+mvn spring-boot:run
+```
+
+ClaimsFlow sends a redacted operational summary to OpenAI for decision-support only. AI results are advisory and never approve, deny, or change a claim automatically. If no key is configured, or the provider is unavailable or returns an invalid result, ClaimsFlow automatically uses its deterministic rule-based recommendation instead.
+
 Verify it in another terminal:
 
 ```bash
@@ -177,6 +189,7 @@ DB_URL=jdbc:postgresql://localhost:5432/claimsflow
 DB_USERNAME=claimsflow
 DB_PASSWORD=claimsflow
 PORT=8080
+OPENAI_API_KEY=
 ```
 
 These values match `docker-compose.yml`. The credentials are for local development only.
@@ -204,6 +217,8 @@ mvn spring-boot:run
 ```
 
 Changing the backend port also requires changing the target in `frontend/proxy.conf.json` for local Angular development.
+
+`OPENAI_API_KEY` is optional and must be supplied through the environment; never commit a key. Leave it unset or blank to use deterministic recommendations. The integration uses the `gpt-5-nano` model by default, sends only redacted operational claim fields, and falls back automatically when the provider fails or its response does not pass local validation.
 
 ## Database operations
 
@@ -432,6 +447,6 @@ The decision records are in `docs/decisions/`.
 - Single organization and a fictional adjuster identity for demo actions
 - No external insurance system integration
 - No cloud deployment configuration
-- Recommendations are rule-based rather than model-generated
+- OpenAI recommendations are optional; deterministic rule-based recommendations remain the fallback
 
 These constraints keep the project locally runnable and focused on the junior full-stack interview workflow.

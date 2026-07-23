@@ -45,7 +45,24 @@ Angular reactive form
 
 ## Decision support
 
-`ClaimInsightProvider` is an interface. `RuleBasedClaimInsightProvider` is the current implementation and reliable fallback. It receives an immutable analysis request and returns an action, explanation, confidence, and missing-information list.
+`ClaimInsightProvider` is an interface. `OpenAiClaimInsightProvider` is the primary provider when `OPENAI_API_KEY` is configured; `RuleBasedClaimInsightProvider` is the deterministic fallback. The API key is read from the optional `OPENAI_API_KEY` environment variable through `claimsflow.openai.api-key`, and the default model is `gpt-5-nano`.
+
+The OpenAI provider sends a redacted operational summary containing claim type, status, priority, assignment state, completeness percentage, and missing-information labels. It does not send claimant details or other free-text claim content. The request requires a strict JSON schema with an allowed action, bounded explanation and confidence, and a missing-information list. The response is validated again locally before it can become a recommendation.
+
+The provider path is:
+
+```text
+RecommendationService
+  → ClaimInsightProvider
+  → OpenAI Responses API (optional)
+  → strict schema and local validation
+  → pending advisory recommendation
+
+No key configured, request failure, or invalid model output
+  → RuleBasedClaimInsightProvider
+```
+
+OpenAI calls are advisory only. They cannot mutate claims or approve or reject a recommendation. If no key is configured, the provider fails, or its output is missing, malformed, unsupported, or outside persistence limits, the deterministic provider supplies the recommendation automatically.
 
 The provider cannot mutate claims. The recommendation is persisted as pending and requires a separate human approval or rejection request.
 
