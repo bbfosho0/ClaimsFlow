@@ -1,0 +1,13 @@
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+coverage/
+*.log
+.DS_Store
+claimsflow-data/
