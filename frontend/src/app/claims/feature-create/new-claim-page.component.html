@@ -1,0 +1,77 @@
+<div class="page-enter intake-page">
+  <header class="page-header">
+    <div><p class="eyebrow">Claim intake</p><h1>Create a claim</h1><p>Capture the initial facts and evidence. Backend rules perform authoritative triage.</p></div>
+    <a class="button secondary" routerLink="/claims">← Back to queue</a>
+  </header>
+
+  <div #errorSummary *ngIf="errors().length" class="alert error-summary" tabindex="-1" role="alert">
+    <strong>Review the following:</strong><ul><li *ngFor="let error of errors()">{{ error }}</li></ul>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ol class="intake-progress" aria-label="Claim intake sections">
+      <li class="complete"><span>✓</span><div><strong>Claimant</strong><small>Identity</small></div></li>
+      <li><span>2</span><div><strong>Incident</strong><small>Facts</small></div></li>
+      <li><span>3</span><div><strong>Evidence</strong><small>Available items</small></div></li>
+      <li><span>4</span><div><strong>Review</strong><small>Submit</small></div></li>
+    </ol>
+
+    <div class="intake-layout">
+      <div class="form-column">
+        <section class="panel form-section">
+          <div class="section-heading"><span>1</span><div><h2>Claimant</h2><p>Who is making the claim?</p></div></div>
+          <div class="field-grid two-column">
+            <label>Full name<input formControlName="claimantName" autocomplete="name"></label>
+            <label>Email<input type="email" formControlName="claimantEmail" autocomplete="email"></label>
+          </div>
+        </section>
+
+        <section class="panel form-section">
+          <div class="section-heading"><span>2</span><div><h2>Incident</h2><p>Describe what happened and the known impact.</p></div></div>
+          <fieldset class="claim-type-fieldset">
+            <legend>Claim type</legend>
+            <div class="claim-type-grid">
+              <label class="claim-type-card" *ngFor="let type of claimTypes" [class.selected]="form.controls.claimType.value === type.value">
+                <input type="radio" formControlName="claimType" [value]="type.value">
+                <span class="option-icon" aria-hidden="true">{{ type.icon }}</span>
+                <strong>{{ type.label }}</strong>
+                <small>{{ type.description }}</small>
+              </label>
+            </div>
+          </fieldset>
+          <div class="field-grid two-column">
+            <label>Incident date<input type="date" [max]="today" formControlName="incidentDate"></label>
+            <label>Estimated loss<input type="number" min="0" step="0.01" formControlName="estimatedLoss"></label>
+          </div>
+          <label>Description<textarea rows="5" formControlName="description" placeholder="Describe what happened and the known impact."></textarea><small>{{ form.controls.description.value.length }} / 2000</small></label>
+        </section>
+
+        <section class="panel form-section">
+          <div class="section-heading"><span>3</span><div><h2>Evidence available</h2><p>Claims may be submitted incomplete. Missing evidence will be surfaced in triage.</p></div></div>
+          <div class="evidence-grid">
+            <label class="evidence-card" [class.selected]="form.controls.incidentReportPresent.value"><input type="checkbox" formControlName="incidentReportPresent"><span aria-hidden="true">✓</span><strong>Incident report</strong><small>Formal report or reference number</small></label>
+            <label class="evidence-card" [class.selected]="form.controls.photosPresent.value"><input type="checkbox" formControlName="photosPresent"><span aria-hidden="true">▣</span><strong>Damage photos</strong><small>Images documenting the incident</small></label>
+            <label class="evidence-card" [class.selected]="form.controls.proofOfOwnershipPresent.value"><input type="checkbox" formControlName="proofOfOwnershipPresent"><span aria-hidden="true">◇</span><strong>Proof of ownership</strong><small>Receipt, title, or ownership record</small></label>
+            <label class="evidence-card" [class.selected]="form.controls.medicalDocumentationPresent.value"><input type="checkbox" formControlName="medicalDocumentationPresent"><span aria-hidden="true">+</span><strong>Medical documentation</strong><small>Records supporting an injury claim</small></label>
+          </div>
+        </section>
+      </div>
+
+      <aside class="review-panel" aria-label="Claim review summary">
+        <p class="eyebrow">Review & submit</p>
+        <h2>Claim summary</h2>
+        <p>Review your entered facts before creating the claim.</p>
+        <dl>
+          <div><dt>Required fields</dt><dd>{{ requiredCompleted() }} of 6 complete</dd></div>
+          <div><dt>Claim type</dt><dd>{{ selectedClaimTypeLabel() }}</dd></div>
+          <div><dt>Evidence</dt><dd>{{ evidenceCount() }} evidence {{ evidenceCount() === 1 ? 'item' : 'items' }} selected</dd></div>
+          <div><dt>Estimated loss</dt><dd>{{ form.controls.estimatedLoss.value | currency }}</dd></div>
+        </dl>
+        <div class="authority-note"><span aria-hidden="true">i</span><p>Priority and completeness are calculated by backend rules after submission.</p></div>
+        <div *ngIf="actionError()" class="inline-error" role="alert">{{ actionError() }}</div>
+        <button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Creating…' : '✓ Create claim' }}</button>
+        <a class="button secondary" routerLink="/claims">Cancel</a>
+      </aside>
+    </div>
+  </form>
+</div>
