@@ -10,14 +10,14 @@ class RuleBasedClaimInsightProviderTest {
 
     @Test
     void missingEvidenceTakesPriority() {
-        var insight = provider.analyze(new ClaimAnalysisRequest(ClaimStatus.NEW, ClaimPriority.HIGH, false, 50, List.of("Damage photos")));
+        var insight = provider.analyze(new ClaimAnalysisRequest(ClaimType.AUTO, ClaimStatus.NEW, ClaimPriority.HIGH, false, 50, List.of("Damage photos"), null, null, null));
         assertThat(insight.action()).isEqualTo("REQUEST_INFORMATION");
         assertThat(insight.missingInformation()).containsExactly("Damage photos");
     }
 
     @Test
     void completeUnassignedClaimRequestsAssignment() {
-        var insight = provider.analyze(new ClaimAnalysisRequest(ClaimStatus.NEW, ClaimPriority.MEDIUM, false, 100, List.of()));
+        var insight = provider.analyze(new ClaimAnalysisRequest(ClaimType.AUTO, ClaimStatus.NEW, ClaimPriority.MEDIUM, false, 100, List.of(), null, null, null));
         assertThat(insight.action()).isEqualTo("ASSIGN_ADJUSTER");
     }
 }

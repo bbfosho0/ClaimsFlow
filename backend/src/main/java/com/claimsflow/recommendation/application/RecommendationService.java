@@ -31,7 +31,7 @@ public class RecommendationService {
     public Recommendation generate(UUID claimId) {
         Claim claim = claims.get(claimId);
         var completeness = claims.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
-        ClaimInsight insight = provider.analyze(new ClaimAnalysisRequest(claim.getStatus(), claim.getPriority(), claim.getAssignedAdjuster() != null, completeness.percentage(), completeness.missingEvidence()));
+        ClaimInsight insight = provider.analyze(ClaimAnalysisRequest.from(claim, completeness));
         var recommendation = Recommendation.pending(claim, insight.action(), insight.explanation(), insight.confidence(), String.join("|", insight.missingInformation()), clock.instant());
         recommendations.save(recommendation);
         audit.record(claim, "system", "RECOMMENDATION_GENERATED", "Decision-support recommendation generated", null, insight.action(), clock.instant());

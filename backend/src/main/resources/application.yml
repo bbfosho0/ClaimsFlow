@@ -24,3 +24,8 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+claimsflow:
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-5-nano
+    timeout: 10s
