@@ -89,7 +89,7 @@ Start the frontend in a second terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm start
 ```
 
@@ -133,12 +133,12 @@ Frontend:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run test:ci
 npm run build
 ```
 
-GitHub Actions runs both verification jobs. The first frontend CI run also produces a `frontend-package-lock` artifact so the generated lockfile can be committed and later CI runs can use a repository-pinned dependency graph.
+GitHub Actions runs independent backend and frontend verification jobs using the committed Maven and npm dependency definitions.
 
 ## Interview demo
 
