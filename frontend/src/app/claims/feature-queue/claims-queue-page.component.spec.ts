@@ -1,5 +1,5 @@
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 import { ClaimsQueuePageComponent } from './claims-queue-page.component';
@@ -29,7 +29,7 @@ describe('ClaimsQueuePageComponent', () => {
     const fixture = TestBed.createComponent(ClaimsQueuePageComponent);
     fixture.detectChanges();
 
-    const chips = Array.from(fixture.nativeElement.querySelectorAll<HTMLButtonElement>('.filter-chip'));
+    const chips = Array.from(fixture.nativeElement.querySelectorAll('.filter-chip')) as HTMLButtonElement[];
     expect(chips.length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('New');
     expect(fixture.nativeElement.textContent).toContain('High priority');
