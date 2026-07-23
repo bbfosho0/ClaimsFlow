@@ -84,6 +84,25 @@ class OpenAiClaimInsightProviderTest {
         server.verify();
     }
 
+    @Test
+    void fallsBackWhenMissingInformationWouldExceedPersistenceLimit() {
+        List<String> missingInformation = List.of("x".repeat(500), "y".repeat(500), "z".repeat(500));
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andRespond(withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 82, missingInformation), APPLICATION_JSON));
+
+        assertThat(provider.analyze(REQUEST)).isEqualTo(ruleBased.analyze(REQUEST));
+        server.verify();
+    }
+
+    @Test
+    void fallsBackWhenMissingInformationContainsPersistenceDelimiter() {
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andRespond(withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 82, List.of("Damage|photos")), APPLICATION_JSON));
+
+        assertThat(provider.analyze(REQUEST)).isEqualTo(ruleBased.analyze(REQUEST));
+        server.verify();
+    }
+
     @ParameterizedTest
     @MethodSource("invalidOrFailedResponses")
     void fallsBackForInvalidOrUnavailableModelOutput(ResponseCreator response) {

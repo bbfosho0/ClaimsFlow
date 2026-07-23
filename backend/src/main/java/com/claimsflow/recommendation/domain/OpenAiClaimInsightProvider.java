@@ -13,6 +13,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
+    private static final String MISSING_INFORMATION_DELIMITER = "|";
+    private static final int MAX_MISSING_INFORMATION_LENGTH = 1000;
     private static final Set<String> ALLOWED_ACTIONS = Set.of(
             "REQUEST_INFORMATION", "ASSIGN_ADJUSTER", "BEGIN_REVIEW", "PREPARE_DECISION");
     private static final Set<String> REQUIRED_FIELDS = Set.of(
@@ -162,11 +164,20 @@ public class OpenAiClaimInsightProvider implements ClaimInsightProvider {
         }
 
         var values = new ArrayList<String>();
+        int serializedLength = 0;
         for (JsonNode value : missingInformation) {
             if (!value.isTextual() || value.textValue().isBlank() || value.textValue().length() > 500) {
                 throw new IllegalArgumentException("Response missing information is invalid.");
             }
-            values.add(value.textValue());
+            String text = value.textValue();
+            if (text.contains(MISSING_INFORMATION_DELIMITER)) {
+                throw new IllegalArgumentException("Response missing information contains an unsupported delimiter.");
+            }
+            serializedLength += text.length() + (values.isEmpty() ? 0 : MISSING_INFORMATION_DELIMITER.length());
+            if (serializedLength > MAX_MISSING_INFORMATION_LENGTH) {
+                throw new IllegalArgumentException("Response missing information exceeds the persistence limit.");
+            }
+            values.add(text);
         }
         return List.copyOf(values);
     }
