@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: claimsflow
+      POSTGRES_USER: claimsflow
+      POSTGRES_PASSWORD: claimsflow
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claimsflow -d claimsflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - claimsflow-data:/var/lib/postgresql/data
+
+volumes:
+  claimsflow-data:

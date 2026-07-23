@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: claimsflow
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/claimsflow}
+    username: ${DB_USERNAME:claimsflow}
+    password: ${DB_PASSWORD:claimsflow}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
