@@ -39,7 +39,7 @@
             <td><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /></td>
             <td [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</td>
             <td><span class="sla-label" [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</span><small>{{ sla(claim.slaDeadline).detail }}</small></td>
-            <td><app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" compact /></td>
+            <td><app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" [compact]="true" /></td>
           </tr>
         </tbody>
       </table>

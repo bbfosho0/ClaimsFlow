@@ -40,7 +40,7 @@ describe('NewClaimPageComponent', () => {
     const fixture = TestBed.createComponent(NewClaimPageComponent);
     fixture.detectChanges();
 
-    const autoType = fixture.nativeElement.querySelector('input[type="radio"][value="AUTO"]') as HTMLInputElement;
+    const autoType = fixture.nativeElement.querySelector('input[type="radio"][formcontrolname="claimType"]') as HTMLInputElement;
     const photos = fixture.nativeElement.querySelector('input[formcontrolname="photosPresent"]') as HTMLInputElement;
     autoType.click();
     photos.click();
