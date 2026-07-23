@@ -1,0 +1,57 @@
+<div class="page-enter dashboard-page">
+  <header class="operations-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Claims operations / {{ todayLabel }}</p>
+      <h1>Operations dashboard</h1>
+      <p>Protect SLAs and keep decisions auditable across the active claims portfolio.</p>
+      <div class="hero-status" *ngIf="data() as dashboard">
+        <span><strong>▲</strong> {{ dashboard.slaRiskClaims }} SLA risks</span>
+        <span><strong>•</strong> {{ dashboard.unassignedClaims }} unassigned</span>
+        <span><strong>✓</strong> All systems healthy</span>
+      </div>
+    </div>
+    <a class="button primary" routerLink="/claims/new"><span aria-hidden="true">+</span> Create claim</a>
+  </header>
+
+  <div *ngIf="loading()" class="panel loading-state" role="status">Loading operations data…</div>
+  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+
+  <ng-container *ngIf="data() as dashboard">
+    <section class="metric-grid" aria-label="Claim metrics">
+      <app-metric-card label="Open claims" [value]="dashboard.openClaims" context="Portfolio volume" icon="◆" tone="primary" />
+      <app-metric-card label="High priority" [value]="dashboard.highPriorityClaims" context="Immediate attention" icon="!" tone="critical" />
+      <app-metric-card label="SLA risk" [value]="dashboard.slaRiskClaims" context="Due within 24 hours" icon="▲" tone="warning" />
+      <app-metric-card label="Unassigned" [value]="dashboard.unassignedClaims" context="Needs an owner" icon="○" />
+      <app-metric-card label="Incomplete" [value]="dashboard.incompleteClaims" context="Evidence outstanding" icon="□" />
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="panel workload-panel">
+        <div class="section-heading">
+          <div><h2>Adjuster workload</h2><p>Capacity across active adjusters</p></div>
+          <a routerLink="/claims">Open queue →</a>
+        </div>
+        <div *ngIf="!dashboard.workload.length" class="empty">No active adjusters.</div>
+        <div class="workload-row" *ngFor="let item of dashboard.workload">
+          <div class="workload-meta">
+            <strong>{{ item.displayName }}</strong>
+            <span [class.near-capacity]="item.activeClaims / item.capacity >= .8">{{ item.activeClaims }} of {{ item.capacity }} active</span>
+          </div>
+          <progress [value]="item.activeClaims" [max]="item.capacity" [attr.aria-label]="item.displayName + ' active claims capacity'"></progress>
+          <small>{{ item.activeClaims / item.capacity >= .8 ? 'Near capacity · rebalance soon' : 'Capacity available' }}</small>
+        </div>
+      </section>
+
+      <section class="panel activity-panel">
+        <div class="section-heading"><div><h2>Recent activity</h2><p>Latest operational events</p></div></div>
+        <div *ngIf="!dashboard.recentActivity.length" class="empty">No activity recorded.</div>
+        <ol class="timeline">
+          <li *ngFor="let item of dashboard.recentActivity">
+            <span class="event-marker" aria-hidden="true">•</span>
+            <div><strong>{{ item.summary }}</strong><span>{{ item.actor }} · {{ item.occurredAt | date:'medium' }}</span></div>
+          </li>
+        </ol>
+      </section>
+    </div>
+  </ng-container>
+</div>
