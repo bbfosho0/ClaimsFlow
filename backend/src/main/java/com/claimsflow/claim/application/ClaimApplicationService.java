@@ -18,20 +18,15 @@ public class ClaimApplicationService {
     private final ClaimJpaRepository claims;
     private final AdjusterService adjusters;
     private final AuditService audit;
-    private final Clock clock;
+    private final Clock clock = Clock.systemUTC();
     private final CompletenessPolicy completeness = new CompletenessPolicy();
     private final PriorityPolicy priority = new PriorityPolicy();
     private final ClaimTransitionPolicy transitions = new ClaimTransitionPolicy();
 
     public ClaimApplicationService(ClaimJpaRepository claims, AdjusterService adjusters, AuditService audit) {
-        this(claims, adjusters, audit, Clock.systemUTC());
-    }
-
-    ClaimApplicationService(ClaimJpaRepository claims, AdjusterService adjusters, AuditService audit, Clock clock) {
         this.claims = claims;
         this.adjusters = adjusters;
         this.audit = audit;
-        this.clock = clock;
     }
 
     @Transactional
