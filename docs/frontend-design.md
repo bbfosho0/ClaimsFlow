@@ -5,9 +5,12 @@ The ClaimsFlow frontend uses the **ClaimsOps Command Center** visual system: a l
 ## Figma source of truth
 
 - [ClaimsFlow — ClaimsOps Command Center](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y)
-- Foundations and design variables
-- Reusable components and states
-- Desktop designs for all four routes
+- [Foundations](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=1-35)
+- [Reusable components](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=3-2)
+- [Desktop dashboard](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=5-2)
+- [Desktop claims queue](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=7-2)
+- [Desktop guided intake](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=8-2)
+- [Desktop claim workspace](https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=8-424)
 - Responsive mobile designs for all four routes
 - Accessibility, motion, data-boundary, and Angular-mapping annotations
 
