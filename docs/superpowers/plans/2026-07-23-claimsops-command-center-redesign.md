@@ -2,49 +2,49 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the ClaimsFlow MVP presentation with a polished, responsive ClaimsOps Command Center design in Figma and Angular while preserving every existing route, API contract, validation rule, workflow, and human-review safeguard.
+**Goal:** Replace the ClaimsFlow MVP presentation with a polished, responsive ClaimsOps Command Center in Figma and Angular without changing existing routes, APIs, validation, workflow semantics, or mandatory human review.
 
-**Architecture:** Figma file `jVmP142OtufkQZvNk8VE6y` is the visual source of truth for tokens, reusable components, desktop screens, responsive screens, and annotations. Angular 20 remains a standalone, lazy-routed application; global CSS custom properties provide design tokens, focused standalone presentation components remove repeated badge/progress/empty-state markup, and the existing feature-page classes retain data loading and workflow behavior. Derived presentation logic such as SLA labels is implemented as pure, independently tested TypeScript rather than embedded in templates.
+**Architecture:** Figma file `jVmP142OtufkQZvNk8VE6y` is the visual source of truth for design variables, reusable components, desktop screens, mobile screens, and implementation annotations. Angular 20 remains a standalone, lazy-routed application. CSS custom properties establish the same visual vocabulary in code; small typed presentation components remove repeated badge, progress, and empty-state markup; pure TypeScript utilities own derived labels such as SLA urgency; existing feature-page classes retain data loading and workflow behavior.
 
-**Tech Stack:** Figma Design and Plugin API, Angular 20.3 standalone components, TypeScript 5.8, Angular Reactive Forms, signals, RxJS 7.8, HTML, CSS custom properties, Jasmine, Karma, ChromeHeadless, GitHub Actions.
+**Tech Stack:** Figma Design and Plugin API, Angular 20.3, TypeScript 5.8, Angular Reactive Forms, signals, RxJS 7.8, HTML, CSS custom properties, Jasmine, Karma, ChromeHeadless, GitHub Actions.
 
 ## Global Constraints
 
 - Preserve `/dashboard`, `/claims`, `/claims/new`, and `/claims/:id` exactly.
-- Preserve Angular standalone components, route-level lazy loading, typed API services, signals, RxJS, and Reactive Forms.
-- Do not add authentication, roles, real operator profiles, file uploads, notifications, saved searches, unsupported filtering, backend sorting, or fabricated analytics.
-- Do not change backend APIs, claim transitions, recommendation review semantics, assignment behavior, or audit behavior.
-- Never label every recommendation as OpenAI-generated; the backend can use deterministic fallback and the current response does not expose provenance.
-- Keep one claim-intake form and one submit operation; the four sections are visual progression, not a multi-route wizard.
-- Keep the claims queue as a semantic HTML table on desktop and expose equivalent structured content on mobile.
-- Use text or iconography in addition to semantic color.
-- Meet WCAG AA contrast for normal text and controls and remain usable at 320px viewport width.
-- Preserve the skip link, programmatic labels, visible focus, loading/error/empty states, and focus movement to the intake error summary.
-- Use restrained 120–280ms motion and disable nonessential motion under `prefers-reduced-motion: reduce`.
-- Do not add a UI framework, global state library, charting library, icon package, or runtime dependency solely for presentation.
-- Use inline SVGs or CSS geometry for the small icon set so the production bundle remains self-contained.
-- Figma and Angular use the approved palette and 8-point spacing system from the design specification.
-- Use `npm ci`, `npm run test:ci`, and `npm run build` for final verification.
-- Work on an isolated implementation branch or worktree created from `design/claimsops-command-center`; never commit feature code directly to `main`.
+- Preserve standalone components, route-level lazy loading, typed API services, signals, RxJS, and Reactive Forms.
+- Do not add authentication, roles, real profiles, uploads, notifications, saved searches, unsupported filters, unsupported sorting, fabricated trends, charts, or analytics.
+- Do not change backend code, API contracts, claim transition rules, assignment behavior, recommendation review semantics, or audit behavior.
+- Do not label recommendations as OpenAI-generated because the current API does not expose provider provenance and deterministic fallback remains possible.
+- Keep claim intake as one reactive form and one submit operation; four sections are visual grouping, not a routed wizard.
+- Keep a semantic HTML table on desktop and equivalent structured claim cards on mobile.
+- Use text or icons in addition to semantic color.
+- Meet WCAG AA contrast, remain usable at 320px, preserve the skip link, programmatic labels, visible focus, loading/error/empty states, and intake error-summary focus.
+- Use 120–280ms restrained motion and disable nonessential motion under `prefers-reduced-motion: reduce`.
+- Do not add a UI framework, chart library, icon package, global state library, or new runtime dependency solely for presentation.
+- Use inline SVG or CSS geometry for the small icon set.
+- Use the exact approved palette and 8-point spacing system from the specification.
+- Work on an isolated feature branch or worktree created from `design/claimsops-command-center`; never commit implementation code directly to `main`.
+- Final verification is `npm ci`, `npm run test:ci`, `npm run build`, `mvn verify`, and green GitHub Actions for the exact PR head SHA.
 
 ---
 
-## File Structure
+## File Map
 
 ### Figma
 
 - File: `https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y`
-- Page `01 Foundations`: variables, type scale, spacing, radius, elevation, accessibility notes.
-- Page `02 Components`: navigation, buttons, badges, progress, metric tiles, form controls, evidence selectors, alerts, timeline items, command panels.
-- Page `03 Desktop Screens`: dashboard, queue, intake, claim workspace at 1440px width.
-- Page `04 Responsive Screens`: the same four routes at 390px width, plus one 768px shell reference.
-- Page `05 Annotations`: responsive rules, state matrix, supported-data notes, Angular file mapping.
+- `01 Foundations`: variables, typography, spacing, radii, elevation, accessibility notes.
+- `02 Components`: navigation, buttons, badges, progress, metric tiles, controls, evidence selectors, alerts, timeline items, command panels.
+- `03 Desktop Screens`: dashboard, queue, intake, claim workspace at 1440px.
+- `04 Responsive Screens`: all four routes at 390px plus one 768px shell reference.
+- `05 Annotations`: responsive rules, state matrix, supported-data limits, Angular path mapping.
 
-### Angular files to create
+### Create
 
-- `frontend/src/app/shared/presentation/label.util.ts`: convert enum-like values to human-readable labels.
-- `frontend/src/app/shared/presentation/sla-display.ts`: derive accessible SLA urgency labels from a deadline and reference time.
-- `frontend/src/app/shared/presentation/sla-display.spec.ts`: pure SLA presentation tests.
+- `docs/design/claimsops-command-center-figma.md`
+- `frontend/src/app/shared/presentation/label.util.ts`
+- `frontend/src/app/shared/presentation/sla-display.ts`
+- `frontend/src/app/shared/presentation/sla-display.spec.ts`
 - `frontend/src/app/shared/ui/status-badge/status-badge.component.ts`
 - `frontend/src/app/shared/ui/status-badge/status-badge.component.html`
 - `frontend/src/app/shared/ui/status-badge/status-badge.component.css`
@@ -57,6 +57,7 @@
 - `frontend/src/app/shared/ui/empty-state/empty-state.component.ts`
 - `frontend/src/app/shared/ui/empty-state/empty-state.component.html`
 - `frontend/src/app/shared/ui/empty-state/empty-state.component.css`
+- `frontend/src/app/shared/ui/shared-ui.spec.ts`
 - `frontend/src/app/core/layout/app-shell.component.html`
 - `frontend/src/app/core/layout/app-shell.component.css`
 - `frontend/src/app/dashboard/dashboard-page.component.html`
@@ -70,37 +71,37 @@
 - `frontend/src/app/claims/feature-detail/claim-detail-page.component.css`
 - `frontend/src/app/claims/feature-detail/claim-detail-page.component.spec.ts`
 
-### Angular files to modify
+### Modify
 
-- `frontend/src/styles.css`: global reset, tokens, typography, shared button/surface/form/focus/motion classes.
-- `frontend/src/app/core/layout/app-shell.component.ts`: external template/style references only; retain router imports and OnPush.
-- `frontend/src/app/dashboard/dashboard-page.component.ts`: external template/style references and reusable UI imports.
-- `frontend/src/app/dashboard/dashboard-page.component.spec.ts`: verify the redesigned metric hierarchy and accessible workload output.
-- `frontend/src/app/claims/feature-queue/claims-queue-page.component.ts`: external files, reusable UI imports, filter-chip removal, SLA presentation.
-- `frontend/src/app/claims/feature-create/new-claim-page.component.ts`: external files, form-derived summary helpers, no validation changes.
-- `frontend/src/app/claims/feature-create/new-claim-page.component.spec.ts`: test claim-type/evidence card behavior and error-summary preservation.
-- `frontend/src/app/claims/feature-detail/claim-detail-page.component.ts`: external files, reusable UI imports, evidence helpers, no workflow changes.
-- `README.md`: add the Figma source-of-truth link and frontend visual-system notes after implementation is verified.
+- `frontend/src/styles.css`
+- `frontend/src/app/core/layout/app-shell.component.ts`
+- `frontend/src/app/app.component.spec.ts`
+- `frontend/src/app/dashboard/dashboard-page.component.ts`
+- `frontend/src/app/dashboard/dashboard-page.component.spec.ts`
+- `frontend/src/app/claims/feature-queue/claims-queue-page.component.ts`
+- `frontend/src/app/claims/feature-create/new-claim-page.component.ts`
+- `frontend/src/app/claims/feature-create/new-claim-page.component.spec.ts`
+- `frontend/src/app/claims/feature-detail/claim-detail-page.component.ts`
+- `README.md`
 
 ---
 
-### Task 1: Build Figma foundations and reusable components
+### Task 1: Create Figma foundations and reusable components
 
 **Files:**
 - Modify: Figma file `jVmP142OtufkQZvNk8VE6y`
 - Reference: `docs/superpowers/specs/2026-07-23-claimsops-command-center-design.md`
 
 **Interfaces:**
-- Consumes: approved palette, typography, spacing, radius, motion, and accessibility requirements.
-- Produces: named variables and components used by every screen; component names must match the Angular mapping annotations in Task 2.
+- Produces exact page names, variables, component-set names, and node IDs consumed by Task 2.
 
-- [ ] **Step 1: Read the Figma runtime contracts before writing**
+- [ ] **Step 1: Load required Figma guidance**
 
-Load `figma-use`, its runtime contracts, and its design-system contracts. Use `Figma.get_metadata` to confirm the file is editable and inspect existing pages. Do not rerun a broad creation script blindly after a partial failure.
+Read `figma-use`, `runtime-contracts.md`, and `design-system-contracts.md`. Call `Figma.get_metadata` without a node ID to inspect current pages. Record every created or reused page ID; do not rerun a broad creation script after a partial failure.
 
-- [ ] **Step 2: Create or normalize the five required pages**
+- [ ] **Step 2: Create or reuse the exact pages**
 
-Use `Figma.use_figma` and create these exact page names in order when absent:
+Use `Figma.use_figma` to ensure these pages exist in this order:
 
 ```text
 01 Foundations
@@ -110,11 +111,21 @@ Use `Figma.use_figma` and create these exact page names in order when absent:
 05 Annotations
 ```
 
-Return the page IDs and persist them in execution notes so later scripts target IDs rather than page-name guesses.
+Return an object shaped as:
 
-- [ ] **Step 3: Create Figma variables**
+```javascript
+return {
+  foundationsPageId,
+  componentsPageId,
+  desktopPageId,
+  responsivePageId,
+  annotationsPageId,
+};
+```
 
-Create a collection named `ClaimsFlow` with a mode named `Light`. Add these exact color variables:
+- [ ] **Step 3: Create the `ClaimsFlow` variable collection**
+
+Create a `ClaimsFlow` collection with mode `Light`. Add exact color variables:
 
 ```text
 color/nav/midnight        #071B2E
@@ -150,73 +161,65 @@ radius/card 12
 radius/panel 16
 ```
 
-- [ ] **Step 4: Build the foundations board**
+- [ ] **Step 4: Build `Foundations / Overview`**
 
-On `01 Foundations`, create Auto Layout sections for color swatches, typography, spacing, radii, elevation, and accessibility. Use Inter with these exact styles:
-
-```text
-Display / 32 / Bold / 40 line height
-Section / 20 / Bold / 28 line height
-Card / 16 / Bold / 24 line height
-Body / 14 / Regular / 22 line height
-Label / 12 / Bold / 16 line height
-Metric / 36 / Bold / 40 line height
-Table / 13 / Regular / 20 line height
-```
-
-Include visible notes: `Never use color alone`, `Minimum 44px touch target on mobile`, `Visible focus ring`, and `No recommendation-provider claim without backend provenance`.
-
-- [ ] **Step 5: Build component variants**
-
-On `02 Components`, create local component sets with these exact names and properties:
+On `01 Foundations`, build one Auto Layout frame named `Foundations / Overview` containing color swatches, typography, spacing, radii, elevation, and accessibility notes. Load Inter Regular, Semi Bold, and Bold before applying text styles. Use this exact type scale:
 
 ```text
-Button                 variant=Primary|Secondary|Danger|Ghost, state=Default|Hover|Focus|Disabled
-Navigation item        state=Default|Hover|Active, icon=Overview|Claims|Add
-Priority badge         priority=Low|Medium|High|Critical
-Status badge           status=New|Under review|Waiting|Ready|Resolved|Closed
-Progress meter         tone=Neutral|Success|Warning|Critical, size=Compact|Standard
-Metric tile            emphasis=Primary|Neutral|Warning|Critical
-Evidence selector      state=Unchecked|Checked|Missing, evidence=Report|Photos|Ownership|Medical
-Alert                   tone=Info|Success|Warning|Critical
-Timeline item           event=Created|Assignment|Status|Recommendation|Review
-Command panel           tone=Neutral|Accent|Warning
-Form control            kind=Input|Select|Textarea, state=Default|Focus|Invalid|Disabled
+Display / 32 / Bold / 40
+Section / 20 / Bold / 28
+Card / 16 / Bold / 24
+Body / 14 / Regular / 22
+Label / 12 / Bold / 16
+Metric / 36 / Bold / 40
+Table / 13 / Regular / 20
 ```
 
-Every variant must use Auto Layout, variable-bound colors where supported, minimum accessible control sizes, and semantic text alongside color.
+Include visible notes: `Never use color alone`, `Minimum 44px touch target on mobile`, `Visible focus ring`, and `No provider claim without backend provenance`.
 
-- [ ] **Step 6: Inspect the component page visually**
+- [ ] **Step 5: Build exact component sets**
 
-Use `Figma.get_screenshot` for the `02 Components` top-level frame. Verify:
+On `02 Components`, create one top-level Auto Layout frame named `Components / Library` and these component sets:
 
-- no text clipping;
-- no detached labels;
-- all variants have consistent padding;
-- critical and warning colors remain readable;
-- focus variants are visible against both light and midnight surfaces.
+```text
+Button: variant=Primary|Secondary|Danger|Ghost, state=Default|Hover|Focus|Disabled
+Navigation item: state=Default|Hover|Active, icon=Overview|Claims|Add
+Priority badge: priority=Low|Medium|High|Critical
+Status badge: status=New|Under review|Waiting|Ready|Resolved|Closed
+Progress meter: tone=Neutral|Success|Warning|Critical, size=Compact|Standard
+Metric tile: emphasis=Primary|Neutral|Warning|Critical
+Evidence selector: state=Unchecked|Checked|Missing, evidence=Report|Photos|Ownership|Medical
+Alert: tone=Info|Success|Warning|Critical
+Timeline item: event=Created|Assignment|Status|Recommendation|Review
+Command panel: tone=Neutral|Accent|Warning
+Form control: kind=Input|Select|Textarea, state=Default|Focus|Invalid|Disabled
+```
 
-Fix issues with targeted node edits, then capture a second screenshot.
+Use Auto Layout, variable-bound colors where supported, semantic text plus color, and minimum mobile control height of 44px.
 
-- [ ] **Step 7: Record the Figma checkpoint**
+- [ ] **Step 6: Review foundations and components**
 
-Add a short execution note to the branch commit or PR description containing the Foundations frame ID, Components frame ID, and screenshot node IDs. Figma edits are not represented by a Git commit, so this note is the review boundary.
+Call `Figma.get_screenshot` for `Foundations / Overview` and `Components / Library`. Verify no clipping, consistent padding, readable warning/critical states, visible focus states, and no detached labels. Make targeted node edits and capture final screenshots.
+
+- [ ] **Step 7: Record returned IDs**
+
+Keep the returned page, top-level frame, and component-set IDs in execution notes for Task 2. This is the design review checkpoint; no Git commit is required for Figma-only changes.
 
 ---
 
-### Task 2: Design the four desktop and four responsive Figma screens
+### Task 2: Design desktop and responsive Figma screens
 
 **Files:**
 - Modify: Figma file `jVmP142OtufkQZvNk8VE6y`
-- Reference: current Angular templates and approved design specification.
+- Create: `docs/design/claimsops-command-center-figma.md`
 
 **Interfaces:**
-- Consumes: Task 1 variables and components.
-- Produces: screen frames named exactly as listed below and implementation annotations used by Tasks 5–9.
+- Consumes Task 1 variables/components.
+- Produces exact screen-frame IDs and annotations consumed by Angular implementation and PR review.
 
-- [ ] **Step 1: Create exact frame inventory**
+- [ ] **Step 1: Create exact screen frames**
 
-Create these frames:
+Create:
 
 ```text
 Desktop / Dashboard / 1440
@@ -230,58 +233,54 @@ Mobile / New Claim / 390
 Mobile / Claim Workspace / 390
 ```
 
-Desktop frames use a 248px sidebar. Mobile frames use a compact top bar and visible primary destinations. Use Auto Layout for every screen root and principal region.
+Desktop screens use a 248px sidebar. Mobile screens use a compact top bar with all three primary destinations visible. Every screen root and principal region uses Auto Layout.
 
-- [ ] **Step 2: Design dashboard using only supported data**
+- [ ] **Step 2: Build the dashboard**
 
-Use the existing five metrics, adjuster workload, and recent activity. Do not draw trends, recommendation counts, workflow-distribution charts, or ranked attention lists as implemented data. The five metric tiles must visually prioritize Open Claims, High Priority, and SLA Risk while keeping Unassigned and Incomplete quieter.
+Use only current data: Open Claims, High Priority, SLA Risk, Unassigned, Incomplete, Adjuster Workload, and Recent Activity. Do not show trends, recommendation totals, workflow distribution, or attention rankings. Prioritize Open Claims, High Priority, and SLA Risk visually.
 
-- [ ] **Step 3: Design claims queue**
+- [ ] **Step 3: Build the queue**
 
-Include search, status, priority, assignment, Apply, Reset, removable filter chips, semantic table columns, SLA countdown with timestamp context, completeness meter, and pagination. The mobile frame must render equivalent claim cards rather than a horizontally scrolling table.
+Include search, status, priority, assignment, Apply, Reset, removable chips, semantic table columns, readable SLA pressure, completeness meter, and pagination. Mobile uses claim cards with equivalent fields rather than horizontal table scrolling.
 
-- [ ] **Step 4: Design claim intake**
+- [ ] **Step 4: Build intake**
 
-Use one visual form divided into Claimant, Incident, Evidence, and Review sections. Claim type and evidence use card-style controls, but retain visible labels and familiar control semantics. The sticky summary may show only completed required-field count, chosen claim type, and selected evidence count.
+Use one visual form grouped into Claimant, Incident, Evidence, and Review. Claim type and evidence use card-style controls while retaining familiar labels and control semantics. Sticky summary shows only completed required fields, selected claim type, and selected evidence count.
 
-- [ ] **Step 5: Design claim workspace**
+- [ ] **Step 5: Build claim workspace**
 
-Include claim identity, priority, status, SLA, completeness, assignment, claim facts, description, evidence matrix, priority factors, decision support, sticky action rail, and uncollapsed audit timeline. Add this exact copy within the recommendation panel:
+Include claim identity, badges, SLA, completeness, assigned adjuster, facts, description, evidence matrix, priority factors, decision support, sticky action rail, and uncollapsed audit timeline. Use this exact advisory copy:
 
 ```text
 Advisory recommendation. A human reviewer must approve or reject this suggestion before it affects the claim workflow.
 ```
 
-Do not use `OpenAI recommendation` as the heading.
+Use `Decision support` as the heading; never `OpenAI recommendation`.
 
-- [ ] **Step 6: Add implementation annotations**
+- [ ] **Step 6: Build annotations**
 
-On `05 Annotations`, map screen regions to exact source paths, list desktop/mobile breakpoints, describe hover/focus/loading/error/empty/disabled states, and flag any Figma-only future-capability idea as `Not implemented — unsupported by current API`.
+On `05 Annotations`, map principal regions to exact Angular file paths, document 760px and 1000px responsive transitions, enumerate hover/focus/loading/error/empty/disabled states, and label every unsupported future idea `Not implemented — unsupported by current API`.
 
-- [ ] **Step 7: Perform Figma review**
+- [ ] **Step 7: Inspect all nine frames**
 
-Capture screenshots of all nine frames. Review at full size for hierarchy and at thumbnail size for scanability. Verify no unsupported data, no provenance claim, no color-only state, no clipped mobile control, and no horizontal overflow. Correct targeted nodes and capture final screenshots.
+Capture every frame with `Figma.get_screenshot`. Check hierarchy at full size and scanability at thumbnail size. Verify no unsupported data, provider claim, color-only state, clipped control, or horizontal mobile overflow. Correct only targeted nodes and recapture.
 
-- [ ] **Step 8: Commit the design checkpoint document**
+- [ ] **Step 8: Write the Figma source document with actual node URLs**
 
-Create `docs/design/claimsops-command-center-figma.md` containing:
+During execution, build each URL from the returned node ID:
 
-```markdown
-# ClaimsOps Command Center Figma Source
+```javascript
+const nodeUrl = (nodeId) =>
+  `https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y?node-id=${nodeId.replace(':', '-')}`;
+```
 
-- File: https://www.figma.com/design/jVmP142OtufkQZvNk8VE6y
-- Foundations frame: `<resolved node URL>`
-- Components frame: `<resolved node URL>`
-- Desktop screens section: `<resolved node URL>`
-- Responsive screens section: `<resolved node URL>`
-- Annotations section: `<resolved node URL>`
+Write `docs/design/claimsops-command-center-figma.md` using those computed URLs. The document must list the Figma file, foundations frame, components frame, desktop section, responsive section, and annotations section, followed by:
 
+```text
 The Figma file is the visual source of truth. The approved behavioral scope remains defined by the Angular application and the redesign specification.
 ```
 
-Replace each angle-bracket field with the real node URL before committing.
-
-Run:
+- [ ] **Step 9: Commit**
 
 ```bash
 git add docs/design/claimsops-command-center-figma.md
@@ -290,7 +289,7 @@ git commit -m "docs: link ClaimsOps Figma designs"
 
 ---
 
-### Task 3: Add global tokens and pure presentation utilities
+### Task 3: Add design tokens and pure presentation utilities
 
 **Files:**
 - Modify: `frontend/src/styles.css`
@@ -299,8 +298,18 @@ git commit -m "docs: link ClaimsOps Figma designs"
 - Create: `frontend/src/app/shared/presentation/sla-display.spec.ts`
 
 **Interfaces:**
-- Produces: `humanizeLabel(value: string): string` and `getSlaDisplay(deadline: string, now?: Date): SlaDisplay`.
-- `SlaDisplay` is `{ label: string; detail: string; tone: 'neutral' | 'warning' | 'critical' | 'expired'; hoursRemaining: number }`.
+
+```typescript
+export function humanizeLabel(value: string): string;
+export type SlaTone = 'neutral' | 'warning' | 'critical' | 'expired';
+export interface SlaDisplay {
+  label: string;
+  detail: string;
+  tone: SlaTone;
+  hoursRemaining: number;
+}
+export function getSlaDisplay(deadline: string, now?: Date): SlaDisplay;
+```
 
 - [ ] **Step 1: Write failing SLA tests**
 
@@ -310,48 +319,42 @@ import { getSlaDisplay } from './sla-display';
 describe('getSlaDisplay', () => {
   const now = new Date('2026-07-23T12:00:00Z');
 
-  it('marks deadlines within 24 hours as warning', () => {
-    expect(getSlaDisplay('2026-07-23T17:00:00Z', now)).toEqual(jasmine.objectContaining({
-      label: 'Due in 5h',
-      tone: 'warning',
-    }));
+  it('formats a warning deadline', () => {
+    expect(getSlaDisplay('2026-07-23T17:00:00Z', now)).toEqual(
+      jasmine.objectContaining({ label: 'Due in 5h', tone: 'warning' }),
+    );
   });
 
-  it('marks deadlines within two hours as critical', () => {
-    expect(getSlaDisplay('2026-07-23T13:30:00Z', now)).toEqual(jasmine.objectContaining({
-      label: 'Due in 1h 30m',
-      tone: 'critical',
-    }));
+  it('formats a critical deadline', () => {
+    expect(getSlaDisplay('2026-07-23T13:30:00Z', now)).toEqual(
+      jasmine.objectContaining({ label: 'Due in 1h 30m', tone: 'critical' }),
+    );
   });
 
-  it('marks elapsed deadlines as expired', () => {
-    expect(getSlaDisplay('2026-07-23T10:00:00Z', now)).toEqual(jasmine.objectContaining({
-      label: 'Overdue by 2h',
-      tone: 'expired',
-    }));
+  it('formats an elapsed deadline', () => {
+    expect(getSlaDisplay('2026-07-23T10:00:00Z', now)).toEqual(
+      jasmine.objectContaining({ label: 'Overdue by 2h', tone: 'expired' }),
+    );
   });
 
-  it('uses days for non-urgent deadlines', () => {
-    expect(getSlaDisplay('2026-07-26T12:00:00Z', now)).toEqual(jasmine.objectContaining({
-      label: '3d remaining',
-      tone: 'neutral',
-    }));
+  it('formats a non-urgent deadline in days', () => {
+    expect(getSlaDisplay('2026-07-26T12:00:00Z', now)).toEqual(
+      jasmine.objectContaining({ label: '3d remaining', tone: 'neutral' }),
+    );
   });
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm RED**
-
-Run:
+- [ ] **Step 2: Run RED**
 
 ```bash
 cd frontend
 npm run test:ci -- --include='src/app/shared/presentation/sla-display.spec.ts'
 ```
 
-Expected: compilation failure because `sla-display.ts` does not exist.
+Expected: TypeScript cannot resolve `./sla-display`.
 
-- [ ] **Step 3: Implement the utilities**
+- [ ] **Step 3: Implement utilities**
 
 ```typescript
 // label.util.ts
@@ -390,12 +393,10 @@ export function getSlaDisplay(deadline: string, now = new Date()): SlaDisplay {
     };
   }
 
-  const label = absoluteMinutes < 48 * 60
-    ? `Due in ${formatDuration(absoluteMinutes)}`
-    : `${Math.round(absoluteMinutes / 1_440)}d remaining`;
-
   return {
-    label,
+    label: absoluteMinutes < 2_880
+      ? `Due in ${formatDuration(absoluteMinutes)}`
+      : `${Math.round(absoluteMinutes / 1_440)}d remaining`,
     detail,
     tone: hoursRemaining <= 2 ? 'critical' : hoursRemaining <= 24 ? 'warning' : 'neutral',
     hoursRemaining,
@@ -410,9 +411,9 @@ function formatDuration(totalMinutes: number): string {
 }
 ```
 
-- [ ] **Step 4: Replace global CSS with the approved token layer**
+- [ ] **Step 4: Replace global CSS with tokens and shared rules**
 
-Define the approved variables under `:root`, then add reset, typography, `.button`, `.surface`, `.page-header`, `.eyebrow`, `.alert`, `.sr-only`, focus, and reduced-motion rules. The root variable block must include:
+Start `styles.css` with this exact block:
 
 ```css
 :root {
@@ -452,7 +453,9 @@ Define the approved variables under `:root`, then add reset, typography, `.butto
 }
 ```
 
-- [ ] **Step 5: Run utility tests and production build**
+Then add reset, typography, `.button`, `.surface`, `.page-header`, `.eyebrow`, `.alert`, `.sr-only`, visible `:focus-visible`, page-entry animation, and a `prefers-reduced-motion` block that removes transitions and animations.
+
+- [ ] **Step 5: Run GREEN and build**
 
 ```bash
 cd frontend
@@ -460,51 +463,65 @@ npm run test:ci -- --include='src/app/shared/presentation/sla-display.spec.ts'
 npm run build
 ```
 
-Expected: all focused tests pass and Angular production build succeeds.
+Expected: four SLA specs pass and production build succeeds.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add frontend/src/styles.css frontend/src/app/shared/presentation
-git commit -m "feat: add ClaimsOps design tokens and formatters"
+git commit -m "feat: add ClaimsOps tokens and presentation utilities"
 ```
 
 ---
 
-### Task 4: Add reusable badges, progress, and empty-state primitives
+### Task 4: Add typed shared UI primitives
 
 **Files:**
-- Create the twelve files under `frontend/src/app/shared/ui/` listed in File Structure.
-- Test: add focused specs beside each TypeScript component or one `frontend/src/app/shared/ui/shared-ui.spec.ts` that imports all four.
+- Create: all `frontend/src/app/shared/ui/**` files listed in File Map.
+- Test: `frontend/src/app/shared/ui/shared-ui.spec.ts`
 
 **Interfaces:**
-- `StatusBadgeComponent` input: `status: ClaimStatus`.
-- `PriorityBadgeComponent` input: `priority: ClaimPriority`.
-- `ProgressMeterComponent` inputs: `value: number`, `label: string`, `tone: 'neutral' | 'success' | 'warning' | 'critical'`, `compact: boolean`.
-- `EmptyStateComponent` inputs: `title: string`, `description: string`.
-
-- [ ] **Step 1: Write failing component tests**
-
-Test that:
 
 ```typescript
-expect(statusElement.textContent).toContain('Under Review');
-expect(statusElement.getAttribute('data-status')).toBe('UNDER_REVIEW');
-expect(progress.getAttribute('aria-valuenow')).toBe('72');
-expect(progress.getAttribute('aria-label')).toBe('Claim completeness');
+StatusBadgeComponent.status: InputSignal<ClaimStatus>
+PriorityBadgeComponent.priority: InputSignal<ClaimPriority>
+ProgressMeterComponent.value: InputSignal<number>
+ProgressMeterComponent.label: InputSignal<string>
+ProgressMeterComponent.tone: InputSignal<'neutral' | 'success' | 'warning' | 'critical'>
+ProgressMeterComponent.compact: InputSignal<boolean>
+EmptyStateComponent.title: InputSignal<string>
+EmptyStateComponent.description: InputSignal<string>
 ```
 
-- [ ] **Step 2: Run the new tests and confirm RED**
+- [ ] **Step 1: Write failing shared UI tests**
 
-Expected: compilation failures because the shared UI components do not exist.
-
-- [ ] **Step 3: Implement typed standalone components**
-
-Use Angular `input.required<T>()` for required inputs, `ChangeDetectionStrategy.OnPush`, external HTML/CSS files, semantic text, and no service dependencies. `ProgressMeterComponent` must clamp visual width to `0..100` while preserving the supplied numeric value in accessible text.
-
-Required decorator shape:
+Use host test components to bind signal inputs. Assert:
 
 ```typescript
+expect(root.querySelector('app-status-badge')?.textContent).toContain('Under Review');
+expect(root.querySelector('[data-status="UNDER_REVIEW"]')).not.toBeNull();
+expect(root.querySelector('[data-priority="CRITICAL"]')?.textContent).toContain('Critical');
+expect(root.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('72');
+expect(root.querySelector('[role="progressbar"]')?.getAttribute('aria-label')).toBe('Claim completeness');
+expect(root.textContent).toContain('No claims found');
+```
+
+- [ ] **Step 2: Run RED**
+
+```bash
+cd frontend
+npm run test:ci -- --include='src/app/shared/ui/shared-ui.spec.ts'
+```
+
+Expected: imports fail because the four components do not exist.
+
+- [ ] **Step 3: Implement `StatusBadgeComponent`**
+
+```typescript
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ClaimStatus } from '../../models/claim.models';
+import { humanizeLabel } from '../../presentation/label.util';
+
 @Component({
   selector: 'app-status-badge',
   standalone: true,
@@ -518,40 +535,152 @@ export class StatusBadgeComponent {
 }
 ```
 
-Use the same pattern for the other components.
+Template:
 
-- [ ] **Step 4: Run shared UI tests and build**
+```html
+<span class="badge" [attr.data-status]="status()">
+  <span class="badge__dot" aria-hidden="true"></span>
+  {{ label() }}
+</span>
+```
+
+- [ ] **Step 4: Implement `PriorityBadgeComponent`**
+
+```typescript
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ClaimPriority } from '../../models/claim.models';
+import { humanizeLabel } from '../../presentation/label.util';
+
+@Component({
+  selector: 'app-priority-badge',
+  standalone: true,
+  templateUrl: './priority-badge.component.html',
+  styleUrl: './priority-badge.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PriorityBadgeComponent {
+  readonly priority = input.required<ClaimPriority>();
+  readonly label = computed(() => humanizeLabel(this.priority()));
+}
+```
+
+Template:
+
+```html
+<span class="badge" [attr.data-priority]="priority()">
+  <span class="badge__icon" aria-hidden="true">◆</span>
+  {{ label() }}
+</span>
+```
+
+- [ ] **Step 5: Implement `ProgressMeterComponent`**
+
+```typescript
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+
+type ProgressTone = 'neutral' | 'success' | 'warning' | 'critical';
+
+@Component({
+  selector: 'app-progress-meter',
+  standalone: true,
+  templateUrl: './progress-meter.component.html',
+  styleUrl: './progress-meter.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProgressMeterComponent {
+  readonly value = input.required<number>();
+  readonly label = input.required<string>();
+  readonly tone = input<ProgressTone>('neutral');
+  readonly compact = input(false);
+  readonly clampedValue = computed(() => Math.min(100, Math.max(0, this.value())));
+}
+```
+
+Template:
+
+```html
+<div class="meter" [class.meter--compact]="compact()" [attr.data-tone]="tone()">
+  <div
+    class="meter__track"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [attr.aria-valuenow]="clampedValue()"
+    [attr.aria-label]="label()"
+  >
+    <span class="meter__fill" [style.width.%]="clampedValue()"></span>
+  </div>
+  <span class="meter__value">{{ clampedValue() }}%</span>
+</div>
+```
+
+- [ ] **Step 6: Implement `EmptyStateComponent`**
+
+```typescript
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+
+@Component({
+  selector: 'app-empty-state',
+  standalone: true,
+  templateUrl: './empty-state.component.html',
+  styleUrl: './empty-state.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class EmptyStateComponent {
+  readonly title = input.required<string>();
+  readonly description = input.required<string>();
+}
+```
+
+Template:
+
+```html
+<div class="empty-state">
+  <span class="empty-state__mark" aria-hidden="true"></span>
+  <strong>{{ title() }}</strong>
+  <p>{{ description() }}</p>
+  <ng-content />
+</div>
+```
+
+- [ ] **Step 7: Style exact semantic states**
+
+Use component-scoped CSS and global variables. Every badge includes visible text. Critical/high priority use red/amber treatments; resolved/closed use success/neutral treatments; progress tone changes the fill but keeps numeric text.
+
+- [ ] **Step 8: Run GREEN and build**
 
 ```bash
 cd frontend
-npm run test:ci -- --include='src/app/shared/ui/**/*.spec.ts'
+npm run test:ci -- --include='src/app/shared/ui/shared-ui.spec.ts'
 npm run build
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add frontend/src/app/shared/ui
-git commit -m "feat: add ClaimsOps presentation components"
+git commit -m "feat: add ClaimsOps shared UI primitives"
 ```
 
 ---
 
-### Task 5: Refactor the application shell
+### Task 5: Refactor shell and dashboard
 
 **Files:**
 - Modify: `frontend/src/app/core/layout/app-shell.component.ts`
 - Create: `frontend/src/app/core/layout/app-shell.component.html`
 - Create: `frontend/src/app/core/layout/app-shell.component.css`
 - Modify: `frontend/src/app/app.component.spec.ts`
+- Modify: `frontend/src/app/dashboard/dashboard-page.component.ts`
+- Create: `frontend/src/app/dashboard/dashboard-page.component.html`
+- Create: `frontend/src/app/dashboard/dashboard-page.component.css`
+- Modify: `frontend/src/app/dashboard/dashboard-page.component.spec.ts`
 
 **Interfaces:**
-- Consumes: global tokens and Angular Router directives.
-- Produces: persistent desktop sidebar, compact responsive navigation, skip link, generic decision-support availability text, and demo-operator treatment.
+- Shell preserves `RouterOutlet`, `RouterLink`, `RouterLinkActive`, skip link, and `main#main-content`.
+- Dashboard consumes existing `DashboardService` data only.
 
-- [ ] **Step 1: Extend the existing shell test**
-
-Assert that the rendered shell includes:
+- [ ] **Step 1: Add failing shell assertions**
 
 ```typescript
 expect(root.querySelector('.skip-link')?.getAttribute('href')).toBe('#main-content');
@@ -561,13 +690,20 @@ expect(root.textContent).toContain('Decision support available');
 expect(root.querySelector('#main-content')).not.toBeNull();
 ```
 
-- [ ] **Step 2: Run the shell test and confirm RED**
+- [ ] **Step 2: Add failing dashboard assertions**
 
-The existing shell does not contain the new workspace and system-status copy.
+Extend the dashboard fixture with one recent event, then assert five `[data-testid="metric-tile"]` elements, critical emphasis on SLA Risk, a workload progress element labeled `Maya Chen workload`, and no `Trend` copy.
 
-- [ ] **Step 3: Move template and CSS into external files**
+- [ ] **Step 3: Run RED**
 
-Change the component metadata to:
+```bash
+cd frontend
+npm run test:ci -- --include='src/app/app.component.spec.ts' --include='src/app/dashboard/dashboard-page.component.spec.ts'
+```
+
+- [ ] **Step 4: Externalize shell template and CSS**
+
+Use:
 
 ```typescript
 @Component({
@@ -580,58 +716,11 @@ Change the component metadata to:
 })
 ```
 
-The HTML must preserve the skip link and `main#main-content[tabindex="-1"]`. Use inline SVG icons with `aria-hidden="true"`, exact nav destinations, a generic green-dot system state, and `Interview User` as clearly labeled demo operator copy rather than authentication UI.
+Preserve skip link and `main#main-content[tabindex="-1"]`. Add inline SVG icons with `aria-hidden="true"`, exact routes, generic `Decision support available`, and clearly labeled demo operator `Interview User`. Desktop uses a 248px sticky midnight sidebar. At 760px, use a top bar and visible three-destination navigation without a hamburger-only interaction.
 
-- [ ] **Step 4: Implement responsive CSS**
+- [ ] **Step 5: Externalize dashboard template and CSS**
 
-Desktop: 248px sticky midnight sidebar. At `max-width: 760px`, switch to a top bar and three-column visible primary nav. Ensure the mobile navigation does not rely on hover or a hamburger menu.
-
-- [ ] **Step 5: Run shell test and build**
-
-```bash
-cd frontend
-npm run test:ci -- --include='src/app/app.component.spec.ts'
-npm run build
-```
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add frontend/src/app/core/layout frontend/src/app/app.component.spec.ts
-git commit -m "feat: redesign ClaimsFlow application shell"
-```
-
----
-
-### Task 6: Refactor the operations dashboard
-
-**Files:**
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.ts`
-- Create: `frontend/src/app/dashboard/dashboard-page.component.html`
-- Create: `frontend/src/app/dashboard/dashboard-page.component.css`
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.spec.ts`
-
-**Interfaces:**
-- Consumes: `DashboardService`, `ProgressMeterComponent`, `EmptyStateComponent`, existing `DashboardSnapshot`.
-- Produces: visual hierarchy for five existing metrics, workload utilization, and recent activity only.
-
-- [ ] **Step 1: Write failing dashboard expectations**
-
-Extend the fixture data with one recent event and assert:
-
-```typescript
-expect(root.querySelectorAll('[data-testid="metric-tile"]').length).toBe(5);
-expect(root.querySelector('[data-emphasis="critical"]')?.textContent).toContain('SLA risk');
-expect(root.querySelector('progress[aria-label="Maya Chen workload"]')).not.toBeNull();
-expect(root.textContent).toContain('Recent activity');
-expect(root.textContent).not.toContain('Trend');
-```
-
-- [ ] **Step 2: Run dashboard spec and confirm RED**
-
-- [ ] **Step 3: Externalize the template and CSS**
-
-Retain the existing class behavior and signals. Add only presentation helpers such as:
+Keep service loading logic unchanged. Add:
 
 ```typescript
 readonly todayLabel = new Intl.DateTimeFormat('en-US', {
@@ -645,28 +734,26 @@ workloadPercent(active: number, capacity: number): number {
 }
 ```
 
-- [ ] **Step 4: Implement dashboard layout**
+Build one command header, five current metrics, Adjuster Workload, and Recent Activity. Do not add charts, trend percentages, or fabricated modules.
 
-Use one command header, a primary Open Claims tile, semantic High Priority and SLA Risk tiles, quiet Unassigned and Incomplete tiles, then two supported modules: Adjuster workload and Recent activity. Do not add charts or fabricated trend copy.
-
-- [ ] **Step 5: Run dashboard test and build**
+- [ ] **Step 6: Run GREEN and build**
 
 ```bash
 cd frontend
-npm run test:ci -- --include='src/app/dashboard/dashboard-page.component.spec.ts'
+npm run test:ci -- --include='src/app/app.component.spec.ts' --include='src/app/dashboard/dashboard-page.component.spec.ts'
 npm run build
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/app/dashboard
-git commit -m "feat: redesign operations dashboard"
+git add frontend/src/app/core/layout frontend/src/app/app.component.spec.ts frontend/src/app/dashboard
+git commit -m "feat: redesign ClaimsOps shell and dashboard"
 ```
 
 ---
 
-### Task 7: Refactor the claims queue with filter chips and SLA presentation
+### Task 6: Refactor claims queue
 
 **Files:**
 - Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.ts`
@@ -675,17 +762,18 @@ git commit -m "feat: redesign operations dashboard"
 - Create: `frontend/src/app/claims/feature-queue/claims-queue-page.component.spec.ts`
 
 **Interfaces:**
-- Consumes: `ClaimFilters`, `serializeClaimFilters`, `humanizeLabel`, `getSlaDisplay`, badge/progress/empty components.
-- Produces: `activeFilters(): ActiveFilterChip[]`, `removeFilter(key: FilterKey): void`, `sla(deadline: string): SlaDisplay`.
 
 ```typescript
 type FilterKey = 'q' | 'status' | 'priority' | 'assignment';
 interface ActiveFilterChip { key: FilterKey; label: string; }
+activeFilters(): ActiveFilterChip[];
+removeFilter(key: FilterKey): void;
+sla(deadline: string): SlaDisplay;
 ```
 
-- [ ] **Step 1: Write the queue component test harness**
+- [ ] **Step 1: Write failing component tests**
 
-Configure `ActivatedRoute` with a `BehaviorSubject<Params>`, mock `ClaimsApiService.list()` with one claim, and use `RouterTestingHarness` or a router spy. Add failing tests that:
+Use a `BehaviorSubject<Params>` for `ActivatedRoute.queryParams`, mock `ClaimsApiService.list()` with one claim, and spy on `Router.navigate`. Assert:
 
 ```typescript
 expect(component.activeFilters()).toEqual([
@@ -697,24 +785,25 @@ expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({
   queryParams: jasmine.objectContaining({ assignment: 'unassigned' }),
 }));
 expect(root.querySelector('table')).not.toBeNull();
-expect(root.querySelector('[aria-label="72% complete"]')).not.toBeNull();
+expect(root.querySelector('[aria-label="Claim completeness"]')).not.toBeNull();
 ```
 
-- [ ] **Step 2: Run queue spec and confirm RED**
+- [ ] **Step 2: Run RED**
 
-- [ ] **Step 3: Add presentation methods without changing API filters**
+```bash
+cd frontend
+npm run test:ci -- --include='src/app/claims/feature-queue/claims-queue-page.component.spec.ts'
+```
 
-Implement `activeFilters`, `removeFilter`, and `sla`. `removeFilter` must set only the requested field to its empty value, reset `page` to zero, serialize the remaining filters, and navigate relative to the current route.
+- [ ] **Step 3: Externalize and add presentation methods**
 
-- [ ] **Step 4: Implement semantic desktop table and mobile cards**
+Import `humanizeLabel`, `getSlaDisplay`, `SlaDisplay`, and shared UI components. Replace the local label implementation with `humanizeLabel`. `removeFilter` must clear one requested field, set page to zero, serialize remaining filters, and navigate relative to the current route. Do not add new backend filter values.
 
-Keep a real `<table>` for desktop. Render a separate mobile card list hidden from desktop through CSS, using the same loaded claim data. Each card and table row must link to `/claims/:id`, show priority/status text, assignment, SLA label plus accessible timestamp, and a completeness meter.
+- [ ] **Step 4: Build desktop table and mobile cards**
 
-- [ ] **Step 5: Implement responsive and sticky behavior**
+Desktop retains a real `<table>` with sticky headers. Mobile renders a separate structured card list from the same `page.content`. Both views show claim link, claimant, type, priority, status, assignment, SLA label with timestamp context, and completeness meter.
 
-At desktop widths, use sticky table headers and preserve horizontal containment inside the panel. At `max-width: 760px`, hide the table region and show cards. Do not hide fields required to understand urgency.
-
-- [ ] **Step 6: Run queue tests and build**
+- [ ] **Step 5: Run GREEN and build**
 
 ```bash
 cd frontend
@@ -722,7 +811,7 @@ npm run test:ci -- --include='src/app/claims/feature-queue/claims-queue-page.com
 npm run build
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add frontend/src/app/claims/feature-queue
@@ -731,7 +820,7 @@ git commit -m "feat: redesign claims work queue"
 
 ---
 
-### Task 8: Refactor claim intake into a guided single-form experience
+### Task 7: Refactor guided claim intake
 
 **Files:**
 - Modify: `frontend/src/app/claims/feature-create/new-claim-page.component.ts`
@@ -740,14 +829,19 @@ git commit -m "feat: redesign claims work queue"
 - Modify: `frontend/src/app/claims/feature-create/new-claim-page.component.spec.ts`
 
 **Interfaces:**
-- Consumes: the existing reactive form and validators.
-- Produces: `completedRequiredFields(): number`, `selectedEvidenceCount(): number`, `selectClaimType(type: ClaimType): void`.
+
+```typescript
+completedRequiredFields(): number;
+selectedEvidenceCount(): number;
+selectClaimType(type: ClaimType): void;
+```
 
 - [ ] **Step 1: Add failing interaction tests**
 
-Add tests that click a claim-type card and an evidence card, then assert the existing controls changed:
+Retain future-date and incomplete-evidence tests. Add:
 
 ```typescript
+fixture.detectChanges();
 fixture.nativeElement.querySelector('[data-claim-type="AUTO"]').click();
 expect(component.form.controls.claimType.value).toBe('AUTO');
 
@@ -755,23 +849,28 @@ fixture.nativeElement.querySelector('[data-evidence="photosPresent"]').click();
 expect(component.form.controls.photosPresent.value).toBeTrue();
 ```
 
-Retain the existing future-date and incomplete-evidence tests. Add an invalid-submit test that confirms the summary uses `role="alert"` and receives focus.
+Add invalid-submit coverage proving the error summary has `role="alert"` and receives focus after the scheduled focus callback.
 
-- [ ] **Step 2: Run the intake spec and confirm RED**
+- [ ] **Step 2: Run RED**
 
-- [ ] **Step 3: Externalize the component and add derived helpers**
+```bash
+cd frontend
+npm run test:ci -- --include='src/app/claims/feature-create/new-claim-page.component.spec.ts'
+```
 
-Do not replace the form or validators. Implement claim-type selection through `form.controls.claimType.setValue(type)` and derive summary counts directly from current form controls. Do not predict backend priority or completeness.
+- [ ] **Step 3: Externalize without changing form behavior**
 
-- [ ] **Step 4: Build the guided form markup**
+Keep all existing controls, validators, `submit()`, API call, navigation, and error collection. `selectClaimType` calls `form.controls.claimType.setValue(type)`. Summary helpers derive only required-field completion and selected evidence count; they must not predict backend completeness or priority.
 
-Use one `<form [formGroup]="form" (ngSubmit)="submit()">` with four numbered visual sections. Claim-type cards must wrap actual radio inputs or set the same form control through an accessible button/card pattern. Evidence cards must contain actual checkbox inputs bound to the existing boolean controls. Keep visible labels and the error summary.
+- [ ] **Step 4: Build one guided form**
 
-- [ ] **Step 5: Implement the sticky summary and responsive layout**
+Use one `<form [formGroup]="form" (ngSubmit)="submit()">` with Claimant, Incident, Evidence, and Review sections. Claim-type cards remain backed by `claimType`; evidence cards contain actual checkbox inputs bound to existing boolean controls. Preserve visible labels, error summary, description count, server error, disabled submission, and Cancel route.
 
-Desktop uses form + sticky summary columns. At tablet/mobile widths, the summary becomes an inline final section. Keep submission actions reachable without covering focused controls.
+- [ ] **Step 5: Implement responsive summary**
 
-- [ ] **Step 6: Run intake tests and build**
+Desktop uses a sticky summary column. Below 850px, move the summary inline after Evidence. Sticky content must not cover focused controls.
+
+- [ ] **Step 6: Run GREEN and build**
 
 ```bash
 cd frontend
@@ -788,7 +887,7 @@ git commit -m "feat: redesign guided claim intake"
 
 ---
 
-### Task 9: Refactor the claim workspace and decision-support panel
+### Task 8: Refactor claim decision workspace
 
 **Files:**
 - Modify: `frontend/src/app/claims/feature-detail/claim-detail-page.component.ts`
@@ -797,34 +896,37 @@ git commit -m "feat: redesign guided claim intake"
 - Create: `frontend/src/app/claims/feature-detail/claim-detail-page.component.spec.ts`
 
 **Interfaces:**
-- Consumes: current `ClaimsApiService` methods, badge/progress/empty components, `getSlaDisplay`, existing recommendation and audit models.
-- Produces: evidence-state helpers and redesigned markup; action method signatures remain unchanged.
+- Keep `assign()`, `updateStatus()`, `generate()`, and `review()` signatures and service calls unchanged.
+- Add `evidenceRows` computed signal and use shared label/SLA/UI presentation.
 
-- [ ] **Step 1: Create a workflow-preservation test harness**
+- [ ] **Step 1: Write failing workflow-preservation tests**
 
-Mock `get`, `getAdjusters`, and `getAudit` with `of(...)`. Mock `generateRecommendation` and `reviewRecommendation`. Assert:
+Mock `get`, `getAdjusters`, `getAudit`, `generateRecommendation`, and `reviewRecommendation`. Assert:
 
 ```typescript
 expect(root.textContent).toContain('Advisory recommendation');
 expect(root.textContent).not.toContain('OpenAI recommendation');
-expect(root.querySelector('[aria-label="75% complete"]')).not.toBeNull();
-
+expect(root.querySelector('[aria-label="Claim completeness"]')).not.toBeNull();
 component.generate();
 expect(api.generateRecommendation).toHaveBeenCalledWith('claim-1');
-
 component.review('APPROVED');
 expect(api.reviewRecommendation).toHaveBeenCalledWith(
-  'claim-1', 'rec-1', 'APPROVED', 'Interview User'
+  'claim-1', 'rec-1', 'APPROVED', 'Interview User',
 );
 ```
 
-Also test that approval/rejection controls are disabled while `acting()` is true and absent after a non-pending review state.
+Also assert review buttons are disabled while `acting()` is true and absent after review state becomes approved or rejected.
 
-- [ ] **Step 2: Run detail spec and confirm RED**
+- [ ] **Step 2: Run RED**
 
-- [ ] **Step 3: Externalize template/styles and import shared UI**
+```bash
+cd frontend
+npm run test:ci -- --include='src/app/claims/feature-detail/claim-detail-page.component.spec.ts'
+```
 
-Keep all service calls and state transitions. Replace repeated label logic with `humanizeLabel`. Add pure helpers for evidence rows:
+- [ ] **Step 3: Externalize and add evidence presentation**
+
+Keep all service calls and state transitions. Add:
 
 ```typescript
 readonly evidenceRows = computed(() => {
@@ -839,24 +941,17 @@ readonly evidenceRows = computed(() => {
 });
 ```
 
-- [ ] **Step 4: Implement the command workspace**
+Use `humanizeLabel` and `getSlaDisplay` for presentation only.
 
-Build:
+- [ ] **Step 4: Build the workspace**
 
-- contextual claim header with number, claimant, badges, SLA, completeness, adjuster;
-- main overview and incident-description surfaces;
-- evidence matrix and priority factors;
-- visually distinct decision-support panel with exact advisory copy;
-- uncollapsed semantic audit timeline;
-- sticky assignment/status action rail.
+Implement contextual header, facts, incident description, evidence matrix, priority factors, distinct decision-support panel, uncollapsed audit timeline, and sticky assignment/status rail. The decision panel includes the exact advisory copy from Task 2, confidence as numeric text plus progress, missing information, review state, reviewer, and current approve/reject actions. Do not expose provider provenance.
 
-Do not expose provider provenance or add workflow actions that do not exist.
+- [ ] **Step 5: Implement responsive actions**
 
-- [ ] **Step 5: Implement responsive action behavior**
+Below 850px, move the rail inline after the header. Ensure selects and buttons retain visible labels and sticky content never obscures focus.
 
-At narrow widths, move the action rail inline after the claim header or to a sticky bottom region that does not obscure focus. Ensure select controls and buttons retain accessible labels and disabled explanations through nearby text.
-
-- [ ] **Step 6: Run detail tests and build**
+- [ ] **Step 6: Run GREEN and build**
 
 ```bash
 cd frontend
@@ -873,103 +968,57 @@ git commit -m "feat: redesign claim decision workspace"
 
 ---
 
-### Task 10: Run accessibility, responsiveness, and motion review
+### Task 9: Accessibility, responsiveness, and Figma parity review
 
 **Files:**
-- Modify as required: all frontend CSS/HTML files changed in Tasks 3–9.
-- Test: existing and new component specs.
+- Modify only files from Tasks 3–8 when defects are found.
+- Store screenshots outside tracked repository paths or attach them directly to the PR.
 
 **Interfaces:**
-- Consumes: complete redesigned frontend.
-- Produces: consistent behavior at 320, 390, 768, 1024, and 1440px; keyboard-visible focus and reduced-motion compliance.
+- Produces verified behavior at 320, 390, 768, 1024, and 1440px and visual parity with the approved Figma frames.
 
-- [ ] **Step 1: Run all frontend tests before manual review**
+- [ ] **Step 1: Run the complete frontend suite**
 
 ```bash
 cd frontend
 npm run test:ci
+npm run build
 ```
 
-Expected: zero failed specs.
+Expected: zero failed specs and successful production build.
 
-- [ ] **Step 2: Start the application with seeded backend data**
+- [ ] **Step 2: Start seeded application**
 
-From repository root:
+Terminal 1:
 
 ```bash
 docker compose up -d db
-cd backend && mvn spring-boot:run
+cd backend
+mvn spring-boot:run
 ```
 
-In another terminal:
+Terminal 2:
 
 ```bash
 cd frontend
 npm start
 ```
 
-Verify backend health before reviewing the UI.
+Confirm `http://localhost:8080/actuator/health` reports `UP` before UI review.
 
-- [ ] **Step 3: Review every route at required widths**
+- [ ] **Step 3: Review all routes and widths**
 
-Review `/dashboard`, `/claims`, `/claims/new`, and one seeded `/claims/:id` at 320, 390, 768, 1024, and 1440px. Verify no horizontal page overflow, obscured focus, clipped labels, unusable tables/cards, or inaccessible sticky areas.
+Review `/dashboard`, `/claims`, `/claims/new`, and one seeded `/claims/:id` at 320, 390, 768, 1024, and 1440px. Check page overflow, clipping, table/card equivalence, sticky regions, focus visibility, labels, disabled states, and touch targets.
 
-- [ ] **Step 4: Keyboard review**
+- [ ] **Step 4: Keyboard and reduced-motion review**
 
-Starting at the browser chrome, navigate each route using Tab, Shift+Tab, Enter, Space, and arrow keys where native controls support them. Verify skip link, route links, form fields, filter chips, table claim links, action controls, and recommendation review buttons.
+Navigate with Tab, Shift+Tab, Enter, Space, and native control arrows. Verify skip link, navigation, filter chips, claim links, form controls, action controls, and recommendation review. Enable reduced motion and confirm nonessential animation is removed.
 
-- [ ] **Step 5: Reduced-motion and contrast review**
+- [ ] **Step 5: Compare implementation and Figma**
 
-Enable reduced motion and confirm nonessential transitions stop. Check every text/background pair and focus ring against WCAG AA. Correct CSS variables or component styles rather than one-off overrides where possible.
+Capture 1440px and 390px browser screenshots for all routes outside the repo. Export the eight matching Figma frames. Compare sidebar width, page padding, hierarchy, typography, badge colors, controls, table density, and mobile stacking. Correct material discrepancies; do not chase subpixel renderer differences.
 
-- [ ] **Step 6: Run full tests and build after fixes**
-
-```bash
-cd frontend
-npm run test:ci
-npm run build
-```
-
-- [ ] **Step 7: Commit review fixes**
-
-```bash
-git add frontend
-git commit -m "fix: polish responsive and accessible interactions"
-```
-
-Do not create an empty commit when no fixes are required.
-
----
-
-### Task 11: Compare Angular implementation against Figma
-
-**Files:**
-- Modify as required: Figma file and frontend presentation files.
-- Create: temporary screenshots outside the repository or PR-upload attachments only.
-
-**Interfaces:**
-- Consumes: approved Figma frames and locally rendered routes.
-- Produces: documented visual parity without checking generated screenshots into source.
-
-- [ ] **Step 1: Capture local route screenshots**
-
-Capture desktop 1440px and mobile 390px screenshots for all four routes using browser tooling. Store them outside tracked repository paths.
-
-- [ ] **Step 2: Export corresponding Figma screenshots**
-
-Use `Figma.get_screenshot` for the eight matching screen frames at sufficient resolution for typography and spacing review.
-
-- [ ] **Step 3: Review differences systematically**
-
-Compare shell width, page padding, typography, surface hierarchy, badge colors, control dimensions, table density, sticky regions, and mobile stacking. Record only material discrepancies; do not chase subpixel differences caused by rendering engines.
-
-- [ ] **Step 4: Correct implementation or Figma source intentionally**
-
-Prefer correcting Angular when the approved Figma design is feasible and accessible. Update Figma when real content or browser constraints reveal a better solution. Keep both sources aligned and update annotations when behavior changes.
-
-- [ ] **Step 5: Re-run focused tests and build for changed features**
-
-Run relevant focused specs followed by:
+- [ ] **Step 6: Re-run complete verification after fixes**
 
 ```bash
 cd frontend
@@ -977,41 +1026,33 @@ npm run test:ci
 npm run build
 ```
 
-- [ ] **Step 6: Commit parity corrections**
+- [ ] **Step 7: Commit only when fixes exist**
 
 ```bash
 git add frontend docs/design
-git commit -m "fix: align frontend with ClaimsOps designs"
+git commit -m "fix: polish responsive and accessible interactions"
 ```
 
-Do not create an empty commit when no tracked changes were needed.
+Do not create an empty commit.
 
 ---
 
-### Task 12: Update documentation, verify CI, and open the pull request
+### Task 10: Documentation, full verification, PR, and CI
 
 **Files:**
 - Modify: `README.md`
-- Modify if needed: `docs/design/claimsops-command-center-figma.md`
-- No committed screenshot binaries unless the repository already establishes that convention.
+- Modify if node links changed: `docs/design/claimsops-command-center-figma.md`
 
 **Interfaces:**
-- Consumes: final Figma and Angular output.
-- Produces: reviewable PR with exact verification evidence and design links.
+- Produces a reviewable pull request with design links, screenshots, verification evidence, and no generated artifacts.
 
-- [ ] **Step 1: Update README frontend section**
+- [ ] **Step 1: Update README**
 
-Add:
+Add the Figma source link, ClaimsOps visual principles, statement that UI uses current APIs only, frontend verification commands, and route-by-route demo path. Do not describe unsupported capabilities.
 
-- the Figma source link;
-- the ClaimsOps Command Center design principles;
-- confirmation that UI state uses current APIs only;
-- the existing frontend verification commands;
-- the route-by-route interview demo path.
+- [ ] **Step 2: Verify from a clean frontend install**
 
-Do not describe unsupported capabilities.
-
-- [ ] **Step 2: Run final local verification from a clean dependency install**
+Unix-like shell:
 
 ```bash
 cd frontend
@@ -1021,17 +1062,19 @@ npm run test:ci
 npm run build
 ```
 
-On Windows PowerShell, replace removal with:
+Windows PowerShell:
 
 ```powershell
+Set-Location frontend
 Remove-Item -Recurse -Force node_modules
+npm ci
+npm run test:ci
+npm run build
 ```
 
 Expected: clean install, zero failed tests, successful production build.
 
-- [ ] **Step 3: Verify backend regression suite**
-
-The redesign should not change backend code, but run the repository’s complete required verification:
+- [ ] **Step 3: Run backend regression suite**
 
 ```bash
 cd backend
@@ -1040,7 +1083,7 @@ mvn verify
 
 Expected: `BUILD SUCCESS`.
 
-- [ ] **Step 4: Review the branch diff**
+- [ ] **Step 4: Review branch hygiene**
 
 ```bash
 git status --short
@@ -1049,7 +1092,7 @@ git diff --stat main...HEAD
 git log --oneline main..HEAD
 ```
 
-Confirm no credentials, generated bundles, `node_modules`, temporary screenshots, tool transcripts, or unrelated files are tracked.
+Confirm no credentials, `node_modules`, `dist`, `target`, temporary screenshots, prompt logs, tool transcripts, or unrelated files are tracked.
 
 - [ ] **Step 5: Commit documentation**
 
@@ -1058,49 +1101,40 @@ git add README.md docs/design/claimsops-command-center-figma.md
 git commit -m "docs: document ClaimsOps frontend design"
 ```
 
-- [ ] **Step 6: Push and open a pull request**
+- [ ] **Step 6: Push and open PR**
 
-Use a feature branch such as `feature/claimsops-command-center` created from the approved design branch. PR title:
+Use branch `feature/claimsops-command-center` created from the approved design branch. PR title:
 
 ```text
 Redesign ClaimsFlow as a ClaimsOps command center
 ```
 
-PR body must include:
+PR body includes summary, Figma links, redesigned routes, accessibility and responsive review, unchanged API/workflow statement, exact local verification results, desktop/mobile before-and-after screenshots as attachments, exclusions, and the recommendation-provenance safeguard.
 
-- summary of the visual and maintainability improvements;
-- Figma file and node links;
-- routes redesigned;
-- accessibility and responsive review performed;
-- explicit statement that APIs and workflow semantics are unchanged;
-- `npm ci`, `npm run test:ci`, `npm run build`, and `mvn verify` results;
-- desktop and mobile before/after screenshots as PR attachments;
-- known exclusions and recommendation-provenance safeguard.
+- [ ] **Step 7: Verify GitHub Actions for the exact PR head**
 
-- [ ] **Step 7: Verify GitHub Actions**
+Require successful backend and frontend jobs. On failure, fetch failed job steps/logs, fix the underlying defect, rerun local verification, push, and inspect the new head SHA.
 
-Inspect the workflow jobs for the exact PR head SHA. Require successful backend and frontend jobs. Fetch logs for any failed job, fix the underlying defect, rerun local verification, push, and re-check the new head SHA.
+- [ ] **Step 8: Perform two-stage final review**
 
-- [ ] **Step 8: Perform final two-stage review**
+1. Specification review: map every acceptance criterion to implementation evidence.
+2. Code-quality review: inspect maintainability, duplication, semantic HTML, accessibility, test strength, and unsupported claims.
 
-1. Specification review: verify every acceptance criterion in the design spec is satisfied.
-2. Code-quality review: inspect maintainability, duplication, semantics, test strength, accessibility, and absence of unsupported claims.
-
-Resolve all blocking findings before merge. Do not merge solely because the interface looks polished.
+Resolve all blocking findings before merge. Do not merge solely because the UI looks polished.
 
 ---
 
 ## Final Acceptance Checklist
 
-- [ ] Figma contains approved foundations, components, four desktop screens, four mobile screens, tablet shell reference, and annotations.
-- [ ] Figma uses Auto Layout and reusable component variants for principal UI elements.
-- [ ] All four Angular routes match the approved design direction.
-- [ ] Existing API contracts, routes, validation, service calls, and workflows remain unchanged.
-- [ ] No unsupported data or recommendation-provider provenance is presented as real.
-- [ ] Desktop queue remains a semantic table and mobile queue retains equivalent information.
-- [ ] Claim intake remains one reactive form and preserves error-summary focus.
-- [ ] Recommendation approval/rejection behavior and advisory warning remain intact.
-- [ ] Interface works with keyboard navigation and at 320px width.
+- [ ] Figma contains foundations, components, four desktop screens, four mobile screens, tablet shell, and annotations.
+- [ ] Principal Figma structures use Auto Layout and reusable variants.
+- [ ] All four Angular routes match the approved ClaimsOps direction.
+- [ ] Existing routes, APIs, validation, service calls, and workflows remain unchanged.
+- [ ] No unsupported data or provider provenance is presented as real.
+- [ ] Desktop queue remains a semantic table and mobile queue contains equivalent information.
+- [ ] Intake remains one reactive form and preserves error-summary focus.
+- [ ] Recommendation advisory copy and approval/rejection behavior remain intact.
+- [ ] Interface works with keyboard navigation and at 320px.
 - [ ] Reduced-motion behavior is implemented.
 - [ ] Existing and new frontend tests pass.
 - [ ] Angular production build passes.
