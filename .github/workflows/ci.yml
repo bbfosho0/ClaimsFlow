@@ -37,6 +37,8 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,6 +47,17 @@ jobs:
       - name: Generate dependency lock
         run: npm install --package-lock-only --silent
         working-directory: frontend
+      - name: Commit dependency lock
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: lock frontend dependencies"
+            git push
+          fi
       - name: Install dependencies
         run: npm ci --silent
         working-directory: frontend
@@ -71,11 +84,4 @@ jobs:
             frontend/frontend-test.log
             frontend/frontend-build.log
           if-no-files-found: ignore
-          retention-days: 3
-      - name: Preserve generated lockfile
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-package-lock
-          path: frontend/package-lock.json
           retention-days: 3
