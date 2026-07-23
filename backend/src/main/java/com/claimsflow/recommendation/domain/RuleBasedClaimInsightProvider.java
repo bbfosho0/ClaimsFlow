@@ -1,9 +1,6 @@
 package com.claimsflow.recommendation.domain;
 
 import com.claimsflow.claim.domain.ClaimStatus;
-import org.springframework.stereotype.Component;
-
-@Component
 public class RuleBasedClaimInsightProvider implements ClaimInsightProvider {
     @Override
     public ClaimInsight analyze(ClaimAnalysisRequest request) {

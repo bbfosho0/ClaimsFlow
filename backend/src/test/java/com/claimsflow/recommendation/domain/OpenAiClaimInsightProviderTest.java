@@ -1,0 +1,130 @@
+package com.claimsflow.recommendation.domain;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import com.claimsflow.claim.domain.ClaimPriority;
+import com.claimsflow.claim.domain.ClaimStatus;
+import com.claimsflow.claim.domain.ClaimType;
+import com.claimsflow.recommendation.config.OpenAiProperties;
+import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpMethod;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.ResponseCreator;
+import org.springframework.web.client.RestClient;
+
+class OpenAiClaimInsightProviderTest {
+    private static final ClaimAnalysisRequest REQUEST = new ClaimAnalysisRequest(
+            ClaimType.AUTO,
+            ClaimStatus.NEW,
+            ClaimPriority.HIGH,
+            false,
+            50,
+            List.of("Damage photos"),
+            null,
+            null,
+            "Claimant claimant@example.test said their vehicle was damaged.");
+
+    private RestClient.Builder restClientBuilder;
+    private MockRestServiceServer server;
+    private RuleBasedClaimInsightProvider ruleBased;
+    private OpenAiClaimInsightProvider provider;
+
+    @BeforeEach
+    void setUp() {
+        restClientBuilder = RestClient.builder().baseUrl("https://api.openai.com");
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        ruleBased = new RuleBasedClaimInsightProvider();
+        provider = providerFor("test-key");
+    }
+
+    @Test
+    void sendsRedactedStructuredRequestAndReturnsValidatedInsight() {
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Bearer test-key"))
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(content().string(containsString("\"model\":\"gpt-5-nano\"")))
+                .andExpect(content().string(containsString("\"type\":\"json_schema\"")))
+                .andExpect(content().string(containsString("\"strict\":true")))
+                .andExpect(content().string(containsString("\"REQUEST_INFORMATION\"")))
+                .andExpect(content().string(containsString("\"PREPARE_DECISION\"")))
+                .andExpect(content().string(not(containsString("claimant@example.test"))))
+                .andExpect(content().string(not(containsString("vehicle was damaged"))))
+                .andRespond(withSuccess(validResponse("BEGIN_REVIEW"), APPLICATION_JSON));
+
+        var insight = provider.analyze(REQUEST);
+
+        assertThat(insight).isEqualTo(new ClaimInsight(
+                "BEGIN_REVIEW", "The claim is ready for review.", 82, List.of("Damage photos")));
+        server.verify();
+    }
+
+    @Test
+    void immediatelyFallsBackWhenApiKeyIsBlank() {
+        var blankKeyProvider = providerFor("  ");
+
+        assertThat(blankKeyProvider.analyze(REQUEST)).isEqualTo(ruleBased.analyze(REQUEST));
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidOrFailedResponses")
+    void fallsBackForInvalidOrUnavailableModelOutput(ResponseCreator response) {
+        server.expect(requestTo("https://api.openai.com/v1/responses")).andRespond(response);
+
+        assertThat(provider.analyze(REQUEST)).isEqualTo(ruleBased.analyze(REQUEST));
+        server.verify();
+    }
+
+    private OpenAiClaimInsightProvider providerFor(String apiKey) {
+        return new OpenAiClaimInsightProvider(
+                restClientBuilder.build(),
+                new OpenAiProperties(apiKey, "gpt-5-nano", Duration.ofSeconds(2)),
+                ruleBased,
+                new com.fasterxml.jackson.databind.ObjectMapper());
+    }
+
+    private static Stream<ResponseCreator> invalidOrFailedResponses() {
+        return Stream.of(
+                withStatus(INTERNAL_SERVER_ERROR).contentType(APPLICATION_JSON).body("{\"error\":{\"message\":\"unavailable\"}}"),
+                request -> {
+                    throw new SocketTimeoutException("Timed out");
+                },
+                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"refusal\",\"refusal\":\"I cannot help\"}]}]}", APPLICATION_JSON),
+                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"not-json\"}]}]}", APPLICATION_JSON),
+                withSuccess(validResponse("ESCALATE_EXTERNALLY"), APPLICATION_JSON),
+                withSuccess(responseWithInsight("BEGIN_REVIEW", "", 82, List.of()), APPLICATION_JSON),
+                withSuccess(responseWithInsight("BEGIN_REVIEW", "x".repeat(501), 82, List.of()), APPLICATION_JSON),
+                withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 101, List.of()), APPLICATION_JSON),
+                withSuccess(responseWithInsight("BEGIN_REVIEW", "The claim is ready for review.", 82, List.of("  ")), APPLICATION_JSON),
+                withSuccess("{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"{\\\"action\\\":\\\"BEGIN_REVIEW\\\",\\\"explanation\\\":\\\"The claim is ready for review.\\\",\\\"confidence\\\":82,\\\"missingInformation\\\":[null]}\"}]}]}", APPLICATION_JSON));
+    }
+
+    private static String validResponse(String action) {
+        return responseWithInsight(action, "The claim is ready for review.", 82, List.of("Damage photos"));
+    }
+
+    private static String responseWithInsight(String action, String explanation, int confidence, List<String> missingInformation) {
+        String insight = "{\"action\":\"%s\",\"explanation\":\"%s\",\"confidence\":%d,\"missingInformation\":[%s]}"
+                .formatted(action, explanation, confidence, missingInformation.stream().map(value -> "\"%s\"".formatted(value)).collect(java.util.stream.Collectors.joining(",")));
+        return "{\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":%s}]}]}"
+                .formatted(new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(insight));
+    }
+}
