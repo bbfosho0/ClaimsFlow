@@ -27,6 +27,13 @@ jobs:
           mvn -q verify > maven-verify.log 2>&1 || { tail -n 180 maven-verify.log; exit 1; }
           tail -n 40 maven-verify.log
         working-directory: backend
+      - name: Preserve backend failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-verify-log
+          path: backend/maven-verify.log
+          retention-days: 3
 
   frontend:
     runs-on: ubuntu-latest
@@ -55,7 +62,18 @@ jobs:
           npm run build > frontend-build.log 2>&1 || { tail -n 180 frontend-build.log; exit 1; }
           tail -n 40 frontend-build.log
         working-directory: frontend
+      - name: Preserve frontend failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-failure-logs
+          path: |
+            frontend/frontend-test.log
+            frontend/frontend-build.log
+          if-no-files-found: ignore
+          retention-days: 3
       - name: Preserve generated lockfile
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-package-lock
