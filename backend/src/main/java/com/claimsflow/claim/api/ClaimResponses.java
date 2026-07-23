@@ -13,7 +13,7 @@ public final class ClaimResponses {
 
     public static ClaimDetail detail(Claim claim, ClaimApplicationService service) {
         var complete = service.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
-        var triage = service.priority().evaluate(claim.getClaimType(), claim.getEstimatedLoss(), claim.getIncidentDate(), complete.percentage(), claim.getSlaDeadline(), Instant.now());
+        var triage = service.priority().evaluate(claim.getClaimType(), claim.getEstimatedLoss(), claim.getIncidentDate(), complete.percentage(), claim.getSlaDeadline(), service.now());
         return new ClaimDetail(claim.getId(), claim.getClaimNumber(), claim.getClaimantName(), claim.getClaimantEmail(), claim.getClaimType(), claim.getIncidentDate(), claim.getEstimatedLoss(), claim.getDescription(), new Evidence(claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent()), claim.getCompletenessPercentage(), complete.missingEvidence(), claim.getPriority(), triage.factors(), claim.getStatus(), service.transitions().allowedNext(claim.getStatus()), claim.getAssignedAdjuster() == null ? null : AdjusterResponse.from(claim.getAssignedAdjuster()), claim.getSlaDeadline(), claim.getCreatedAt(), claim.getUpdatedAt(), claim.getVersion());
     }
 

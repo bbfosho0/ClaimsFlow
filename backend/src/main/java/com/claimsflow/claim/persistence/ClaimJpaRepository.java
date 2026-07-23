@@ -7,14 +7,14 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.domain.Specification;
 
 public interface ClaimJpaRepository extends JpaRepository<Claim, UUID>, JpaSpecificationExecutor<Claim> {
     @EntityGraph(attributePaths = "assignedAdjuster")
-    Optional<Claim> findWithAssignedAdjusterById(UUID id);
+    Optional<Claim> findOneById(UUID id);
 
     @Override
     @EntityGraph(attributePaths = "assignedAdjuster")

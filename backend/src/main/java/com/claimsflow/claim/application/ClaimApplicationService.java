@@ -47,7 +47,7 @@ public class ClaimApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public Claim get(UUID id) { return claims.findWithAssignedAdjusterById(id).orElseThrow(() -> new ResourceNotFoundException("CLAIM_NOT_FOUND", "Claim was not found.")); }
+    public Claim get(UUID id) { return claims.findOneById(id).orElseThrow(() -> new ResourceNotFoundException("CLAIM_NOT_FOUND", "Claim was not found.")); }
 
     @Transactional(readOnly = true)
     public Page<Claim> list(String query, ClaimStatus status, ClaimPriority priority, String assignment, Pageable pageable) {
@@ -79,6 +79,7 @@ public class ClaimApplicationService {
     public ClaimTransitionPolicy transitions() { return transitions; }
     public CompletenessPolicy completeness() { return completeness; }
     public PriorityPolicy priority() { return priority; }
+    public Instant now() { return clock.instant(); }
 
     private Duration slaDuration(ClaimPriority priority) {
         return switch (priority) {
