@@ -1,0 +1,14 @@
+:host { display: block; }
+.metric-card { min-height: 168px; display: flex; flex-direction: column; gap: .55rem; padding: 1.15rem; border: 1px solid var(--color-border); border-radius: var(--radius-command); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.metric-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--color-teal); color: #fff; font-weight: 800; }
+.metric-label { margin-top: .15rem; color: var(--color-text-muted); font-size: .75rem; font-weight: 700; }
+.metric-card strong { font-size: 2.2rem; line-height: 1; }
+.metric-card small { margin-top: auto; color: var(--color-text-muted); }
+.metric-card[data-tone="primary"] { border: 0; background: var(--color-nav-midnight); color: #fff; }
+.metric-card[data-tone="primary"] .metric-icon { background: var(--color-cyan); color: var(--color-nav-midnight); }
+.metric-card[data-tone="primary"] .metric-label,
+.metric-card[data-tone="primary"] small { color: #bfd2df; }
+.metric-card[data-tone="warning"] { border-color: #e6b867; }
+.metric-card[data-tone="warning"] .metric-icon { background: var(--color-warning); }
+.metric-card[data-tone="critical"] { border-color: #e5a39d; }
+.metric-card[data-tone="critical"] .metric-icon { background: var(--color-critical); }
