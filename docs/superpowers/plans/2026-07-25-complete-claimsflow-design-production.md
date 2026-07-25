@@ -119,9 +119,13 @@ Expected: an `auth:` line and recent projects.
 npx --yes @superdesign/cli@latest login
 ```
 
-- [ ] **Step 3: Run the CLI repository initialization workflow**
+- [ ] **Step 3: Read the installed CLI help and run its repository-init command**
 
-Expected outputs:
+```bash
+npx --yes @superdesign/cli@latest --help
+```
+
+Use the exact initialization command exposed by the installed CLI version. Do not guess an obsolete command name. The command must analyze the current repository and produce exactly these files:
 
 ```text
 .superdesign/init/components.md
