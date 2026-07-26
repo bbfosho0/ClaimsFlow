@@ -40,9 +40,16 @@ describe('NewClaimPageComponent', () => {
     const fixture = TestBed.createComponent(NewClaimPageComponent);
     fixture.detectChanges();
 
-    const autoType = fixture.nativeElement.querySelector('input[type="radio"][formcontrolname="claimType"]') as HTMLInputElement;
+    const autoTypeCard = Array.from(
+      fixture.nativeElement.querySelectorAll('label.claim-type-card') as NodeListOf<HTMLLabelElement>,
+    ).find(card => card.textContent?.includes('Auto'));
+    const autoType = autoTypeCard?.querySelector<HTMLInputElement>('input[type="radio"][formcontrolname="claimType"]');
     const photos = fixture.nativeElement.querySelector('input[formcontrolname="photosPresent"]') as HTMLInputElement;
-    autoType.click();
+
+    expect(autoType).withContext('AUTO claim type radio').not.toBeNull();
+    expect(photos).withContext('Damage photos evidence checkbox').not.toBeNull();
+
+    autoType!.click();
     photos.click();
     fixture.detectChanges();
 

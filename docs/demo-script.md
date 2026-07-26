@@ -37,7 +37,7 @@ Show the missing evidence, completeness percentage, priority factors, SLA deadli
 
 ## 5:15 to 6:15: recommendation and human review
 
-Generate a recommendation. Explain the `ClaimInsightProvider` boundary and why the core runtime uses a rule-based implementation. Approve or reject the pending recommendation. Emphasize that it cannot mutate or decide the claim automatically.
+Generate a recommendation. Explain that `ClaimInsightProvider` is the boundary: when the exact process environment variable `OPENAI_API_KEY` is configured, `OpenAiClaimInsightProvider` is attempted; otherwise, or if it fails validation, `RuleBasedClaimInsightProvider` supplies the deterministic fallback. Only redacted operational fields are sent to the provider, responses use strict structured output and local validation, and the remote call completes outside the database transaction. The recommendation and audit event are then persisted transactionally. Approve or reject the pending recommendation, emphasizing that it remains advisory, requires human review, and cannot mutate or resolve a claim.
 
 ## 6:15 to 6:50: audit
 
