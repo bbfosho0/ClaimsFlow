@@ -22,24 +22,24 @@
 **Files:**
 - Modify: Figma pages `06 New Claim Flow`, `07 Communications`, `08 Payments & Recovery`
 
-- [ ] Create each screen from the command-grid shell and its nearest canonical pattern.
-- [ ] Add loading, empty, error, stale, and offline states where data is represented.
-- [ ] Check sidebar order, 100% table readability, keyboard focus annotation, and reduced-motion notes.
+- [x] Create each screen from the command-grid shell and its nearest canonical pattern.
+- [x] Add loading, empty, error, stale, and offline states where data is represented.
+- [x] Check sidebar order, 100% table readability, keyboard focus annotation, and reduced-motion notes.
 
 ### Task 2: Propagate intelligence and administration pages
 
 **Files:**
 - Modify: Figma pages `09 Analytics & Reports` through `16 Handoff Notes`
 
-- [ ] Use the shared components for filters, panels, KPIs, badges, and inspector patterns.
-- [ ] Keep AI surfaces provenance-backed and explicitly approval-gated.
-- [ ] Add prototype links for claim intake, triage, evidence review, recommendation approval, and assignment.
+- [x] Use the shared components for filters, panels, KPIs, badges, and inspector patterns.
+- [x] Keep AI surfaces provenance-backed and explicitly approval-gated.
+- [x] Add prototype-flow handoff notes for claim intake, triage, evidence review, recommendation approval, and assignment.
 
 ### Task 3: Handoff QA
 
 **Files:**
 - Modify: Figma pages `14 Responsive & States`, `15 Prototype Flows`, `16 Handoff Notes`
 
-- [ ] Verify every canonical frame has a dominant visualization and a shared shell.
-- [ ] Verify editable nodes, named reusable components, and token documentation.
-- [ ] Export frame links/screenshots for PR #4 and record implementation notes without merging.
+- [x] Verify every canonical frame has a dominant visualization and a shared shell.
+- [x] Verify editable nodes, named reusable components, and token documentation.
+- [x] Record Figma links and implementation notes in PR #4 without merging.
