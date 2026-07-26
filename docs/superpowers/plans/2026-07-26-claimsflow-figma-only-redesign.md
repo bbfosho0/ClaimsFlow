@@ -33,7 +33,7 @@
 
 - [x] Use the shared components for filters, panels, KPIs, badges, and inspector patterns.
 - [x] Keep AI surfaces provenance-backed and explicitly approval-gated.
-- [x] Add prototype-flow handoff notes for claim intake, triage, evidence review, recommendation approval, and assignment.
+- [x] Add a clickable intake → triage → evidence-review Figma prototype flow with 180ms dissolve transitions.
 
 ### Task 3: Handoff QA
 
