@@ -20,3 +20,5 @@ Create a premium dark operational system in Figma for ClaimsFlow, led by an Evid
 ## Figma delivery
 
 The editable Figma target is https://www.figma.com/design/M7GOuna2hq7jWCGTZhiP5b. Foundations, component library, and all three canonical frames are the approval anchor for future pages.
+
+The local `ClaimsFlow / Tokens` collection provides named editable color variables for canvas, surfaces, borders, text, operational signals, intelligence, risk, and critical states.
