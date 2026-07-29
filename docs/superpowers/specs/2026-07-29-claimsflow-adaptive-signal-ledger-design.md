@@ -5,8 +5,8 @@
 **Repository:** `bbfosho0/ClaimsFlow`  
 **Specification branch:** `design/adaptive-signal-ledger-spec`  
 **Figma file:** https://www.figma.com/design/M7GOuna2hq7jWCGTZhiP5b  
-**Selected structural direction:** Direction C, Adaptive Ledger  
-**Selected color direction:** Direction A, Signal Grid  
+**Selected structure:** Direction C, Adaptive Ledger  
+**Selected palette:** Direction A, Signal Grid  
 
 ## 1. Purpose
 
@@ -14,34 +14,34 @@ Rebuild the ClaimsFlow Angular frontend into a distinctive, production-quality i
 
 The approved direction is named **Adaptive Signal Ledger**. It combines:
 
-- Direction C's application structure, navigation, contextual hierarchy, modular composition, and enterprise usability.
-- Direction A's near-black teal shell, cyan and teal operational accents, stronger contrast, live-signal energy, and connected KPI treatment.
+- Direction C's navigation, contextual hierarchy, modular composition, and enterprise usability.
+- Direction A's near-black teal shell, teal and cyan operational accents, stronger contrast, live-signal energy, and connected KPI treatment.
 - A mixed surface strategy, with light working surfaces for reading and data entry, plus selected dark command surfaces for urgent, analytical, or decision-heavy work.
 
-The redesign must make ClaimsFlow feel like a credible operational product, not a generic administration template, decorative concept board, consumer finance interface, or cyberpunk monitoring console.
+The result must feel like a credible operational product, not a generic administration template, consumer finance interface, decorative concept board, or cyberpunk monitoring console.
 
 ## 2. Design source of truth
 
-The implementation source of truth is this specification plus the approved Figma direction study:
+Implementation must follow this specification and these approved Figma references:
 
 - Direction C, structural reference: https://www.figma.com/design/M7GOuna2hq7jWCGTZhiP5b?node-id=35-381
 - Direction A, palette and signal reference: https://www.figma.com/design/M7GOuna2hq7jWCGTZhiP5b?node-id=35-48
 
-The implementation must not reproduce either frame unchanged. It must use Direction C's composition and Direction A's color and signal language as defined in this specification.
+Neither frame is copied unchanged. Direction C controls layout and hierarchy. Direction A controls the shell palette, contrast, signal treatment, and operational energy.
 
-The earlier Figma Attempt 2 associated with draft PR 4 is rejected and is not an implementation reference. Its overlapping modules, malformed visualizations, placeholder iconography, uniform card treatment, and incomplete claim-workspace treatment must not be propagated.
+The earlier Figma Attempt 2 associated with draft PR 4 is rejected and excluded from implementation. Its overlapping modules, malformed visualizations, placeholder iconography, uniform card treatment, and incomplete claim-workspace treatment must not be propagated.
 
-## 3. Product goals
+## 3. Goals
 
-1. Make the frontend visually distinctive enough to function as a high-quality portfolio centerpiece.
+1. Make the frontend strong enough to function as a high-quality portfolio centerpiece.
 2. Improve triage speed, hierarchy, and scanability for adjusters and team leads.
-3. Make the Claim Workspace the strongest and most complete product surface.
-4. Present decision support as useful, traceable, and explicitly human-governed.
-5. Establish a reusable visual system shared across all routes.
-6. Preserve the existing backend workflow and typed Angular service boundaries.
+3. Make the Claim Workspace the strongest and most complete surface.
+4. Present decision support as useful, traceable, advisory, and human-governed.
+5. Establish one reusable visual system across every route.
+6. Preserve existing backend behavior and typed Angular service boundaries.
 7. Maintain strong keyboard, focus, contrast, responsive, loading, empty, and error behavior.
 8. Avoid the repeated-card-grid appearance common to generic dashboard templates.
-9. Keep implementation practical within the current Angular codebase.
+9. Keep implementation practical within the existing Angular codebase.
 
 ## 4. Non-goals
 
@@ -50,14 +50,14 @@ The redesign will not:
 - Replace Angular or introduce a parallel frontend.
 - Change backend endpoints, request models, response models, persistence, or business rules.
 - Add authentication, production user management, or unsupported permissions.
-- Add unsupported filters, sorting, saved searches, notifications, uploads, or external integrations.
-- Fabricate trend percentages, historical analytics, recommendation counts, or provider status.
+- Add unsupported filtering, saved searches, notifications, uploads, or external integrations.
+- Fabricate historical trends, percentage changes, recommendation counts, or provider status.
 - Present deterministic fallback recommendations as OpenAI-generated.
 - Allow decision support to approve, deny, assign, or transition a claim automatically.
-- Add a global state library without a demonstrated need.
+- Add a global state library without demonstrated need.
 - Add a large UI framework solely for appearance.
-- ship decorative animation, continuous ambient motion, excessive glow, or readability-reducing effects.
-- Turn semantic tables into desktop card grids.
+- Ship continuous decorative motion, excessive glow, or readability-reducing effects.
+- Turn the desktop claims table into a card grid.
 
 ## 5. Existing application boundaries
 
@@ -70,12 +70,12 @@ The current routes remain:
 
 The redesign preserves:
 
-- Angular standalone components.
+- Angular standalone components and OnPush change detection.
 - Existing lazy route loading.
 - Existing typed HTTP services and models.
-- Signals and RxJS data loading patterns.
+- Signals and RxJS data-loading patterns.
 - Reactive Forms and current validation constraints.
-- URL-backed claims queue filters.
+- URL-backed queue filters using `q`, `status`, `priority`, and `assignment`.
 - Existing assignment, status-transition, recommendation-review, and audit behavior.
 - Existing loading, error, empty, success, and disabled-state semantics.
 
@@ -88,47 +88,25 @@ The backend remains authoritative for:
 - Recommendation generation and review state.
 - Audit events.
 
-The frontend may derive presentation-only values such as readable SLA countdowns, form-completion progress, icon selection, display grouping, and visual urgency categories.
+The frontend may derive presentation-only values such as readable SLA countdowns, form-completion progress, display grouping, icon selection, and visual urgency categories.
 
 ## 6. Product character
 
-ClaimsFlow should feel:
+ClaimsFlow should feel precise, calm under pressure, operational, technically modern, data-aware, trustworthy, human-governed, and visually intentional.
 
-- Precise.
-- Calm under pressure.
-- Operational.
-- Technically modern.
-- Data-aware.
-- Trustworthy.
-- Human-governed.
-- Visually intentional.
-
-It should not feel:
-
-- Generic.
-- Empty or sterile.
-- Consumer-oriented.
-- Game-like.
-- Cyberpunk.
-- Overly glossy.
-- Decorated with unsupported data.
+It should not feel generic, empty, consumer-oriented, game-like, cyberpunk, overly glossy, or decorated with unsupported data.
 
 ## 7. Visual architecture
 
-### 7.1 Mixed surface strategy
+### 7.1 Surface strategy
 
-The interface uses three primary visual layers:
+Use three visual layers:
 
-1. **Dark application shell**  
-   Used for navigation, global context, system identity, and selected command controls.
+1. **Dark application shell** for navigation, global context, identity, and selected command controls.
+2. **Light working canvas** for tables, forms, evidence reading, audit history, and information-dense work.
+3. **Dark command surfaces** used selectively for operational signal summaries, urgent exceptions, and decision support.
 
-2. **Light working canvas**  
-   Used for tables, forms, evidence reading, audit history, and information-dense tasks.
-
-3. **Dark command surfaces**  
-   Used selectively for operational pulse, urgent exceptions, decision support, and high-attention analytical modules.
-
-Dark surfaces must be purposeful. The product must not become a uniformly dark dashboard.
+Dark surfaces must have a functional reason. The product must not become uniformly dark.
 
 ### 7.2 Color tokens
 
@@ -159,11 +137,11 @@ Dark surfaces must be purposeful. The product must not become a uniformly dark d
 | `--cf-blue` | `#62A6FF` | Informational metadata and assignment context |
 | `--cf-violet` | `#A78BFA` | Recommendation and intelligence context only |
 
-Accent colors are reserved for meaning. Neutral surfaces must dominate so operational signals remain legible.
+Accent colors are reserved for meaning. Neutral surfaces dominate so operational signals remain legible.
 
 ### 7.3 Typography
 
-Use Inter where available, with the existing system-compatible sans-serif stack as fallback. Do not introduce a blocking font dependency.
+Use Inter where available, with the existing system-compatible sans-serif stack as fallback. Do not add a blocking font dependency.
 
 | Role | Specification |
 | --- | --- |
@@ -177,19 +155,19 @@ Use Inter where available, with the existing system-compatible sans-serif stack 
 | Metadata | 12px, 400, 18px line height |
 | Control text | 13px to 14px, 600 |
 
-Large type is reserved for page identity and high-value metrics. Toolbars, tables, navigation, inputs, and inspectors require deliberately specified typography and must not inherit browser-default control sizing.
+Large typography is reserved for page identity and high-value metrics. Toolbars, tables, navigation, inputs, and inspectors require explicit typography and must not use browser-default control sizing.
 
 ### 7.4 Geometry and spacing
 
 - Base unit: 4px.
-- Primary spacing values: 8px, 12px, 16px, 24px, 32px, 40px.
+- Primary spacing: 8px, 12px, 16px, 24px, 32px, 40px.
 - Small control radius: 8px.
 - Standard workspace-panel radius: 14px.
 - Major command-surface radius: 18px.
 - Badge and chip radius: fully rounded.
 - Desktop layout gaps: 20px to 24px.
 - Dense table row target: approximately 56px.
-- Interactive target minimum: 44px where practical, mandatory on mobile.
+- Mobile interactive target minimum: 44px.
 
 Borders and tonal separation provide most structure. Shadows communicate elevation only and remain restrained.
 
@@ -201,40 +179,32 @@ Icons must match meaning and optical weight across navigation, controls, badges,
 
 ## 8. Application shell
 
-### 8.1 Desktop shell
+### 8.1 Desktop
 
-Use a persistent left navigation region with:
+Use a persistent left navigation containing:
 
 - ClaimsFlow brand identity.
-- Operations workspace label.
-- Overview navigation.
-- Claims navigation.
-- New Claim navigation.
-- Lower utility area.
-- Generic system-health treatment where supported.
-- Demo operator treatment only if already present and not presented as production authentication.
+- Operations Intelligence workspace label.
+- Overview, Claims, and New Claim destinations.
+- The existing generic `System healthy` and `Decision support available` treatment, without provider provenance.
+- The existing demo-operator treatment, clearly presented as demonstration context rather than authentication.
 
 The active route uses a high-contrast dark-surface state with teal or cyan edge emphasis. Hover, focus, selected, and disabled states must be distinct.
 
-### 8.2 Global workspace header
+### 8.2 Global claim search
 
-The main workspace header may include:
+Add one global claim-search field to the desktop workspace header. Submitting it navigates to `/claims` using the existing `q` query parameter. It does not introduce a new API, command palette, fuzzy search service, or unsupported result overlay.
 
-- Page identity.
-- Current operational context.
-- A global claim search or command entry point, limited to behavior the existing application can support.
-- The current route's main action.
+The current route's primary action remains visible beside the search field where space permits.
 
-The header must not become crowded with decorative controls or unsupported status widgets.
-
-### 8.3 Mobile shell
+### 8.3 Mobile
 
 Below 768px:
 
 - Replace the persistent sidebar with a compact top application bar.
-- Keep the three primary destinations directly accessible where space permits.
-- Avoid hover-dependent interaction.
-- Preserve the main route action.
+- Keep Overview, Claims, and New Claim directly accessible.
+- Preserve the current route's primary action.
+- Avoid hover-dependent behavior.
 - Prevent horizontal page overflow.
 
 ## 9. Operations Overview
@@ -243,18 +213,17 @@ The dashboard becomes a decision surface rather than a row of equal cards.
 
 ### 9.1 Header and context ribbon
 
-The top region includes:
+The top region contains:
 
-- Page title.
-- Concise operational summary.
+- Page title and concise operational summary.
 - Primary `Create claim` action.
-- A dark context ribbon for the most important supported operational condition.
+- A dark context ribbon generated only from the existing dashboard snapshot.
 
-The context ribbon may communicate existing SLA risk or queue conditions. It must not invent provider status, trend percentages, or unsupported historical comparisons.
+The ribbon may summarize SLA risk, high-priority volume, unassigned volume, or incomplete volume. It must not imply historical movement or provider status.
 
 ### 9.2 KPI instruments
 
-Display the existing five metrics:
+Display the existing metrics:
 
 - Open claims.
 - High priority.
@@ -267,31 +236,29 @@ They must not be five identical rectangles.
 - Open claims is the leading inventory instrument.
 - SLA risk and high priority receive stronger semantic treatment.
 - Unassigned and incomplete remain actionable but quieter.
-- Thin connectors, aligned baselines, and shared signal strokes create Direction A's networked operational feeling.
-- Every metric includes a label, exact value, semantic icon, and a short phrase derived only from the metric itself.
-- No percentage changes, trend arrows, or historical graphs are shown unless the backend supplies the necessary data.
+- Thin connectors, aligned baselines, and shared signal strokes create Direction A's connected operational feeling.
+- Every metric includes a label, exact value, semantic icon, and a short phrase derived only from that metric.
+- No percentage changes, trend arrows, historical graphs, or time axes are shown.
 
-### 9.3 Dashboard modules
+### 9.3 Current-state signal panel
 
-Use existing supported data for:
+Use a dark command surface to compare the five current aggregate counts. The visualization has no time axis and makes no trend claim. Because these counts are not mutually exclusive, it must not be labeled as a distribution or total composition.
 
-- Adjuster workload.
-- Recent activity.
-- Current operational conditions.
+### 9.4 Action context
 
-Approved composition:
+Create action rows from the existing aggregate counts:
 
-1. **Operational pulse**  
-   A dark command surface showing supported current-state distribution or activity. It must not display fabricated historical trend data.
+- High priority.
+- SLA risk.
+- Unassigned.
+- Incomplete.
 
-2. **Action context**  
-   A prioritized list of supported SLA or queue exceptions with direct navigation to the relevant queue or claim.
+Each row shows the exact aggregate count and navigates to the Claims Queue. Existing supported filters may be applied when the mapping is exact. Unsupported SLA-risk or completeness filters must not be invented. Those rows navigate to the unfiltered queue with clear copy, rather than pretending the queue is filtered.
 
-3. **Adjuster workload**  
-   A light working surface with horizontal capacity indicators and exact values.
+### 9.5 Workload and activity
 
-4. **Recent activity**  
-   A compact chronological feed with differentiated event markers.
+- **Adjuster workload:** light working surface with active claims, capacity, and exact values.
+- **Recent activity:** compact chronological feed using actor, action type, summary, and timestamp.
 
 ## 10. Claims Queue
 
@@ -305,11 +272,11 @@ Order:
 2. Command toolbar.
 3. Applied-filter strip.
 4. Semantic desktop table.
-5. Optional contextual inspector on sufficiently wide screens.
+5. Contextual inspector at viewport widths of 1440px and above.
 
 ### 10.2 Command toolbar
 
-The toolbar contains only supported controls:
+Use only the existing controls:
 
 - Search.
 - Status.
@@ -324,7 +291,7 @@ Search receives the most width. Applied filters appear as removable chips tied t
 
 The desktop queue remains a semantic HTML table.
 
-Required columns and hierarchy:
+Required hierarchy:
 
 - Claim number as the strongest row entry point.
 - Claimant as supporting identity.
@@ -347,7 +314,7 @@ Behavior:
 
 ### 10.4 Contextual inspector
 
-At wide desktop widths, selecting a row may open a narrow preview rail containing only existing claim data:
+At 1440px and above, selecting a row opens a narrow preview rail with existing claim data only:
 
 - Claimant.
 - Claim type.
@@ -356,13 +323,13 @@ At wide desktop widths, selecting a row may open a narrow preview rail containin
 - SLA.
 - Completeness.
 - Assignment.
-- Direct `Open workspace` action.
+- `Open workspace` action.
 
-The inspector must not duplicate the complete Claim Workspace or introduce unsupported actions.
+The inspector does not duplicate the complete Claim Workspace or add unsupported actions. From 768px to 1439px, the same preview opens as a drawer. Below 768px, it is omitted and each card links directly to the workspace.
 
 ### 10.5 Mobile queue
 
-Below 768px, transform table rows into structured claim cards while preserving all important fields and a clear route to the Claim Workspace.
+Below 768px, transform rows into structured claim cards while preserving every critical field and a clear route to the Claim Workspace.
 
 ## 11. Claim Workspace
 
@@ -375,12 +342,9 @@ Display:
 - Back navigation.
 - Claim number.
 - Claimant name.
-- Claim type.
-- Incident date.
-- Priority.
-- Status.
-- SLA.
-- Completeness.
+- Claim type and incident date.
+- Priority and status.
+- SLA and completeness.
 - Assigned adjuster when present.
 
 The header must answer:
@@ -393,16 +357,11 @@ The header must answer:
 
 Use three coordinated zones:
 
-1. **Primary evidence ledger**  
-   Claim facts, incident narrative, evidence state, and priority factors.
+1. **Primary evidence ledger** for claim facts, incident narrative, evidence state, and priority factors.
+2. **Operational timeline** for audit history, actors, timestamps, summaries, and value transitions.
+3. **Sticky command rail** for assignment, valid status transitions, contextual feedback, and review actions.
 
-2. **Operational timeline**  
-   Audit history, actors, timestamps, summaries, and value transitions.
-
-3. **Sticky command rail**  
-   Assignment, valid status transitions, contextual feedback, and review actions.
-
-The zones must remain visually connected without becoming nested card stacks.
+The zones remain visually connected without becoming nested card stacks.
 
 ### 11.3 Evidence ledger
 
@@ -410,13 +369,13 @@ Present evidence as a clear matrix:
 
 - Present.
 - Missing.
-- Not applicable or unavailable only where the existing data supports that state.
+- Not applicable or unavailable only when supported by existing data.
 
 Missing evidence receives warning emphasis. Present evidence remains quieter. Priority factors explain current backend output without implying editable scoring.
 
 ### 11.4 Decision support
 
-Decision support uses a visually distinct dark command surface containing:
+Use a distinct dark command surface containing:
 
 - Recommended action.
 - Explanation.
@@ -429,22 +388,16 @@ Decision support uses a visually distinct dark command surface containing:
 
 Rules:
 
-- Never label a recommendation as OpenAI-generated unless reliable provider provenance is added to the response model.
+- Never label a recommendation as OpenAI-generated unless reliable provenance is added to the response model.
 - Confidence uses a numeric value plus a visual indicator.
-- Approve and reject actions must differ through label, icon, shape, and semantic treatment, not color alone.
+- Approve and reject differ through label, icon, shape, and semantic treatment, not color alone.
 - Decision support cannot automatically change claim status, assignment, or outcome.
 
 ### 11.5 Audit timeline
 
 Display all audit events by default. Each event shows available actor, timestamp, summary, event type, and value transition.
 
-Differentiate:
-
-- Claim creation.
-- Assignment.
-- Status transition.
-- Recommendation generation.
-- Recommendation review.
+Differentiate claim creation, assignment, status transition, recommendation generation, and recommendation review.
 
 ## 12. New Claim Intake
 
@@ -467,8 +420,7 @@ Use:
 - Sticky progress and summary rail.
 - Numbered section markers.
 - Section descriptions.
-- Grouped fields.
-- Clear helper text.
+- Grouped fields and helper text.
 - Compact final review surface before submission.
 
 ### 12.3 Interaction treatment
@@ -476,7 +428,7 @@ Use:
 - Claim types become selectable visual cards backed by the existing `claimType` control.
 - Evidence items become accessible selection cards backed by real form controls.
 - Progress reflects frontend form completion only.
-- The frontend must not predict backend priority or authoritative completeness.
+- The frontend does not predict backend priority or authoritative completeness.
 
 ### 12.4 Validation
 
@@ -491,20 +443,20 @@ Preserve:
 - Disabled submitting state.
 - Server error feedback.
 
-Inline field errors may supplement, but not replace, the error summary.
+Inline errors supplement, but do not replace, the error summary.
 
 ## 13. Shared component architecture
 
-### 13.1 Application shell components
+### Application shell
 
 - `app-shell`
 - `primary-navigation`
 - `workspace-header`
-- `global-command-search`
+- `global-claim-search`
 - `system-status`
 - `mobile-navigation`
 
-### 13.2 Shared presentation components
+### Shared presentation
 
 - `metric-instrument`
 - `command-panel`
@@ -514,15 +466,16 @@ Inline field errors may supplement, but not replace, the error summary.
 - `progress-indicator`
 - `sla-indicator`
 - `filter-chip`
+- `context-inspector`
 - `context-drawer`
 - `empty-state`
 - `loading-skeleton`
 - `inline-alert`
 - `timeline-item`
 
-Components must have focused ownership. Route components coordinate data and actions. Shared presentation components receive typed inputs and emit user intent without owning backend rules.
+Route components coordinate data and actions. Shared components receive typed inputs and emit user intent without owning backend rules.
 
-Do not create abstraction solely to reduce a few lines. Extract components where they establish a repeated visual or interaction contract.
+Do not extract abstractions solely to reduce a few lines. Extract where a repeated visual or interaction contract exists.
 
 ## 14. Angular state and data flow
 
@@ -533,15 +486,15 @@ Use the existing Angular architecture:
 - RxJS and typed services for asynchronous API workflows.
 - Reactive Forms for intake and queue controls.
 - Router query parameters as the queue filter source of truth.
-- Existing services and backend responses as the authoritative data source.
+- Existing services and backend responses as authoritative data.
 
 A new global state library is not justified for this scope.
 
-Angular 20 implementation should favor standalone, focused components and explicit loading, loaded, empty, and error rendering. Queue query-parameter behavior should remain testable through Angular router testing utilities.
+Angular 20 implementation should continue using standalone, focused components and explicit loading, loaded, empty, and error rendering. Queue query-parameter behavior remains testable through Angular router testing utilities.
 
 ## 15. Loading, empty, success, and error behavior
 
-Every route must explicitly support:
+Every route explicitly supports:
 
 1. Initial loading.
 2. Loaded state.
@@ -554,38 +507,33 @@ Every route must explicitly support:
 Guidelines:
 
 - Skeletons approximate final geometry to reduce layout shift.
-- Route failures use a prominent alert with retry where the existing service can retry safely.
+- Route failures use a prominent alert with retry where retry is safe.
 - Action failures remain near the action that caused them.
-- Success feedback must be perceivable without relying on color.
+- Success feedback is perceivable without relying on color.
 - Disabled controls explain their state where needed.
-- Live updates and action outcomes use appropriate accessible status announcements.
+- Asynchronous action outcomes use accessible status announcements.
 
 ## 16. Controls and interaction states
 
-### 16.1 Buttons
+### Buttons
 
 - **Primary:** teal fill, dark text, reserved for the route's main action.
 - **Secondary:** neutral or outlined.
 - **Command:** dark fill on light surfaces.
-- **Destructive:** red-accented, visually distinct from primary.
+- **Destructive:** red-accented and distinct from primary.
 - **Approve and reject:** distinct icon, wording, and shape treatment.
 
-### 16.2 Inputs
+### Inputs
 
 - Default height: 40px to 44px.
 - Persistent visible labels.
 - Cyan focus ring plus neutral outline.
 - Validation shown through message, icon, border, and semantic text.
-- Search may use command styling but remains an accessible standard input.
+- Search remains an accessible standard input.
 
-### 16.3 Badges and signals
+### Badges and signals
 
-Semantic states combine:
-
-- Text label.
-- Icon or marker.
-- Color.
-- Accessible description where necessary.
+Semantic states combine text, icon or marker, color, and accessible description where necessary.
 
 ## 17. Motion
 
@@ -596,32 +544,32 @@ Motion is functional and restrained:
 - Inspector or drawer: approximately 220ms.
 - Progress changes: 250ms to 350ms.
 - Skeletons may use restrained opacity animation.
-- Charts or signal paths may animate once on initial load when the data supports the visualization.
+- Signal paths may animate once on initial load.
 - No continuous decorative loops.
 - `prefers-reduced-motion` disables nonessential movement.
 
 ## 18. Responsive behavior
 
-### 18.1 Desktop, 1280px and above
+### Desktop, 1280px and above
 
 - Persistent sidebar.
 - Multi-column dashboard.
 - Semantic queue table.
-- Optional queue inspector.
 - Claim Workspace with sticky command rail.
+- Queue inspector appears at 1440px and above.
 
-### 18.2 Tablet, 768px to 1279px
+### Tablet, 768px to 1279px
 
-- Compact sidebar or top navigation according to available width.
+- Compact sidebar or top navigation based on available width.
 - Dashboard reduces to two columns.
-- Queue inspector becomes a drawer.
+- Queue preview uses a drawer.
 - Sticky command rail becomes an inline or sticky-bottom action region.
 - No horizontal page overflow.
 
-### 18.3 Mobile, below 768px
+### Mobile, below 768px
 
 - Compact top application bar.
-- Primary destinations remain directly accessible where practical.
+- Primary destinations remain directly accessible.
 - Queue table becomes structured cards.
 - Claim Workspace zones become a clear vertical sequence.
 - Primary actions remain visible.
@@ -630,7 +578,7 @@ Motion is functional and restrained:
 
 ## 19. Accessibility
 
-The implementation must preserve or improve:
+Preserve or improve:
 
 - Skip-link behavior.
 - Semantic landmarks and heading order.
@@ -640,14 +588,14 @@ The implementation must preserve or improve:
 - Visible keyboard focus.
 - Non-color status communication.
 - Accessible exact SLA and completeness values.
-- Screen-reader announcements for asynchronous action results.
+- Screen-reader announcements for asynchronous results.
 - Reduced-motion support.
-- Contrast appropriate to WCAG AA for normal text and controls.
+- WCAG AA contrast for normal text and controls.
 - Logical focus movement when drawers or inspectors open and close.
 
 ## 20. Testing strategy
 
-### 20.1 Unit and presentation tests
+### Unit and presentation tests
 
 Cover:
 
@@ -655,17 +603,18 @@ Cover:
 - Status and priority presentation.
 - Filter-chip removal.
 - Form-completion progress.
-- Validation summary behavior.
+- Validation-summary behavior.
 - Recommendation action states.
 - Loading, empty, success, and error rendering.
-- Inspector or drawer state.
+- Inspector and drawer state.
 
-### 20.2 Router and component tests
+### Router and component tests
 
 Verify:
 
 - Queue filters remain URL-backed.
 - Removing a filter updates the URL correctly.
+- Global search navigates to `/claims?q=...`.
 - Claim links navigate correctly.
 - Desktop table and mobile cards expose equivalent critical data.
 - Keyboard focus is visible and follows expected interaction.
@@ -675,7 +624,7 @@ Verify:
 
 Use Angular router testing utilities for route and query-parameter behavior.
 
-### 20.3 Verification commands
+### Verification commands
 
 Frontend:
 
@@ -695,18 +644,18 @@ mvn verify
 
 ## 21. Visual fidelity workflow
 
-Implementation must proceed against the approved Figma source rather than memory.
+Implementation proceeds against the approved Figma source, not memory.
 
 For each major route:
 
 1. Build the route shell and first viewport.
 2. Run the application in a browser.
 3. Capture desktop and mobile renders.
-4. Compare the browser render directly with the approved concept and this specification.
+4. Compare the browser render directly with Figma and this specification.
 5. Record and fix mismatches in layout, typography, color, spacing, iconography, density, responsive behavior, and interaction state.
 6. Continue until no fixable design-review comments remain.
 
-Required fidelity checks include:
+Required checks:
 
 - Color lock against Direction A.
 - Structural lock against Direction C.
@@ -721,7 +670,7 @@ Required fidelity checks include:
 
 ### Phase 1, foundations
 
-- Finalize Figma synthesis for the four existing routes.
+- Finalize the four-route Figma synthesis.
 - Establish tokens, typography, icon rules, surfaces, spacing, and responsive behavior.
 - Rebuild the application shell.
 - Implement focused shared primitives.
@@ -735,7 +684,7 @@ Required fidelity checks include:
 
 The Claim Workspace receives the highest design and testing priority.
 
-### Phase 3, state and polish
+### Phase 3, states and polish
 
 - Loading and empty states.
 - Error and success states.
@@ -759,7 +708,7 @@ The redesign is complete only when:
 
 1. All four existing routes use the Adaptive Signal Ledger system.
 2. Direction C's layout and hierarchy are recognizably preserved.
-3. Direction A's near-black teal, teal, and cyan operational language is consistently applied.
+3. Direction A's near-black teal, teal, and cyan language is consistently applied.
 4. Light working surfaces and dark command surfaces are used purposefully.
 5. The dashboard is not a uniform card grid.
 6. The desktop queue remains a semantic table.
@@ -770,7 +719,7 @@ The redesign is complete only when:
 11. Keyboard, focus, contrast, reduced-motion, and mobile behavior pass review.
 12. Frontend tests and production build pass.
 13. Backend verification passes or any unrelated blocker is explicitly documented.
-14. Browser renders are directly compared with Figma and no material, fixable visual mismatch remains.
+14. Browser renders are directly compared with Figma and no material, fixable mismatch remains.
 
 ## 24. Explicit decisions
 
@@ -781,6 +730,9 @@ The redesign is complete only when:
 - Violet: recommendation context only.
 - Claim Workspace: primary showcase surface.
 - Desktop queue: semantic table, not cards.
+- Queue inspector: required at 1440px and above, drawer from 768px to 1439px, omitted below 768px.
+- Global search: existing `q` query parameter only.
+- Dashboard current-state visuals: no trend or time-axis semantics.
 - State management: existing signals, RxJS, Reactive Forms, and Router patterns.
 - Global state library: not added.
 - Backend behavior: unchanged.
