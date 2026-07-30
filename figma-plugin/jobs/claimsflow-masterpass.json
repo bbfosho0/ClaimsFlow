@@ -1,0 +1,11 @@
+{
+  "fileKey": "M7GOuna2hq7jWCGTZhiP5b",
+  "operations": [
+    { "nodeId": "100:104", "preset": "overview-signal-field", "mode": "replace" },
+    { "nodeId": "100:168", "preset": "claim-flow-wave", "mode": "replace" },
+    { "nodeId": "101:74", "preset": "queue-command-atmosphere", "mode": "replace" },
+    { "nodeId": "101:247", "preset": "selected-claim-inspector", "mode": "replace" },
+    { "nodeId": "102:87", "preset": "workspace-identity-field", "mode": "replace" },
+    { "nodeId": "102:222", "preset": "decision-intelligence-mesh", "mode": "replace" }
+  ]
+}

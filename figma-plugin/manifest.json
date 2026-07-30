@@ -1,0 +1,17 @@
+{
+  "name": "ClaimsFlow Shader Studio",
+  "id": "claimsflow-shader-studio",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "reasoning": "Automation Mode connects only to the local ClaimsFlow Shader Studio bridge during development.",
+    "devAllowedDomains": [
+      "http://localhost:3847",
+      "ws://localhost:3847"
+    ]
+  }
+}
