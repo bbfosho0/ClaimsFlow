@@ -1,0 +1,29 @@
+{
+  "version": "2026-08-02",
+  "routes": {
+    "showcase": "/",
+    "tour": "/tour",
+    "overview": "/app/dashboard",
+    "claims": "/app/claims",
+    "claimWorkspace": "/app/claims/:id",
+    "newClaim": "/app/claims/new",
+    "claimsIntelligence": "/app/intelligence"
+  },
+  "intelligenceContract": {
+    "allowed": [
+      "explain recommendations",
+      "identify missing evidence",
+      "detect contradictions",
+      "draft communications",
+      "prepare reversible workflow actions"
+    ],
+    "prohibited": [
+      "silent approval or denial",
+      "autonomous payment",
+      "autonomous closure",
+      "unconfirmed reassignment",
+      "unsourced material claims"
+    ],
+    "confirmation": "Every consequential action requires an operator reason, exact result preview, explicit confirmation, and immutable audit event."
+  }
+}
