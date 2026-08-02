@@ -1,19 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiError } from '../core/api/api-error';
 import { humanizeEnum } from '../shared/presentation/claim-presentation';
+import { IntelligenceReviewQueueComponent } from './components/intelligence-review-queue.component';
 import { EvidenceReasoningGraphComponent } from './evidence-reasoning-graph.component';
 import { IntelligenceFacadeService } from './intelligence-facade.service';
 import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, PreparedAction, PreparedActionType } from './intelligence.models';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, EvidenceReasoningGraphComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, EvidenceReasoningGraphComponent, IntelligenceReviewQueueComponent],
   templateUrl: './claims-intelligence-page.component.html',
   styleUrl: './claims-intelligence-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
 })
 export class ClaimsIntelligencePageComponent implements OnInit {
   private readonly facade = inject(IntelligenceFacadeService);
