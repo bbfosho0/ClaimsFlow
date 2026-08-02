@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
@@ -15,6 +15,9 @@ import {
 import { ProgressIndicatorComponent } from '../../shared/ui/progress-indicator/progress-indicator.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 import { ClaimsApiService } from '../data-access/claims-api.service';
+
+type WorkspaceTab = 'dossier' | 'evidence' | 'communications' | 'audit';
+type ReviewDecision = 'APPROVED' | 'REJECTED';
 
 @Component({
   standalone: true,
@@ -38,8 +41,12 @@ export class ClaimDetailPageComponent implements OnInit {
   readonly assignmentError = signal('');
   readonly statusError = signal('');
   readonly recommendationError = signal('');
+  readonly activeTab = signal<WorkspaceTab>('dossier');
+  readonly pendingReview = signal<ReviewDecision | null>(null);
+  readonly reviewSuccess = signal('');
   readonly adjusterId = new FormControl('', { nonNullable: true });
   readonly nextStatus = new FormControl<ClaimStatus | ''>('', { nonNullable: true });
+  readonly reviewReason = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(500)] });
 
   label = humanizeEnum;
   sla = formatSla;
@@ -68,12 +75,16 @@ export class ClaimDetailPageComponent implements OnInit {
     });
   }
 
-  evidenceItems(item: ClaimDetail): ReadonlyArray<{ label: string; present: boolean }> {
+  setTab(tab: WorkspaceTab): void {
+    this.activeTab.set(tab);
+  }
+
+  evidenceItems(item: ClaimDetail): ReadonlyArray<{ label: string; present: boolean; impact: string }> {
     return [
-      { label: 'Incident report', present: item.evidence.incidentReportPresent },
-      { label: 'Damage photos', present: item.evidence.photosPresent },
-      { label: 'Proof of ownership', present: item.evidence.proofOfOwnershipPresent },
-      { label: 'Medical documentation', present: item.evidence.medicalDocumentationPresent },
+      { label: 'Incident report', present: item.evidence.incidentReportPresent, impact: 'Establishes the reported event and initial facts.' },
+      { label: 'Damage photos', present: item.evidence.photosPresent, impact: 'Supports severity and visible damage assessment.' },
+      { label: 'Proof of ownership', present: item.evidence.proofOfOwnershipPresent, impact: 'Confirms the claimant has an insurable interest.' },
+      { label: 'Medical documentation', present: item.evidence.medicalDocumentationPresent, impact: 'Required for injury-related loss evaluation.' },
     ];
   }
 
@@ -123,6 +134,7 @@ export class ClaimDetailPageComponent implements OnInit {
   generate(): void {
     this.acting.set(true);
     this.recommendationError.set('');
+    this.reviewSuccess.set('');
     this.api.generateRecommendation(this.id).subscribe({
       next: value => {
         this.recommendation.set(value);
@@ -136,13 +148,36 @@ export class ClaimDetailPageComponent implements OnInit {
     });
   }
 
-  review(decision: 'APPROVED' | 'REJECTED'): void {
+  openReview(decision: ReviewDecision): void {
+    this.reviewReason.reset('');
+    this.reviewReason.markAsUntouched();
+    this.pendingReview.set(decision);
+  }
+
+  cancelReview(): void {
+    if (this.acting()) return;
+    this.pendingReview.set(null);
+    this.reviewReason.reset('');
+  }
+
+  confirmReview(): void {
     const current = this.recommendation();
-    if (!current) return;
+    const decision = this.pendingReview();
+    if (!current || !decision) return;
+    if (this.reviewReason.invalid) {
+      this.reviewReason.markAsTouched();
+      return;
+    }
+
     this.acting.set(true);
-    this.api.reviewRecommendation(this.id, current.id, decision, 'Interview User').subscribe({
+    this.recommendationError.set('');
+    this.reviewSuccess.set('');
+    this.api.reviewRecommendation(this.id, current.id, decision, 'Interview User', this.reviewReason.value.trim()).subscribe({
       next: value => {
         this.recommendation.set(value);
+        this.reviewSuccess.set(`${this.label(decision)} review recorded and appended to the audit timeline.`);
+        this.pendingReview.set(null);
+        this.reviewReason.reset('');
         this.acting.set(false);
         this.refreshAudit();
       },
