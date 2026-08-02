@@ -38,10 +38,10 @@ export class NewClaimPageComponent {
   readonly uploadedFiles = signal<string[]>([]);
   readonly uploadError = signal('');
   readonly claimTypes: ReadonlyArray<{ value: ClaimType; label: string; icon: string; description: string }> = [
-    { value: 'AUTO', label: 'Auto', icon: '▣', description: 'Vehicle damage or collision' },
-    { value: 'PROPERTY', label: 'Property', icon: '⌂', description: 'Home or business property' },
-    { value: 'PERSONAL_INJURY', label: '+', icon: '+', description: 'Medical or bodily injury' },
-  ].map(item => item.value === 'PERSONAL_INJURY' ? { ...item, label: 'Personal injury' } : item);
+    { value: 'AUTO' as ClaimType, label: 'Auto', icon: '▣', description: 'Vehicle damage or collision' },
+    { value: 'PROPERTY' as ClaimType, label: 'Property', icon: '⌂', description: 'Home or business property' },
+    { value: 'PERSONAL_INJURY' as ClaimType, label: 'Personal injury', icon: '+', description: 'Medical or bodily injury' },
+  ];
 
   readonly form = this.fb.group({
     claimantName: ['', [Validators.required, Validators.maxLength(160)]],
