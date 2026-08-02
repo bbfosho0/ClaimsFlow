@@ -1,0 +1,25 @@
+{
+  "version": "2026-08-02",
+  "components": [
+    { "figmaName": "Button", "angularTarget": "CfButtonComponent" },
+    { "figmaName": "StatusBadge", "angularTarget": "CfStatusBadgeComponent" },
+    { "figmaName": "Field", "angularTarget": "CfFieldComponent" },
+    { "figmaName": "ApplicationShell/NavigationRail", "angularTarget": "CfNavigationRailComponent" },
+    { "figmaName": "ApplicationShell/Header", "angularTarget": "CfApplicationHeaderComponent" },
+    { "figmaName": "Visualization/PriorityCommandField", "angularTarget": "CfPriorityCommandFieldComponent" },
+    { "figmaName": "CommandBar/ClaimsQueue", "angularTarget": "ClaimsQueueCommandComponent" },
+    { "figmaName": "Table/ClaimsQueue", "angularTarget": "ClaimsQueueTableComponent" },
+    { "figmaName": "Inspector/SelectedClaim", "angularTarget": "SelectedClaimInspectorComponent" },
+    { "figmaName": "Tabs/ClaimWorkspace", "angularTarget": "ClaimWorkspaceTabsComponent" },
+    { "figmaName": "Table/EvidenceLedger", "angularTarget": "EvidenceLedgerComponent" },
+    { "figmaName": "Rail/DecisionAndCommunications", "angularTarget": "ClaimDecisionRailComponent" },
+    { "figmaName": "Decision/ConfirmationDialog", "angularTarget": "DecisionConfirmationDialogComponent" },
+    { "figmaName": "Tour/Controller", "angularTarget": "TourControllerComponent" },
+    { "figmaName": "Form/ClaimIntakeDossier", "angularTarget": "NewClaimFormComponent" },
+    { "figmaName": "Rail/Submission", "angularTarget": "ClaimSubmissionRailComponent" },
+    { "figmaName": "Intelligence/ReviewQueueRow", "angularTarget": "ClaimsIntelligenceQueueRowComponent" },
+    { "figmaName": "Visualization/EvidenceReasoningGraph", "angularTarget": "EvidenceReasoningGraphComponent" },
+    { "figmaName": "Assistant/ContextualPanel", "angularTarget": "ClaimAssistantComponent" },
+    { "figmaName": "Intelligence/ActionPreviewDialog", "angularTarget": "IntelligenceActionPreviewDialogComponent" }
+  ]
+}
