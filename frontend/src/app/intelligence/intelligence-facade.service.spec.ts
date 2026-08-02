@@ -51,7 +51,6 @@ const page: ClaimPage = {
     status: claim.status,
     completenessPercentage: claim.completenessPercentage,
     slaDeadline: claim.slaDeadline,
-    createdAt: claim.createdAt,
   }],
   page: 0,
   size: 20,
