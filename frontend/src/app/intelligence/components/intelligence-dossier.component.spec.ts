@@ -72,8 +72,8 @@ describe('IntelligenceDossierComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Explainable guidance');
     expect(fixture.nativeElement.querySelector('app-evidence-reasoning-graph')).not.toBeNull();
 
-    const approve = Array.from(fixture.nativeElement.querySelectorAll('button'))
-      .find((button: HTMLButtonElement) => button.textContent?.includes('Approve guidance')) as HTMLButtonElement;
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>);
+    const approve = buttons.find(button => button.textContent?.includes('Approve guidance')) as HTMLButtonElement;
     approve.click();
     expect(approvalRequested).toBeTrue();
   });
@@ -87,8 +87,8 @@ describe('IntelligenceDossierComponent', () => {
     fixture.componentInstance.generateRecommendation.subscribe(() => generated = true);
     fixture.detectChanges();
 
-    const generate = Array.from(fixture.nativeElement.querySelectorAll('button'))
-      .find((button: HTMLButtonElement) => button.textContent?.includes('Generate recommendation')) as HTMLButtonElement;
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>);
+    const generate = buttons.find(button => button.textContent?.includes('Generate recommendation')) as HTMLButtonElement;
     generate.click();
     expect(generated).toBeTrue();
   });
