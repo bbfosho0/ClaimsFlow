@@ -87,11 +87,17 @@ describe('ClaimDetailPageComponent', () => {
     component.recommendation.set(recommendation);
     harness.detectChanges();
 
-    const root = harness.routeNativeElement!;
-    expect(root.textContent).toContain('Decision support');
+    let root = harness.routeNativeElement!;
+    expect(root.querySelector('[data-tour-target="decision-support"]')).not.toBeNull();
     expect(root.textContent).toContain('Advisory only');
     expect(root.textContent).not.toContain('OpenAI recommendation');
-    expect(root.querySelector('[aria-label="Claim completeness 50%"]')).not.toBeNull();
+    expect(root.querySelector('.identity-instruments article:nth-child(2) strong')?.textContent?.trim()).toBe('50%');
+
+    const auditTab = Array.from(root.querySelectorAll('.workspace-tabs button'))
+      .find(button => button.textContent?.includes('Audit')) as HTMLButtonElement | undefined;
+    auditTab?.click();
+    harness.detectChanges();
+    root = harness.routeNativeElement!;
     expect(root.querySelectorAll('.audit-event').length).toBe(2);
 
     const approve = Array.from(root.querySelectorAll('button'))
@@ -99,6 +105,7 @@ describe('ClaimDetailPageComponent', () => {
     approve?.click();
     harness.detectChanges();
 
+    root = harness.routeNativeElement!;
     expect(api.reviewRecommendation).not.toHaveBeenCalled();
     expect(root.querySelector('[role="dialog"]')).not.toBeNull();
 
@@ -107,6 +114,7 @@ describe('ClaimDetailPageComponent', () => {
     reason.dispatchEvent(new Event('input'));
     harness.detectChanges();
 
+    root = harness.routeNativeElement!;
     const confirm = Array.from(root.querySelectorAll('button'))
       .find(button => button.textContent?.includes('Confirm approved')) as HTMLButtonElement | undefined;
     confirm?.click();
