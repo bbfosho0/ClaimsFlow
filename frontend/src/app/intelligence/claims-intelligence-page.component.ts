@@ -155,9 +155,11 @@ export class ClaimsIntelligencePageComponent implements OnInit {
       recommendationId: recommendation.id,
       decision,
       reason: event.reason,
-    }).subscribe({
-      next: updatedRecommendation => {
-        this.workspace.set({ ...workspace, recommendation: updatedRecommendation });
+    }).pipe(
+      switchMap(() => this.facade.loadWorkspace(workspace.claim.id)),
+    ).subscribe({
+      next: updatedWorkspace => {
+        this.workspace.set(updatedWorkspace);
         this.confirmationMessage.set(`${this.label(decision)} review recorded with operator reason and audit event.`);
         this.preparedAction.set(null);
         this.acting.set(false);
