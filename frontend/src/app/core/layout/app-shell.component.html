@@ -1,33 +1,43 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
 <div class="app-shell">
   <aside class="app-sidebar" aria-label="Primary navigation">
-    <div class="brand-block">
-      <span class="brand-mark" aria-hidden="true">CF</span>
+    <a class="brand-block" routerLink="/" aria-label="ClaimsFlow showcase">
+      <span class="brand-mark" aria-hidden="true"><span>CF</span></span>
       <span class="brand-copy">
         <strong>ClaimsFlow</strong>
-        <small>Operations Intelligence</small>
+        <small>Command system</small>
       </span>
-    </div>
+    </a>
 
+    <div class="rail-label">OPERATIONS</div>
     <nav class="primary-nav" aria-label="ClaimsFlow destinations">
-      <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">
-        <span class="nav-icon" aria-hidden="true">⌂</span>
+      <a routerLink="/app/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span class="nav-icon nav-overview" aria-hidden="true"></span>
         <span>Overview</span>
       </a>
-      <a routerLink="/claims" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">
-        <span class="nav-icon" aria-hidden="true">≡</span>
+      <a routerLink="/app/claims" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">
+        <span class="nav-icon nav-claims" aria-hidden="true"></span>
         <span>Claims</span>
       </a>
-      <a routerLink="/claims/new" routerLinkActive="active" ariaCurrentWhenActive="page">
-        <span class="nav-icon" aria-hidden="true">+</span>
+      <a routerLink="/app/claims/new" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span class="nav-icon nav-new" aria-hidden="true"></span>
         <span>New claim</span>
+      </a>
+      <a routerLink="/app/intelligence" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span class="nav-icon nav-intelligence" aria-hidden="true"></span>
+        <span>Intelligence</span>
       </a>
     </nav>
 
     <div class="sidebar-spacer"></div>
 
+    <a class="tour-link" routerLink="/tour">
+      <span aria-hidden="true">↗</span>
+      <span><strong>Guided tour</strong><small>90-second product path</small></span>
+    </a>
+
     <section class="system-status" aria-label="System status">
-      <div class="status-heading"><span aria-hidden="true">✓</span><strong>System healthy</strong></div>
+      <div class="status-heading"><span class="status-pulse" aria-hidden="true"></span><strong>System healthy</strong></div>
       <span>Decision support available</span>
       <small>API · Database · Audit</small>
     </section>
@@ -39,6 +49,7 @@
   </aside>
 
   <main id="main-content" tabindex="-1" class="app-workspace">
+    <div class="workspace-atmosphere" aria-hidden="true"></div>
     <router-outlet />
   </main>
 </div>
