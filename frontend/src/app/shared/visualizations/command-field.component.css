@@ -1,0 +1,45 @@
+:host { display: block; min-width: 0; }
+.command-field { position: relative; margin: 0; overflow: hidden; border: 1px solid rgb(66 205 236 / .22); border-radius: var(--cf-radius-large); background: radial-gradient(circle at 50% 45%, rgb(43 227 183 / .04), transparent 46%), linear-gradient(180deg, rgb(255 255 255 / .014), transparent), rgb(2 11 16 / .78); box-shadow: inset 0 1px rgb(255 255 255 / .03), 0 24px 80px rgb(0 0 0 / .28); }
+.command-field::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .42; background-image: linear-gradient(rgb(66 205 236 / .025) 1px, transparent 1px), linear-gradient(90deg, rgb(66 205 236 / .02) 1px, transparent 1px); background-size: 28px 28px; mask-image: radial-gradient(circle at center, #000, transparent 78%); }
+.command-field::after { content: ''; position: absolute; inset: -30% -10%; pointer-events: none; background: conic-gradient(from 90deg at 50% 50%, transparent, rgb(66 205 236 / .035), transparent 30%, rgb(154 124 255 / .025), transparent 66%); animation: field-rotation 18s linear infinite; }
+svg { position: relative; z-index: 1; display: block; width: 100%; height: auto; min-height: 260px; }
+.field-grid path { fill: none; stroke: rgb(66 205 236 / .055); stroke-width: 1; }
+.orbit { fill: none; stroke: rgb(66 205 236 / .17); stroke-width: 1; stroke-dasharray: 3 8; transform-origin: 360px 210px; animation: orbit-spin 24s linear infinite; }
+.orbit-two { stroke: rgb(154 124 255 / .16); animation-direction: reverse; animation-duration: 17s; }
+.orbit-three { stroke: rgb(43 227 183 / .22); stroke-dasharray: 2 5; animation-duration: 10s; }
+.command-wave { fill: none; stroke-width: 2.2; filter: url(#cfGlow); stroke-dasharray: 760; stroke-dashoffset: 0; animation: wave-flow 5s ease-in-out infinite; }
+.pressure-line { fill: none; stroke: rgb(247 183 91 / .24); stroke-width: 1.2; stroke-dasharray: 4 9; }
+.connection-lines line { stroke: rgb(66 205 236 / .09); stroke-width: .8; }
+.signal-halo { fill: currentColor; opacity: .07; animation: signal-halo 2.8s ease-in-out infinite; animation-delay: calc(var(--signal-index) * 80ms); }
+.signal-dot { filter: url(#cfGlow); }
+.signal-healthy { fill: var(--cf-color-action-primary); color: var(--cf-color-action-primary); }
+.signal-live { fill: var(--cf-color-activity-live); color: var(--cf-color-activity-live); }
+.signal-advisory { fill: var(--cf-color-intelligence-advisory); color: var(--cf-color-intelligence-advisory); }
+.signal-warning { fill: var(--cf-color-risk-approaching); color: var(--cf-color-risk-approaching); }
+.signal-critical { fill: var(--cf-color-risk-critical); color: var(--cf-color-risk-critical); }
+.signals g[data-tone='healthy'] { color: var(--cf-color-action-primary); }
+.signals g[data-tone='live'] { color: var(--cf-color-activity-live); }
+.signals g[data-tone='advisory'] { color: var(--cf-color-intelligence-advisory); }
+.signals g[data-tone='warning'] { color: var(--cf-color-risk-approaching); }
+.signals g[data-tone='critical'] { color: var(--cf-color-risk-critical); }
+.field-center > circle:first-child { fill: rgb(7 26 34 / .9); stroke: rgb(66 205 236 / .34); }
+.center-pulse { fill: rgb(43 227 183 / .14); stroke: var(--cf-color-action-primary); filter: url(#cfGlow); animation: center-pulse 2.2s ease-in-out infinite; }
+.field-center path { fill: none; stroke: var(--cf-color-text-primary); stroke-width: 1.6; stroke-linecap: round; }
+.scan-line { stroke: rgb(66 205 236 / .34); stroke-width: 1; filter: url(#cfGlow); animation: scan 5.6s var(--cf-ease-standard) infinite; }
+.field-legend { position: absolute; left: 18px; right: 18px; bottom: 15px; z-index: 2; display: flex; flex-wrap: wrap; gap: 7px 14px; color: var(--cf-color-text-muted); font-size: 9px; font-weight: 750; letter-spacing: .045em; text-transform: uppercase; }
+.field-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.field-legend span::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+.field-legend span[data-tone='critical'] { color: var(--cf-color-risk-critical); }
+.field-legend span[data-tone='warning'] { color: var(--cf-color-risk-approaching); }
+.field-legend span[data-tone='live'] { color: var(--cf-color-activity-live); }
+.field-legend span[data-tone='advisory'] { color: var(--cf-color-intelligence-advisory); }
+.command-field[data-variant='compact'] .field-legend { display: none; }
+.command-field[data-variant='compact'] svg { min-height: 210px; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+@keyframes wave-flow { 0%, 100% { stroke-dashoffset: 80; opacity: .68; } 50% { stroke-dashoffset: -70; opacity: 1; } }
+@keyframes signal-halo { 0%, 100% { transform: scale(.75); opacity: .04; } 50% { transform: scale(1.2); opacity: .13; } }
+@keyframes center-pulse { 0%, 100% { transform: scale(.82); opacity: .7; } 50% { transform: scale(1.12); opacity: 1; } }
+@keyframes scan { 0% { transform: translateY(-74px); opacity: 0; } 12%, 82% { opacity: .7; } 100% { transform: translateY(260px); opacity: 0; } }
+@keyframes field-rotation { to { transform: rotate(360deg); } }
+.reduced-motion::after, .reduced-motion .orbit, .reduced-motion .command-wave, .reduced-motion .signal-halo, .reduced-motion .center-pulse, .reduced-motion .scan-line { animation: none; }
+@media (prefers-reduced-motion: reduce) { .command-field::after, .orbit, .command-wave, .signal-halo, .center-pulse, .scan-line { animation: none; } }
