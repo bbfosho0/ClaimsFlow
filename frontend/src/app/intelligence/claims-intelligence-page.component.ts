@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiError } from '../core/api/api-error';
 import { humanizeEnum } from '../shared/presentation/claim-presentation';
+import { ClaimAssistantPanelComponent } from './components/claim-assistant-panel.component';
 import { IntelligenceDossierComponent } from './components/intelligence-dossier.component';
 import { IntelligenceReviewQueueComponent } from './components/intelligence-review-queue.component';
 import { IntelligenceFacadeService } from './intelligence-facade.service';
@@ -11,7 +12,7 @@ import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, Prepare
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, IntelligenceReviewQueueComponent, IntelligenceDossierComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, IntelligenceReviewQueueComponent, IntelligenceDossierComponent, ClaimAssistantPanelComponent],
   templateUrl: './claims-intelligence-page.component.html',
   styleUrl: './claims-intelligence-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
