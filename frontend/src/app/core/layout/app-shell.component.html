@@ -1,27 +1,78 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
 <div class="app-shell">
   <aside class="app-sidebar" aria-label="Primary navigation">
-    <a class="brand-block" routerLink="/" aria-label="ClaimsFlow showcase">
-      <span class="brand-mark" aria-hidden="true"><span>CF</span></span>
-      <span class="brand-copy"><strong>ClaimsFlow</strong><small>Command system</small></span>
-    </a>
+    <div class="sidebar-top">
+      <a class="brand-block" routerLink="/" aria-label="ClaimsFlow showcase">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span class="brand-copy"><strong>ClaimsFlow</strong><small>Intelligent claims</small></span>
+      </a>
 
-    <div class="rail-label">OPERATIONS</div>
-    <nav class="primary-nav" aria-label="ClaimsFlow destinations">
-      <a routerLink="/app/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-icon nav-overview" aria-hidden="true"></span><span>Overview</span></a>
-      <a routerLink="/app/claims" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page"><span class="nav-icon nav-claims" aria-hidden="true"></span><span>Claims</span></a>
-      <a routerLink="/app/claims/new" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-icon nav-new" aria-hidden="true"></span><span>New claim</span></a>
-      <a routerLink="/app/intelligence" routerLinkActive="active" ariaCurrentWhenActive="page"><span class="nav-icon nav-intelligence" aria-hidden="true"></span><span>Intelligence</span></a>
-    </nav>
+      <nav class="primary-nav" aria-label="ClaimsFlow destinations">
+        <a
+          *ngFor="let item of navigation"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          ariaCurrentWhenActive="page"
+          (click)="closeMobileDrawer()">
+          <span class="active-signal" aria-hidden="true"></span>
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </nav>
+    </div>
 
-    <div class="sidebar-spacer"></div>
-    <a class="tour-link" routerLink="/tour"><span aria-hidden="true">↗</span><span><strong>Guided tour</strong><small>90-second product path</small></span></a>
-    <section class="system-status" aria-label="System status"><div class="status-heading"><span class="status-pulse" aria-hidden="true"></span><strong>System healthy</strong></div><span>Decision support available</span><small>API · Database · Audit</small></section>
-    <div class="operator-block" aria-label="Current demo operator"><span class="operator-avatar" aria-hidden="true">YG</span><span><strong>Interview User</strong><small>Claims operator</small></span></div>
+    <div class="sidebar-bottom">
+      <section class="copilot-card" aria-label="AI Copilot">
+        <div class="copilot-heading"><strong>AI Copilot</strong><span>BETA</span></div>
+        <div class="copilot-orb" aria-hidden="true"><i></i><b></b></div>
+        <strong>Ask Copilot</strong>
+        <p>Get insights, summaries, and recommendations.</p>
+        <button type="button">Ask a question <span aria-hidden="true">→</span></button>
+      </section>
+
+      <div class="operator-block" aria-label="Current operator">
+        <span class="operator-avatar" aria-hidden="true">AM</span>
+        <span class="operator-copy"><strong>Alex Morgan</strong><small>Claims Manager</small></span>
+        <span class="operator-menu" aria-hidden="true">⌄</span>
+      </div>
+    </div>
   </aside>
 
-  <main id="main-content" tabindex="-1" class="app-workspace">
-    <div class="workspace-atmosphere" aria-hidden="true"></div>
-    <router-outlet />
-  </main>
+  <section class="workspace-shell">
+    <header class="app-topbar">
+      <div class="route-context">
+        <strong>{{ shellTitle() }}</strong>
+        <span>{{ shellSubtitle() }}</span>
+      </div>
+
+      <label class="global-search">
+        <span class="search-symbol" aria-hidden="true"></span>
+        <span class="sr-only">Global search</span>
+        <input type="search" placeholder="Search claims, policies, documents, people…" />
+        <kbd>⌘K</kbd>
+      </label>
+
+      <div class="topbar-spacer"></div>
+      <button class="topbar-icon notification-button" type="button" aria-label="Notifications"><span aria-hidden="true">♢</span><b>3</b></button>
+      <button class="topbar-icon" type="button" aria-label="Help"><span aria-hidden="true">?</span></button>
+      <div class="topbar-profile" aria-label="Alex Morgan, Claims Manager">
+        <span class="operator-avatar" aria-hidden="true">AM</span>
+        <span><strong>Alex Morgan</strong><small>Claims Manager</small></span>
+        <i aria-hidden="true">⌄</i>
+      </div>
+      <button class="mobile-more" type="button" (click)="toggleMobileDrawer()" [attr.aria-expanded]="mobileDrawerOpen()" aria-controls="mobile-destination-drawer">More</button>
+    </header>
+
+    <div *ngIf="mobileDrawerOpen()" id="mobile-destination-drawer" class="mobile-drawer">
+      <a *ngFor="let item of navigation.slice(5)" [routerLink]="item.path" (click)="closeMobileDrawer()">
+        <span aria-hidden="true">{{ item.icon }}</span>{{ item.label }}
+      </a>
+    </div>
+
+    <main id="main-content" tabindex="-1" class="app-workspace">
+      <div class="workspace-atmosphere" aria-hidden="true"></div>
+      <div class="app-content"><router-outlet /></div>
+    </main>
+  </section>
 </div>
