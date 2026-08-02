@@ -34,7 +34,7 @@ export interface WorkflowNode {
   readonly kind: string;
   readonly title: string;
   readonly detail: string;
-  readonly tone: Exclude<WorkspaceTone, 'blue' | 'critical' | 'muted'>;
+  readonly tone: WorkspaceTone;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -157,12 +157,12 @@ export class WorkspaceDataService {
 
   readonly workflowNodes: readonly WorkflowNode[] = [
     { kind: 'Trigger', title: 'Claim Created', detail: 'When property claim is submitted', tone: 'green' },
-    { kind: 'Condition', title: 'Policy Active?', detail: 'Is policy active and not expired?', tone: 'blue' as never },
+    { kind: 'Condition', title: 'Policy Active?', detail: 'Is policy active and not expired?', tone: 'blue' },
     { kind: 'Condition', title: 'Claim Amount', detail: 'Estimated amount ≤ $25,000?', tone: 'violet' },
     { kind: 'Action', title: 'Send Notification', detail: 'Notify customer of ineligibility', tone: 'amber' },
     { kind: 'AI Action', title: 'Auto-Adjudicate', detail: 'Evaluate and recommend settlement', tone: 'violet' },
     { kind: 'Approval', title: 'Manager Review', detail: 'Required for $25k–$100k', tone: 'amber' },
-    { kind: 'Condition', title: 'AI Confidence Score', detail: 'Confidence score ≥ 75%', tone: 'blue' as never },
+    { kind: 'Condition', title: 'AI Confidence Score', detail: 'Confidence score ≥ 75%', tone: 'blue' },
     { kind: 'Action', title: 'Approve Claim', detail: 'Update status automatically', tone: 'green' },
     { kind: 'Action', title: 'Escalate to Adjuster', detail: 'Send for senior review', tone: 'amber' },
     { kind: 'Action', title: 'Update Claim', detail: 'Close workflow and write audit', tone: 'cyan' },
