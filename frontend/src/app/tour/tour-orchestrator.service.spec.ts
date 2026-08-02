@@ -15,7 +15,6 @@ const page: ClaimPage = {
     status: 'UNDER_REVIEW',
     completenessPercentage: 75,
     slaDeadline: '2026-08-03T12:00:00Z',
-    createdAt: '2026-08-01T12:00:00Z',
   }],
   page: 0,
   size: 20,
