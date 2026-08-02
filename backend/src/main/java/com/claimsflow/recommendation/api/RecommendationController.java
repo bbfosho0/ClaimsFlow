@@ -21,10 +21,13 @@ public class RecommendationController {
 
     @PatchMapping("/{recommendationId}")
     public RecommendationResponse review(@PathVariable UUID claimId, @PathVariable UUID recommendationId, @Valid @RequestBody ReviewRequest request) {
-        return RecommendationResponse.from(service.review(claimId, recommendationId, request.decision(), request.reviewer()));
+        return RecommendationResponse.from(service.review(claimId, recommendationId, request.decision(), request.reviewer(), request.reason()));
     }
 
-    public record ReviewRequest(@NotNull RecommendationReviewState decision, @NotBlank @Size(max = 160) String reviewer) {}
+    public record ReviewRequest(
+            @NotNull RecommendationReviewState decision,
+            @NotBlank @Size(max = 160) String reviewer,
+            @NotBlank @Size(max = 500) String reason) {}
 
     public record RecommendationResponse(UUID id, String recommendedAction, String explanation, int confidence, List<String> missingInformation, Instant generatedAt, RecommendationReviewState reviewState, String reviewerName, Instant reviewedAt) {
         static RecommendationResponse from(Recommendation recommendation) {
