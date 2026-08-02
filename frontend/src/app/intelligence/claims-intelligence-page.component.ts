@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ApiError } from '../core/api/api-error';
 import { humanizeEnum } from '../shared/presentation/claim-presentation';
 import { RecommendationReviewCoordinator } from '../shared/recommendation-review/recommendation-review-coordinator.service';
@@ -22,6 +24,8 @@ import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, Prepare
 export class ClaimsIntelligencePageComponent implements OnInit {
   private readonly facade = inject(IntelligenceFacadeService);
   private readonly reviewCoordinator = inject(RecommendationReviewCoordinator);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly selectedItems = new Subject<IntelligenceQueueItem>();
 
   readonly queue = signal<IntelligenceQueueItem[]>([]);
   readonly selectedId = signal('');
@@ -48,7 +52,32 @@ export class ClaimsIntelligencePageComponent implements OnInit {
   label = humanizeEnum;
 
   ngOnInit(): void {
-    this.facade.loadReviewQueue().subscribe({
+    this.selectedItems.pipe(
+      tap(item => {
+        this.selectedId.set(item.claim.id);
+        this.workspace.set(null);
+        this.loadingWorkspace.set(true);
+        this.error.set('');
+        this.confirmationMessage.set('');
+        this.preparedDraft.set('');
+      }),
+      switchMap(item => this.facade.loadWorkspace(item.claim.id).pipe(
+        map(workspace => ({ workspace, error: '' })),
+        catchError((error: unknown) => of({
+          workspace: null as IntelligenceWorkspace | null,
+          error: this.message(error, 'The selected intelligence dossier is unavailable.'),
+        })),
+      )),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(result => {
+      this.workspace.set(result.workspace);
+      this.error.set(result.error);
+      this.loadingWorkspace.set(false);
+    });
+
+    this.facade.loadReviewQueue().pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
       next: items => {
         this.queue.set(items);
         this.loadingQueue.set(false);
@@ -62,22 +91,7 @@ export class ClaimsIntelligencePageComponent implements OnInit {
   }
 
   select(item: IntelligenceQueueItem): void {
-    this.selectedId.set(item.claim.id);
-    this.workspace.set(null);
-    this.loadingWorkspace.set(true);
-    this.error.set('');
-    this.confirmationMessage.set('');
-    this.preparedDraft.set('');
-    this.facade.loadWorkspace(item.claim.id).subscribe({
-      next: value => {
-        this.workspace.set(value);
-        this.loadingWorkspace.set(false);
-      },
-      error: (error: unknown) => {
-        this.error.set(this.message(error, 'The selected intelligence dossier is unavailable.'));
-        this.loadingWorkspace.set(false);
-      },
-    });
+    this.selectedItems.next(item);
   }
 
   setMode(mode: IntelligenceMode): void {
