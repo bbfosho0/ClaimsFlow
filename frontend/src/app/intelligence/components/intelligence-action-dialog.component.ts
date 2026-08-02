@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnChanges, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { normalizeReviewReason, reviewReasonValidators } from '../../shared/recommendation-review/recommendation-review.validators';
 import { PreparedAction } from '../intelligence.models';
@@ -23,7 +23,8 @@ export class IntelligenceActionDialogComponent implements OnChanges {
   readonly confirmed = output<ConfirmedIntelligenceAction>();
   readonly reason = new FormControl('', { nonNullable: true, validators: reviewReasonValidators() });
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['action']) return;
     this.reason.reset('');
     this.reason.markAsUntouched();
   }
