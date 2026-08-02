@@ -14,17 +14,33 @@ function flattenRoutes(items: Routes, prefix = ''): Map<string, Route> {
 }
 
 describe('ClaimsFlow route contract', () => {
-  it('exposes the showcase, tour, and five lazy application destinations', () => {
+  it('exposes the showcase, tour, nine production workspaces, and three secondary destinations', () => {
     const byPath = flattenRoutes(routes);
 
     expect(byPath.get('')?.loadComponent).toBeDefined();
     expect(byPath.get('showcase')?.redirectTo).toBe('');
     expect(byPath.get('tour')?.loadComponent).toBeDefined();
-    expect(byPath.get('app/dashboard')?.loadComponent).toBeDefined();
-    expect(byPath.get('app/claims')?.loadComponent).toBeDefined();
-    expect(byPath.get('app/claims/new')?.loadComponent).toBeDefined();
-    expect(byPath.get('app/claims/:id')?.loadComponent).toBeDefined();
-    expect(byPath.get('app/intelligence')?.loadComponent).toBeDefined();
+
+    const applicationRoutes = [
+      'app/dashboard',
+      'app/claims',
+      'app/claims/new',
+      'app/claims/:id',
+      'app/my-work',
+      'app/analytics',
+      'app/intelligence',
+      'app/documents',
+      'app/team-ops',
+      'app/workflows',
+      'app/reports',
+      'app/settings',
+    ];
+
+    for (const path of applicationRoutes) {
+      expect(byPath.get(path)?.loadComponent).withContext(path).toBeDefined();
+      expect(byPath.get(path)?.data?.['shellTitle']).withContext(`${path} title`).toBeTruthy();
+      expect(byPath.get(path)?.data?.['shellSubtitle']).withContext(`${path} subtitle`).toBeTruthy();
+    }
   });
 
   it('keeps legacy application URLs as redirects', () => {
