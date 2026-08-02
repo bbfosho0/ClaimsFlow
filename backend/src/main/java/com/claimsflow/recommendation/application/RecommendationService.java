@@ -36,6 +36,12 @@ public class RecommendationService {
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Recommendation> latest(UUID claimId) {
+        claims.get(claimId);
+        return recommendations.findFirstByClaim_IdOrderByGeneratedAtDesc(claimId);
+    }
+
     public Recommendation generate(UUID claimId) {
         Claim claim = claims.get(claimId);
         var completeness = claims.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
