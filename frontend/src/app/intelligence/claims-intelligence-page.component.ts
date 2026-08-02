@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiError } from '../core/api/api-error';
 import { humanizeEnum } from '../shared/presentation/claim-presentation';
+import { RecommendationReviewCoordinator } from '../shared/recommendation-review/recommendation-review-coordinator.service';
 import { ClaimAssistantPanelComponent } from './components/claim-assistant-panel.component';
+import { ConfirmedIntelligenceAction, IntelligenceActionDialogComponent } from './components/intelligence-action-dialog.component';
 import { IntelligenceDossierComponent } from './components/intelligence-dossier.component';
 import { IntelligenceReviewQueueComponent } from './components/intelligence-review-queue.component';
 import { IntelligenceFacadeService } from './intelligence-facade.service';
@@ -12,7 +13,7 @@ import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, Prepare
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, IntelligenceReviewQueueComponent, IntelligenceDossierComponent, ClaimAssistantPanelComponent],
+  imports: [CommonModule, RouterLink, IntelligenceReviewQueueComponent, IntelligenceDossierComponent, ClaimAssistantPanelComponent, IntelligenceActionDialogComponent],
   templateUrl: './claims-intelligence-page.component.html',
   styleUrl: './claims-intelligence-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +21,7 @@ import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, Prepare
 })
 export class ClaimsIntelligencePageComponent implements OnInit {
   private readonly facade = inject(IntelligenceFacadeService);
+  private readonly reviewCoordinator = inject(RecommendationReviewCoordinator);
 
   readonly queue = signal<IntelligenceQueueItem[]>([]);
   readonly selectedId = signal('');
@@ -32,7 +34,6 @@ export class ClaimsIntelligencePageComponent implements OnInit {
   readonly preparedAction = signal<PreparedAction | null>(null);
   readonly confirmationMessage = signal('');
   readonly preparedDraft = signal('');
-  readonly reason = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(500)] });
 
   readonly selectedQueueItem = computed(() => this.queue().find(item => item.claim.id === this.selectedId()) ?? null);
   readonly reasoningNodes = computed(() => {
@@ -107,23 +108,22 @@ export class ClaimsIntelligencePageComponent implements OnInit {
       this.error.set('Generate a recommendation before preparing a review decision.');
       return;
     }
-    this.reason.reset('');
     this.preparedAction.set(this.facade.prepareAction(type, workspace));
   }
 
   cancelAction(): void {
     if (this.acting()) return;
     this.preparedAction.set(null);
-    this.reason.reset('');
   }
 
-  confirmAction(): void {
-    const action = this.preparedAction();
+  confirmAction(event: ConfirmedIntelligenceAction): void {
     const workspace = this.workspace();
-    if (!action || !workspace) return;
+    if (!workspace) return;
 
-    if (action.type === 'DRAFT_EVIDENCE_REQUEST') {
-      const missing = workspace.claim.missingEvidence.length ? workspace.claim.missingEvidence.join(', ') : 'supporting evidence';
+    if (event.action.type === 'DRAFT_EVIDENCE_REQUEST') {
+      const missing = workspace.claim.missingEvidence.length
+        ? workspace.claim.missingEvidence.join(', ')
+        : 'supporting evidence';
       this.preparedDraft.set(`Hello ${workspace.claim.claimantName}, we are reviewing claim ${workspace.claim.claimNumber}. Please provide: ${missing}. This draft has not been sent.`);
       this.confirmationMessage.set('Evidence request draft prepared. No communication was sent and no claim state changed.');
       this.preparedAction.set(null);
@@ -131,21 +131,21 @@ export class ClaimsIntelligencePageComponent implements OnInit {
       return;
     }
 
-    if (this.reason.invalid) {
-      this.reason.markAsTouched();
-      return;
-    }
     const recommendation = workspace.recommendation;
     if (!recommendation) return;
-
+    const decision = event.action.type === 'APPROVE_RECOMMENDATION' ? 'APPROVED' : 'REJECTED';
     this.acting.set(true);
-    const decision = action.type === 'APPROVE_RECOMMENDATION' ? 'APPROVED' : 'REJECTED';
-    this.facade.reviewRecommendation(workspace.claim.id, recommendation.id, decision, this.reason.value.trim()).subscribe({
-      next: updated => {
-        this.workspace.set(updated);
+    this.error.set('');
+    this.reviewCoordinator.review({
+      claimId: workspace.claim.id,
+      recommendationId: recommendation.id,
+      decision,
+      reason: event.reason,
+    }).subscribe({
+      next: updatedRecommendation => {
+        this.workspace.set({ ...workspace, recommendation: updatedRecommendation });
         this.confirmationMessage.set(`${this.label(decision)} review recorded with operator reason and audit event.`);
         this.preparedAction.set(null);
-        this.reason.reset('');
         this.acting.set(false);
       },
       error: (error: unknown) => {
