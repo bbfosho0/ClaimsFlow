@@ -1,0 +1,20 @@
+<aside class="panel intelligence-queue" aria-label="Intelligence review queue">
+  <div class="queue-heading">
+    <div><p class="eyebrow">REVIEW QUEUE</p><h2>Recommendations needing attention</h2></div>
+    <span>{{ items().length }}</span>
+  </div>
+  <div *ngIf="loading()" class="queue-loading" role="status">Loading review queue…</div>
+  <button
+    type="button"
+    class="intelligence-row"
+    *ngFor="let item of items()"
+    [class.selected]="selectedId() === item.claim.id"
+    [attr.data-tone]="item.tone"
+    (click)="selected.emit(item)"
+  >
+    <span class="attention-score">{{ item.attentionScore }}</span>
+    <span class="row-copy"><strong>{{ item.claim.claimNumber }}</strong><small>{{ item.claim.claimantName }}</small><em>{{ item.reason }}</em></span>
+    <span class="row-state"><b>{{ label(item.claim.priority) }}</b><small>{{ item.claim.completenessPercentage }}% evidence</small></span>
+  </button>
+  <div *ngIf="!loading() && !items().length" class="empty">No claims are available for intelligence review.</div>
+</aside>

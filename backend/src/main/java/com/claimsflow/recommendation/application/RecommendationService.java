@@ -36,6 +36,12 @@ public class RecommendationService {
         this.transactions = new TransactionTemplate(transactionManager);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Recommendation> latest(UUID claimId) {
+        claims.get(claimId);
+        return recommendations.findFirstByClaim_IdOrderByGeneratedAtDesc(claimId);
+    }
+
     public Recommendation generate(UUID claimId) {
         Claim claim = claims.get(claimId);
         var completeness = claims.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
@@ -52,13 +58,15 @@ public class RecommendationService {
     }
 
     @Transactional
-    public Recommendation review(UUID claimId, UUID recommendationId, RecommendationReviewState decision, String reviewer) {
+    public Recommendation review(UUID claimId, UUID recommendationId, RecommendationReviewState decision, String reviewer, String reason) {
         if (decision == RecommendationReviewState.PENDING) throw new DomainConflictException("INVALID_REVIEW_DECISION", "A recommendation must be approved or rejected.");
+        if (reason == null || reason.isBlank()) throw new DomainConflictException("REVIEW_REASON_REQUIRED", "A human review reason is required.");
         Recommendation recommendation = recommendations.findByIdAndClaim_Id(recommendationId, claimId)
             .orElseThrow(() -> new ResourceNotFoundException("RECOMMENDATION_NOT_FOUND", "Recommendation was not found."));
         if (recommendation.getReviewState() != RecommendationReviewState.PENDING) throw new DomainConflictException("RECOMMENDATION_ALREADY_REVIEWED", "Only pending recommendations may be reviewed.");
         recommendation.review(decision, reviewer, clock.instant());
-        audit.record(recommendation.getClaim(), reviewer, "RECOMMENDATION_REVIEWED", "Human review recorded", "PENDING", decision.name(), clock.instant());
+        String summary = "Human review recorded: " + reason.trim();
+        audit.record(recommendation.getClaim(), reviewer, "RECOMMENDATION_REVIEWED", summary, "PENDING", decision.name(), clock.instant());
         return recommendation;
     }
 }

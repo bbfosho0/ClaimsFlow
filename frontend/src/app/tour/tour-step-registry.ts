@@ -1,0 +1,58 @@
+import { TourStep } from './tour.models';
+
+export const TOUR_STEPS: readonly TourStep[] = [
+  {
+    id: 'portfolio-pressure',
+    index: 0,
+    title: 'Read portfolio pressure',
+    notice: 'The Command Field groups intervention signals instead of treating every claim as an equal row.',
+    technicalProof: 'Dashboard data comes from one typed snapshot API and is rendered with an accessible SVG summary.',
+    target: 'priority-command',
+    route: () => '/app/dashboard',
+  },
+  {
+    id: 'prioritized-queue',
+    index: 1,
+    title: 'Open the urgent claim',
+    notice: 'The queue combines explicit filters, density, selected context, SLA pressure, evidence completeness, and assignment.',
+    technicalProof: 'Filter state is encoded in query parameters and survives refresh and direct links.',
+    target: 'urgent-claim',
+    route: () => '/app/claims',
+  },
+  {
+    id: 'claim-investigation',
+    index: 2,
+    title: 'Inspect the evidence trail',
+    notice: 'The claim workspace separates authoritative facts, evidence provenance, priority rationale, and operational history.',
+    technicalProof: 'The workspace reads typed claim, adjuster, and audit APIs without moving policy logic into Angular.',
+    target: 'evidence-ledger',
+    route: claimId => claimId ? `/app/claims/${claimId}` : '/app/claims',
+  },
+  {
+    id: 'human-authority',
+    index: 3,
+    title: 'Keep authority human',
+    notice: 'Recommendations expose confidence and missing information, but consequential reviews require a reason and confirmation.',
+    technicalProof: 'Spring validates the reason and appends it to the immutable recommendation review audit event.',
+    target: 'decision-support',
+    route: claimId => claimId ? `/app/claims/${claimId}` : '/app/intelligence',
+  },
+  {
+    id: 'review-ready-intake',
+    index: 4,
+    title: 'Create a review-ready record',
+    notice: 'Four intake gates preserve incomplete evidence while backend triage remains authoritative.',
+    technicalProof: 'Angular Reactive Forms submit a typed request; Spring calculates claim number, completeness, priority, SLA, and workflow state.',
+    target: 'new-claim-submit',
+    route: () => '/app/claims/new',
+  },
+  {
+    id: 'engineering-proof',
+    index: 5,
+    title: 'Inspect the engineering proof',
+    notice: 'The live system is a modular Angular and Spring application with deterministic rules, optional advisory AI, and persistent audit history.',
+    technicalProof: 'The repository verifies backend transactions and frontend behavior in CI and records reduced-motion and shader fallbacks.',
+    target: 'engineering-proof',
+    route: () => '/tour',
+  },
+];

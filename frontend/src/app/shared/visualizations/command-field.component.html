@@ -1,0 +1,66 @@
+<figure class="command-field" [attr.data-variant]="variant()" [class.reduced-motion]="reducedMotion()" [attr.aria-label]="ariaLabel()">
+  <svg viewBox="0 0 720 420" role="img" aria-hidden="true" focusable="false">
+    <defs>
+      <radialGradient id="cfCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#2be3b7" stop-opacity=".22" />
+        <stop offset=".42" stop-color="#42cdec" stop-opacity=".08" />
+        <stop offset="1" stop-color="#02070d" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient id="cfWave" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#42cdec" stop-opacity="0" />
+        <stop offset=".2" stop-color="#42cdec" stop-opacity=".7" />
+        <stop offset=".58" stop-color="#2be3b7" />
+        <stop offset=".82" stop-color="#9a7cff" stop-opacity=".72" />
+        <stop offset="1" stop-color="#9a7cff" stop-opacity="0" />
+      </linearGradient>
+      <filter id="cfGlow" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="5" result="blur" />
+        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    </defs>
+
+    <g class="field-grid">
+      <path d="M60 70H660M60 140H660M60 210H660M60 280H660M60 350H660" />
+      <path d="M120 40V380M240 40V380M360 40V380M480 40V380M600 40V380" />
+    </g>
+
+    <circle class="core-field" cx="360" cy="210" r="176" fill="url(#cfCore)" />
+    <circle class="orbit orbit-one" cx="360" cy="210" r="154" />
+    <circle class="orbit orbit-two" cx="360" cy="210" r="104" />
+    <circle class="orbit orbit-three" cx="360" cy="210" r="58" />
+
+    <path class="command-wave" d="M58 232 C118 170 166 285 228 218 S350 146 410 216 S532 286 662 184" stroke="url(#cfWave)" />
+    <path class="pressure-line" d="M72 312 C160 286 244 330 324 280 S494 212 648 244" />
+
+    <g class="connection-lines">
+      @for (signal of signals(); track signal.id) {
+        <line [attr.x1]="360" [attr.y1]="210" [attr.x2]="signal.x" [attr.y2]="signal.y" />
+      }
+    </g>
+
+    <g class="signals">
+      @for (signal of signals(); track signal.id; let index = $index) {
+        <g data-signal [attr.data-tone]="signal.tone" [attr.transform]="'translate(' + signal.x + ' ' + signal.y + ')'" [style.--signal-index]="index">
+          <circle class="signal-halo" [attr.r]="signal.radius + 9" />
+          <circle class="signal-dot" [attr.r]="signal.radius" [attr.class]="'signal-dot ' + toneClass(signal.tone)" />
+        </g>
+      }
+    </g>
+
+    <g class="field-center" transform="translate(360 210)">
+      <circle r="34" />
+      <circle class="center-pulse" r="17" />
+      <path d="M-12 0H12M0-12V12" />
+    </g>
+
+    <line class="scan-line" x1="54" x2="666" y1="104" y2="104" />
+  </svg>
+
+  <div class="field-legend" aria-hidden="true">
+    <span data-tone="critical">SLA pressure</span>
+    <span data-tone="warning">Missing evidence</span>
+    <span data-tone="live">Ownership</span>
+    <span data-tone="advisory">Decision support</span>
+  </div>
+  <figcaption class="sr-only">{{ ariaLabel() }} SLA pressure is critical, missing evidence is warning, ownership is live activity, verified evidence is healthy, and recommendations are advisory.</figcaption>
+</figure>

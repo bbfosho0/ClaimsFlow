@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
-import { ClaimPage, ClaimPriority, ClaimStatus } from '../../shared/models/claim.models';
+import { ClaimPage, ClaimPriority, ClaimStatus, ClaimSummary } from '../../shared/models/claim.models';
 import {
   completenessTone,
   formatSla,
@@ -18,6 +18,7 @@ import { ClaimFilters, DEFAULT_FILTERS, parseClaimFilters, serializeClaimFilters
 import { ClaimsApiService } from '../data-access/claims-api.service';
 
 type FilterKey = 'q' | 'status' | 'priority' | 'assignment';
+type QueueDensity = 'comfortable' | 'compact';
 
 @Component({
   standalone: true,
@@ -41,6 +42,9 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
   readonly data = signal<ClaimPage | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly density = signal<QueueDensity>('comfortable');
+  readonly selectedClaimId = signal('');
+  readonly selectedClaim = computed(() => this.data()?.content.find(claim => claim.id === this.selectedClaimId()) ?? this.data()?.content[0] ?? null);
   private filters: ClaimFilters = DEFAULT_FILTERS;
 
   ngOnInit(): void {
@@ -101,6 +105,14 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
     });
   }
 
+  setDensity(value: QueueDensity): void {
+    this.density.set(value);
+  }
+
+  selectClaim(claim: ClaimSummary): void {
+    this.selectedClaimId.set(claim.id);
+  }
+
   label = humanizeEnum;
   sla = formatSla;
   priorityTone = priorityTone;
@@ -132,6 +144,9 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
     this.api.list(this.filters).subscribe({
       next: value => {
         this.data.set(value);
+        if (!value.content.some(claim => claim.id === this.selectedClaimId())) {
+          this.selectedClaimId.set(value.content[0]?.id ?? '');
+        }
         this.loading.set(false);
       },
       error: (error: unknown) => {

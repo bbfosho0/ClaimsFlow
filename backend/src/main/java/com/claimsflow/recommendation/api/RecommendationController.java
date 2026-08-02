@@ -7,6 +7,7 @@ import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,16 +16,26 @@ public class RecommendationController {
     private final RecommendationService service;
     public RecommendationController(RecommendationService service) { this.service = service; }
 
+    @GetMapping("/latest")
+    public ResponseEntity<RecommendationResponse> latest(@PathVariable UUID claimId) {
+        return service.latest(claimId)
+                .map(value -> ResponseEntity.ok(RecommendationResponse.from(value)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RecommendationResponse generate(@PathVariable UUID claimId) { return RecommendationResponse.from(service.generate(claimId)); }
 
     @PatchMapping("/{recommendationId}")
     public RecommendationResponse review(@PathVariable UUID claimId, @PathVariable UUID recommendationId, @Valid @RequestBody ReviewRequest request) {
-        return RecommendationResponse.from(service.review(claimId, recommendationId, request.decision(), request.reviewer()));
+        return RecommendationResponse.from(service.review(claimId, recommendationId, request.decision(), request.reviewer(), request.reason()));
     }
 
-    public record ReviewRequest(@NotNull RecommendationReviewState decision, @NotBlank @Size(max = 160) String reviewer) {}
+    public record ReviewRequest(
+            @NotNull RecommendationReviewState decision,
+            @NotBlank @Size(max = 160) String reviewer,
+            @NotBlank @Size(max = 500) String reason) {}
 
     public record RecommendationResponse(UUID id, String recommendedAction, String explanation, int confidence, List<String> missingInformation, Instant generatedAt, RecommendationReviewState reviewState, String reviewerName, Instant reviewedAt) {
         static RecommendationResponse from(Recommendation recommendation) {

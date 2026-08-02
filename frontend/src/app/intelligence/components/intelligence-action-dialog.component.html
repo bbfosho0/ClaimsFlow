@@ -1,0 +1,9 @@
+<div class="action-backdrop" *ngIf="action() as currentAction" (click)="cancelled.emit()">
+  <section class="action-dialog" role="dialog" aria-modal="true" aria-labelledby="action-dialog-title" (click)="$event.stopPropagation()">
+    <p class="eyebrow">PREPARED ACTION / HUMAN CONFIRMATION</p><h2 id="action-dialog-title">{{ currentAction.title }}</h2><p>{{ currentAction.summary }}</p>
+    <div class="effect-preview"><strong>Exact result preview</strong><ul><li *ngFor="let effect of currentAction.effects">{{ effect }}</li></ul></div>
+    <label *ngIf="currentAction.requiresReason">Operator reason<textarea [formControl]="reason" rows="4" placeholder="Explain why this action is appropriate."></textarea><small *ngIf="reason.touched && reason.invalid">Enter a reason of at least 8 characters.</small></label>
+    <div class="dialog-authority"><span aria-hidden="true">!</span><p>No action occurs until you confirm. The assistant cannot bypass this boundary.</p></div>
+    <div class="dialog-actions"><button class="button secondary" type="button" [disabled]="acting()" (click)="cancelled.emit()">Cancel</button><button class="button" [class.primary]="!currentAction.destructive" [class.danger]="currentAction.destructive" type="button" [disabled]="acting()" (click)="confirm()">{{ acting() ? 'Recording…' : 'Confirm action' }}</button></div>
+  </section>
+</div>

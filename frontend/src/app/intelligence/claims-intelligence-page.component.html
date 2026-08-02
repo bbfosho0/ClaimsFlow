@@ -1,0 +1,51 @@
+<section class="cf-page page-enter intelligence-page">
+  <header class="cf-page-header intelligence-header">
+    <div><p class="eyebrow">CLAIMS INTELLIGENCE / HUMAN-CONTROLLED ADVISORY</p><h1>Intelligence Review Center</h1><p>Review portfolio recommendations, inspect evidence provenance, investigate uncertainty, and prepare reversible actions for explicit operator confirmation.</p></div>
+    <div class="header-actions"><span class="cf-chip" data-tone="advisory">Advisory only</span><a class="button secondary" routerLink="/app/claims">Open claims queue</a></div>
+  </header>
+
+  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+  <div *ngIf="confirmationMessage()" class="confirmation-banner" role="status"><span aria-hidden="true">✓</span><strong>{{ confirmationMessage() }}</strong></div>
+
+  <div class="intelligence-layout">
+    <app-intelligence-review-queue
+      [items]="queue()"
+      [selectedId]="selectedId()"
+      [loading]="loadingQueue()"
+      (selected)="select($event)"
+    />
+
+    <main *ngIf="loadingWorkspace()" class="intelligence-workspace">
+      <div class="panel workspace-loading" role="status">Loading intelligence dossier…</div>
+    </main>
+
+    <app-intelligence-dossier
+      *ngIf="workspace() as data"
+      [selectedItem]="selectedQueueItem()"
+      [workspace]="data"
+      [reasoningNodes]="reasoningNodes()"
+      [acting]="acting()"
+      (generateRecommendation)="generateRecommendation()"
+      (prepareApproval)="openAction('APPROVE_RECOMMENDATION')"
+      (prepareRejection)="openAction('REJECT_RECOMMENDATION')"
+    />
+
+    <app-claim-assistant-panel
+      *ngIf="workspace() as data"
+      [workspace]="data"
+      [mode]="mode()"
+      [answer]="assistant()!"
+      [preparedDraft]="preparedDraft()"
+      (modeChanged)="setMode($event)"
+      (prepareEvidenceRequest)="openAction('DRAFT_EVIDENCE_REQUEST')"
+      (prepareApproval)="openAction('APPROVE_RECOMMENDATION')"
+    />
+  </div>
+
+  <app-intelligence-action-dialog
+    [action]="preparedAction()"
+    [acting]="acting()"
+    (cancelled)="cancelAction()"
+    (confirmed)="confirmAction($event)"
+  />
+</section>

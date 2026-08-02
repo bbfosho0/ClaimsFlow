@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RecommendationJpaRepository extends JpaRepository<Recommendation, UUID> {
     Optional<Recommendation> findByIdAndClaim_Id(UUID id, UUID claimId);
+    Optional<Recommendation> findFirstByClaim_IdOrderByGeneratedAtDesc(UUID claimId);
 }

@@ -1,0 +1,35 @@
+<main class="tour-page">
+  <div class="tour-grid" aria-hidden="true"></div>
+  <header class="tour-nav"><a class="tour-brand" routerLink="/"><span>CF</span><div><strong>ClaimsFlow</strong><small>Guided product tour</small></div></a><a class="button secondary" routerLink="/app/dashboard">Exit to application</a></header>
+
+  <section class="tour-hero">
+    <div class="tour-copy">
+      <p class="eyebrow">90-SECOND PRODUCT PATH</p>
+      <h1>Follow one claim from portfolio pressure to controlled action.</h1>
+      <p>This tour navigates the real Angular application. It reads live seeded data, highlights explicit interface targets, and never owns business logic.</p>
+      <div class="tour-hero-actions"><button class="button primary" type="button" [disabled]="starting()" (click)="start()">{{ starting() ? 'Resolving demo claim…' : 'Start guided tour →' }}</button><button class="button secondary" type="button" *ngIf="activeTour" (click)="resume()">Resume previous step</button></div>
+      <div class="alert" *ngIf="error()" role="alert">{{ error() }}</div>
+      <div class="tour-contract"><span>6 steps</span><span>Real application routes</span><span>Keyboard navigation</span><span>Reduced motion supported</span></div>
+    </div>
+    <div class="tour-radar" aria-hidden="true"><div class="radar-grid"></div><i class="ring ring-a"></i><i class="ring ring-b"></i><i class="ring ring-c"></i><span class="radar-core">CF</span><b class="signal s1"></b><b class="signal s2"></b><b class="signal s3"></b><b class="signal s4"></b></div>
+  </section>
+
+  <section class="tour-steps" aria-labelledby="tour-steps-title">
+    <div class="tour-section-heading"><p class="eyebrow">GUIDED SEQUENCE</p><h2 id="tour-steps-title">Six focused steps, one coherent system.</h2></div>
+    <ol>
+      <li *ngFor="let step of orchestrator.steps"><span>0{{ step.index + 1 }}</span><div><strong>{{ step.title }}</strong><p>{{ step.notice }}</p><small>{{ step.technicalProof }}</small></div></li>
+    </ol>
+  </section>
+
+  <section class="engineering-proof cf-material-grid" data-tour-target="engineering-proof">
+    <div class="proof-heading"><p class="eyebrow">ENGINEERING PROOF</p><h2>What is actually implemented.</h2><p>The tour ends here after moving through the live system. These are the implementation boundaries behind the interface.</p></div>
+    <div class="proof-system">
+      <article><span>ANGULAR 20</span><h3>Typed operational frontend</h3><ul><li>Standalone lazy routes</li><li>Signals and Reactive Forms</li><li>View Transitions and reduced motion</li><li>Accessible SVG visualizations</li></ul></article>
+      <article><span>SPRING BOOT 3.5</span><h3>Transactional application layer</h3><ul><li>Deterministic domain policies</li><li>RFC 9457 Problem Details</li><li>Human review reason validation</li><li>Immutable audit events</li></ul></article>
+      <article><span>POSTGRESQL 16</span><h3>Persistent claims system</h3><ul><li>Flyway-controlled schema</li><li>Fictional deterministic seed data</li><li>Claim, adjuster, recommendation, audit</li><li>Constraint-backed consistency</li></ul></article>
+      <article><span>ADVISORY INTELLIGENCE</span><h3>Bounded assistance</h3><ul><li>Optional OpenAI provider</li><li>Deterministic fallback</li><li>Evidence classifications and sources</li><li>No autonomous claim decision</li></ul></article>
+    </div>
+    <div class="verification-strip"><span><strong>Backend</strong> Maven verify</span><span><strong>Frontend</strong> Karma and production build</span><span><strong>Workflow</strong> GitHub Actions</span><span><strong>Authority</strong> Operator confirmation</span></div>
+    <div class="proof-actions"><button class="button primary" type="button" (click)="start()">Restart the guided tour</button><a class="button secondary" routerLink="/app/intelligence">Open Claims Intelligence</a><a class="button secondary" href="https://github.com/bbfosho0/ClaimsFlow" target="_blank" rel="noreferrer">View repository ↗</a></div>
+  </section>
+</main>

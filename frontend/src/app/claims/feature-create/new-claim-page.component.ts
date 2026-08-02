@@ -34,10 +34,13 @@ export class NewClaimPageComponent {
   readonly submitting = signal(false);
   readonly errors = signal<string[]>([]);
   readonly actionError = signal('');
+  readonly currentGate = signal(1);
+  readonly uploadedFiles = signal<string[]>([]);
+  readonly uploadError = signal('');
   readonly claimTypes: ReadonlyArray<{ value: ClaimType; label: string; icon: string; description: string }> = [
-    { value: 'AUTO', label: 'Auto', icon: '▣', description: 'Vehicle damage or collision' },
-    { value: 'PROPERTY', label: 'Property', icon: '⌂', description: 'Home or business property' },
-    { value: 'PERSONAL_INJURY', label: 'Personal injury', icon: '+', description: 'Medical or bodily injury' },
+    { value: 'AUTO' as ClaimType, label: 'Auto', icon: '▣', description: 'Vehicle damage or collision' },
+    { value: 'PROPERTY' as ClaimType, label: 'Property', icon: '⌂', description: 'Home or business property' },
+    { value: 'PERSONAL_INJURY' as ClaimType, label: 'Personal injury', icon: '+', description: 'Medical or bodily injury' },
   ];
 
   readonly form = this.fb.group({
@@ -56,6 +59,18 @@ export class NewClaimPageComponent {
   selectClaimType(value: ClaimType): void {
     this.form.controls.claimType.setValue(value);
     this.form.controls.claimType.markAsTouched();
+  }
+
+  setGate(gate: number): void {
+    this.currentGate.set(Math.max(1, Math.min(4, gate)));
+    queueMicrotask(() => document.getElementById(`intake-gate-${gate}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  gateComplete(gate: number): boolean {
+    if (gate === 1) return this.form.controls.claimantName.valid && this.form.controls.claimantEmail.valid;
+    if (gate === 2) return this.form.controls.claimType.valid && this.form.controls.incidentDate.valid && this.form.controls.estimatedLoss.valid && this.form.controls.description.valid;
+    if (gate === 3) return this.evidenceCount() > 0 || this.uploadedFiles().length > 0;
+    return this.form.valid;
   }
 
   requiredCompleted(): number {
@@ -83,6 +98,25 @@ export class NewClaimPageComponent {
     return this.claimTypes.find(item => item.value === this.form.controls.claimType.value)?.label ?? 'Not selected';
   }
 
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    this.uploadError.set('');
+    const oversized = files.find(file => file.size > 10 * 1024 * 1024);
+    if (oversized) {
+      this.uploadError.set(`${oversized.name} exceeds the 10 MB evidence limit. Your form draft remains safe.`);
+      input.value = '';
+      return;
+    }
+    this.uploadedFiles.set(files.map(file => file.name));
+  }
+
+  clearUploadedFiles(input: HTMLInputElement): void {
+    this.uploadedFiles.set([]);
+    this.uploadError.set('');
+    input.value = '';
+  }
+
   submit(): void {
     this.errors.set([]);
     this.actionError.set('');
@@ -97,9 +131,9 @@ export class NewClaimPageComponent {
     const raw = this.form.getRawValue();
     const request: CreateClaimRequest = { ...raw, claimType: raw.claimType as ClaimType };
     this.api.create(request).subscribe({
-      next: claim => void this.router.navigate(['/claims', claim.id]),
+      next: claim => void this.router.navigate(['/app/claims', claim.id]),
       error: (error: unknown) => {
-        this.actionError.set(error instanceof ApiError ? error.message : 'The claim could not be created.');
+        this.actionError.set(error instanceof ApiError ? error.message : 'The claim could not be created. Your draft remains in this form.');
         this.submitting.set(false);
       },
     });

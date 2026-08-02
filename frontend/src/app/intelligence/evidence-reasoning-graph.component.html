@@ -1,0 +1,15 @@
+<figure class="reasoning-graph" aria-labelledby="reasoning-caption">
+  <svg viewBox="0 0 760 340" role="img" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="reasoningFlow" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#42cdec" stop-opacity=".35"/><stop offset=".5" stop-color="#2be3b7" stop-opacity=".7"/><stop offset="1" stop-color="#9a7cff" stop-opacity=".42"/></linearGradient><filter id="reasoningGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <g class="graph-grid"><path d="M20 55H740M20 115H740M20 175H740M20 235H740M20 295H740"/><path d="M110 20V320M260 20V320M410 20V320M560 20V320M710 20V320"/></g>
+    @for (node of nodes(); track node.id; let index = $index) {
+      <path class="graph-connector" [attr.d]="'M 230 ' + nodeY(index, nodes().length) + ' C 330 ' + nodeY(index, nodes().length) + ', 390 170, 510 170'" />
+      <g class="source-node" [attr.data-classification]="node.classification" [attr.transform]="'translate(42 ' + (nodeY(index, nodes().length) - 22) + ')'">
+        <rect width="188" height="44" rx="11"/><circle cx="18" cy="22" r="5"/><text x="31" y="19">{{ classificationLabel(node.classification) }}</text><text class="node-label" x="31" y="32">{{ node.label }}</text>
+      </g>
+    }
+    <g class="recommendation-node" transform="translate(510 118)"><rect width="208" height="104" rx="18"/><circle cx="104" cy="30" r="18"/><path d="M96 30H112M104 22V38"/><text x="104" y="69" text-anchor="middle">{{ recommendationLabel() }}</text><text class="node-label" x="104" y="86" text-anchor="middle">Human review boundary</text></g>
+  </svg>
+  <div class="graph-legend" aria-hidden="true"><span data-classification="verified">Verified</span><span data-classification="missing">Missing</span><span data-classification="inferred">Inferred</span><span data-classification="policy">Policy</span></div>
+  <figcaption id="reasoning-caption">Evidence sources and policy rules flow toward an advisory recommendation. Missing evidence interrupts confidence, and the recommendation remains behind a human review boundary.</figcaption>
+</figure>
