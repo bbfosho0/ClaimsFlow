@@ -19,7 +19,7 @@ describe('Midnight Command workspaces', () => {
     expect(fixture.nativeElement.textContent).toContain('$12.86M');
   });
 
-  it('selects a document and exposes its preview metadata', async () => {
+  it('selects a document and exposes the approved extraction workspace', async () => {
     await TestBed.configureTestingModule({ imports: [DocumentsPageComponent] }).compileComponents();
     const fixture = TestBed.createComponent(DocumentsPageComponent);
     fixture.detectChanges();
@@ -28,7 +28,8 @@ describe('Midnight Command workspaces', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.selectedDocument().name).toBe('Police Report.pdf');
-    expect(fixture.nativeElement.textContent).toContain('OCR confidence');
+    expect(fixture.nativeElement.textContent).toContain('OCR & Extraction Tags');
+    expect(fixture.nativeElement.textContent).toContain('Confidence Score');
   });
 
   it('filters team operations by squad', async () => {
