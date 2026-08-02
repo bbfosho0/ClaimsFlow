@@ -1,8 +1,21 @@
+import { Route, Routes } from '@angular/router';
 import { routes } from './app.routes';
+
+function flattenRoutes(items: Routes, prefix = ''): Map<string, Route> {
+  const flattened = new Map<string, Route>();
+  for (const route of items) {
+    const fullPath = [prefix, route.path].filter(Boolean).join('/');
+    flattened.set(fullPath, route);
+    if (route.children) {
+      for (const [path, child] of flattenRoutes(route.children, fullPath)) flattened.set(path, child);
+    }
+  }
+  return flattened;
+}
 
 describe('ClaimsFlow route contract', () => {
   it('exposes the showcase, tour, and five lazy application destinations', () => {
-    const byPath = new Map(routes.map(route => [route.path, route]));
+    const byPath = flattenRoutes(routes);
 
     expect(byPath.get('')?.loadComponent).toBeDefined();
     expect(byPath.get('showcase')?.redirectTo).toBe('');
@@ -15,7 +28,7 @@ describe('ClaimsFlow route contract', () => {
   });
 
   it('keeps legacy application URLs as redirects', () => {
-    const byPath = new Map(routes.map(route => [route.path, route]));
+    const byPath = flattenRoutes(routes);
 
     expect(byPath.get('dashboard')?.redirectTo).toBe('app/dashboard');
     expect(byPath.get('claims')?.redirectTo).toBe('app/claims');
