@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { ClaimDetail, ClaimPage, Recommendation } from '../shared/models/claim.models';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
+import { ClaimDetail, ClaimPage, Recommendation } from '../shared/models/claim.models';
 import { IntelligenceFacadeService } from './intelligence-facade.service';
 
 const claim: ClaimDetail = {
@@ -60,7 +60,7 @@ const page: ClaimPage = {
 
 describe('IntelligenceFacadeService', () => {
   it('ranks urgent incomplete unassigned claims and exposes source classifications', () => {
-    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list', 'get', 'getLatestRecommendation', 'getAudit', 'generateRecommendation', 'reviewRecommendation']);
+    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list', 'get', 'getLatestRecommendation', 'getAudit', 'generateRecommendation']);
     api.list.and.returnValue(of(page));
 
     TestBed.configureTestingModule({ providers: [{ provide: ClaimsApiService, useValue: api }] });
@@ -80,7 +80,7 @@ describe('IntelligenceFacadeService', () => {
   });
 
   it('prepares an action without mutating the backend', () => {
-    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list', 'get', 'getLatestRecommendation', 'getAudit', 'generateRecommendation', 'reviewRecommendation']);
+    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list', 'get', 'getLatestRecommendation', 'getAudit', 'generateRecommendation']);
     TestBed.configureTestingModule({ providers: [{ provide: ClaimsApiService, useValue: api }] });
     const service = TestBed.inject(IntelligenceFacadeService);
 
@@ -88,28 +88,6 @@ describe('IntelligenceFacadeService', () => {
 
     expect(action.requiresReason).toBeTrue();
     expect(action.effects).toContain('Claim status remains Under review.');
-    expect(api.reviewRecommendation).not.toHaveBeenCalled();
     expect(api.generateRecommendation).not.toHaveBeenCalled();
-  });
-
-  it('sends the operator reason only after an explicit review request', () => {
-    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list', 'get', 'getLatestRecommendation', 'getAudit', 'generateRecommendation', 'reviewRecommendation']);
-    api.reviewRecommendation.and.returnValue(of({ ...recommendation, reviewState: 'APPROVED', reviewerName: 'Interview User' }));
-    api.get.and.returnValue(of(claim));
-    api.getLatestRecommendation.and.returnValue(of({ ...recommendation, reviewState: 'APPROVED', reviewerName: 'Interview User' }));
-    api.getAudit.and.returnValue(of([]));
-
-    TestBed.configureTestingModule({ providers: [{ provide: ClaimsApiService, useValue: api }] });
-    const service = TestBed.inject(IntelligenceFacadeService);
-
-    service.reviewRecommendation(claim.id, recommendation.id, 'APPROVED', 'Evidence reviewed by the assigned operator.').subscribe();
-
-    expect(api.reviewRecommendation).toHaveBeenCalledWith(
-      claim.id,
-      recommendation.id,
-      'APPROVED',
-      'Interview User',
-      'Evidence reviewed by the assigned operator.',
-    );
   });
 });
