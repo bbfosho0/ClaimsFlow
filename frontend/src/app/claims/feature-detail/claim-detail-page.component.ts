@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
@@ -12,12 +12,14 @@ import {
   priorityTone,
   statusTone,
 } from '../../shared/presentation/claim-presentation';
+import { ReviewDecision } from '../../shared/recommendation-review/recommendation-review.models';
+import { RecommendationReviewCoordinator } from '../../shared/recommendation-review/recommendation-review-coordinator.service';
+import { reviewReasonValidators } from '../../shared/recommendation-review/recommendation-review.validators';
 import { ProgressIndicatorComponent } from '../../shared/ui/progress-indicator/progress-indicator.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 
 type WorkspaceTab = 'dossier' | 'evidence' | 'communications' | 'audit';
-type ReviewDecision = 'APPROVED' | 'REJECTED';
 
 @Component({
   standalone: true,
@@ -29,6 +31,7 @@ type ReviewDecision = 'APPROVED' | 'REJECTED';
 export class ClaimDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ClaimsApiService);
+  private readonly reviewCoordinator = inject(RecommendationReviewCoordinator);
   private id = '';
 
   readonly claim = signal<ClaimDetail | null>(null);
@@ -46,7 +49,10 @@ export class ClaimDetailPageComponent implements OnInit {
   readonly reviewSuccess = signal('');
   readonly adjusterId = new FormControl('', { nonNullable: true });
   readonly nextStatus = new FormControl<ClaimStatus | ''>('', { nonNullable: true });
-  readonly reviewReason = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(500)] });
+  readonly reviewReason = new FormControl('', {
+    nonNullable: true,
+    validators: reviewReasonValidators(),
+  });
 
   label = humanizeEnum;
   sla = formatSla;
@@ -172,7 +178,12 @@ export class ClaimDetailPageComponent implements OnInit {
     this.acting.set(true);
     this.recommendationError.set('');
     this.reviewSuccess.set('');
-    this.api.reviewRecommendation(this.id, current.id, decision, 'Interview User', this.reviewReason.value.trim()).subscribe({
+    this.reviewCoordinator.review({
+      claimId: this.id,
+      recommendationId: current.id,
+      decision,
+      reason: this.reviewReason.value,
+    }).subscribe({
       next: value => {
         this.recommendation.set(value);
         this.reviewSuccess.set(`${this.label(decision)} review recorded and appended to the audit timeline.`);
