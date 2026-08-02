@@ -1,0 +1,32 @@
+{
+  "version": "2026-08-02-final",
+  "implementation": "Figma prototype interactions and Smart Animate; no authored Figma timeline tracks are present",
+  "showcase": {
+    "initial": "223:139",
+    "signalLock": "333:1898",
+    "ready": "223:2",
+    "sequence": [
+      { "from": "223:139", "to": "333:1898", "delaySeconds": 0.65, "durationSeconds": 0.55 },
+      { "from": "333:1898", "to": "223:2", "delaySeconds": 0.18, "durationSeconds": 0.75 }
+    ],
+    "interpolated": [
+      "scan-line y position",
+      "Command Field position and opacity",
+      "grid opacity",
+      "shader wave offset",
+      "Bloom intensity",
+      "Chromatic Metal evolution",
+      "secondary action and proof-rail opacity"
+    ]
+  },
+  "routes": {
+    "transition": "Smart Animate",
+    "durationSeconds": 0.35,
+    "easing": "cubic-bezier(0.22,1,0.36,1)"
+  },
+  "overlays": {
+    "transition": "Dissolve",
+    "durationSeconds": 0.2
+  },
+  "reducedMotion": "Bypass Initial and Signal Lock; render Ready state immediately and replace spatial movement with immediate state changes or short opacity transitions."
+}

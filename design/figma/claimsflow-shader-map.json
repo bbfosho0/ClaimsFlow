@@ -1,0 +1,23 @@
+{
+  "version": "2026-08-02-final",
+  "registryPage": "INTERNAL / Native Shader Seeds",
+  "registryNodeId": "325:3",
+  "registryPath": "figma-plugin/presets/generated-shader-registry.json",
+  "seeds": [
+    { "layerName": "Seed / Glowing Wave", "shaderId": "cd43ef0afb2cac168a28e7f79135150678ccfd25/433", "slotType": "fill", "sourceNodeId": "325:8" },
+    { "layerName": "Seed / Mesh Gradient", "shaderId": "3f03519cd6fb9dd0902b984c6179893f45bedc85/428", "slotType": "fill", "sourceNodeId": "325:13" },
+    { "layerName": "Seed / Water Caustic", "shaderId": "40f03f78407c1c973fc891fbca9ff3d0387485e6/435", "slotType": "fill", "sourceNodeId": "325:18" },
+    { "layerName": "Seed / Pattern Grid", "shaderId": "ce59f555a29a71115f0add8ed63800fd022d0b22/427", "slotType": "fill", "sourceNodeId": "330:3" },
+    { "layerName": "Seed / Bloom", "shaderId": "5b6a365448c87515a9e85593e2b331bc859f9cd5/420", "slotType": "effect", "sourceNodeId": "330:8" },
+    { "layerName": "Seed / Chromatic Metal", "shaderId": "ae26e86a8b9a3945cbfc8e3b6b43b7e3446e1fbc/409", "slotType": "effect", "sourceNodeId": "330:13" }
+  ],
+  "usage": {
+    "glowingWave": ["Showcase Command Field", "Operations Priority Command Field", "Claims Queue command bar", "Claim Workspace identity", "New Claim guided intake"],
+    "meshGradient": ["Claim Workspace decision support", "Claims Intelligence assistant modes", "responsive intelligence surfaces"],
+    "waterCaustic": ["Claims Queue selected inspector", "Claim Workspace selected context"],
+    "patternGrid": ["Engineering proof background only"],
+    "bloom": ["Radar focus and signal-lock emphasis only"],
+    "chromaticMetal": ["Portfolio identity monogram only"]
+  },
+  "runtimeBoundary": "Native Figma shaders are design references. Angular must reproduce equivalent bounded effects with SVG, Canvas, CSS gradients/color-mix, or a lazy-loaded shader renderer only where performance and reduced-motion requirements are met."
+}

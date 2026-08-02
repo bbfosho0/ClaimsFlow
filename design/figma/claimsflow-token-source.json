@@ -1,0 +1,32 @@
+{
+  "version": "2026-08-02",
+  "format": "DTCG-compatible JSON",
+  "figmaFileKey": "M7GOuna2hq7jWCGTZhiP5b",
+  "handoffNodeId": "261:2",
+  "sharedPluginData": {
+    "namespace": "claimsflow",
+    "key": "dtcgTokens"
+  },
+  "expectedTopLevelKeys": [
+    "$schema",
+    "$extensions",
+    "primitives",
+    "semantic",
+    "density",
+    "motion"
+  ],
+  "expectedCollections": [
+    "ClaimsFlow / Primitives",
+    "ClaimsFlow / Semantic",
+    "ClaimsFlow / Density",
+    "ClaimsFlow / Motion"
+  ],
+  "expectedVariableCount": 116,
+  "rules": [
+    "Treat the embedded payload as authoritative.",
+    "Preserve semantic aliases and CSS code-syntax names.",
+    "Do not resample values from screenshots.",
+    "Generate production CSS in a deterministic checked-in build step.",
+    "Validate reduced-motion and compact-density modes."
+  ]
+}
