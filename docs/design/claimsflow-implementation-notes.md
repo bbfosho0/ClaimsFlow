@@ -8,6 +8,8 @@ This document records how the frozen Figma MVP was translated into the Angular a
 - Production handoff: node `261:2`
 - Full prototype: node `221:2`
 - Final implementation plan: `docs/superpowers/plans/2026-08-02-claimsflow-final-mvp-integration.md`
+- Targeted refactor design: `docs/superpowers/specs/2026-08-02-claimsflow-targeted-refactor-design.md`
+- Targeted refactor plan: `docs/superpowers/plans/2026-08-02-claimsflow-targeted-refactor.md`
 
 ## Implemented product surfaces
 
@@ -39,6 +41,17 @@ Reusable production patterns include:
 - Four-gate intake workflow
 - Claims Intelligence queue, dossier, assistant, and action preview
 - Guided-tour controller
+
+## Frontend feature boundaries
+
+- `AppComponent` hosts the public route outlet and the optional guided-tour controller.
+- `AppShellComponent` contains permanent application chrome only and has no dependency on claims data, HTTP, or tour orchestration.
+- Claims Intelligence uses a route orchestrator plus standalone review-queue, dossier, assistant, and action-dialog presentation components.
+- Claim Workspace and Claims Intelligence share `RecommendationReviewCoordinator`; each feature retains its own presentation, confirmation copy, success state, and audit-refresh behavior.
+- `IntelligenceFacadeService` remains responsible for review-queue ranking, workspace reads, evidence classification, assistant presentation, and prepared-action descriptions. Consequential recommendation review is not duplicated there.
+- Claims Intelligence selection uses `switchMap`, so an older dossier response cannot replace a newer user selection.
+
+The refactor preserves the approved routes, API contracts, DOM classes, responsive layouts, motion grammar, shader equivalents, accessibility semantics, and human-authority boundary.
 
 ## Shader translation
 
@@ -109,7 +122,7 @@ Recommendation review requires:
 
 The reason is validated by Spring and written into the immutable audit summary. Reviewing a recommendation does not mutate claim workflow status.
 
-The contextual assistant is deterministic presentation logic over structured claim data. It classifies statements and prepares actions, but only the existing recommendation review API performs a consequential mutation after confirmation.
+The contextual assistant is deterministic presentation logic over structured claim data. It classifies statements and prepares actions, but only the shared review coordinator and existing recommendation review API perform a consequential mutation after confirmation.
 
 ## Evidence-file boundary
 
@@ -128,7 +141,7 @@ The tour uses real application routes and stable targets:
 - `new-claim-submit`
 - `engineering-proof`
 
-The controller stores only progress and the selected claim ID in session storage. It does not store or fake claim domain state.
+The controller is hosted once by `AppComponent`. It stores only progress and the selected claim ID in session storage. It does not store or fake claim domain state, and the permanent application shell can be constructed and tested without HTTP providers.
 
 ## Accessibility boundaries
 
