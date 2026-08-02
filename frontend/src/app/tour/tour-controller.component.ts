@@ -17,7 +17,7 @@ export class TourControllerComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   readonly orchestrator = inject(TourOrchestratorService);
   private readonly subscription = new Subscription();
-  private highlighted?: Element;
+  private highlighted?: HTMLElement;
 
   readonly current = signal<TourStep | null>(null);
   readonly claimId = signal('');
@@ -37,7 +37,7 @@ export class TourControllerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.highlighted?.classList.remove('tour-highlight');
+    this.clearHighlight();
   }
 
   previous(): void {
@@ -68,12 +68,32 @@ export class TourControllerComponent implements OnInit, OnDestroy {
   }
 
   private highlight(step: TourStep | null): void {
-    this.highlighted?.classList.remove('tour-highlight');
-    this.highlighted = undefined;
+    this.clearHighlight();
     if (!step || step.route(this.claimId()) === '/tour') return;
-    const target = document.querySelector(`[data-tour-target="${step.target}"]`);
-    target?.classList.add('tour-highlight');
-    this.highlighted = target ?? undefined;
-    target?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    const target = document.querySelector<HTMLElement>(`[data-tour-target="${step.target}"]`);
+    if (!target) return;
+
+    target.dataset['tourHighlighted'] = 'true';
+    target.style.position = target.style.position || 'relative';
+    target.style.zIndex = '30';
+    target.style.outline = '2px solid var(--cf-color-intelligence-advisory)';
+    target.style.outlineOffset = '5px';
+    target.style.boxShadow = '0 0 0 8px rgb(154 124 255 / .07), 0 0 55px rgb(154 124 255 / .20)';
+    this.highlighted = target;
+
+    const reducedMotion = typeof globalThis.matchMedia === 'function'
+      ? globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+    target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  private clearHighlight(): void {
+    if (!this.highlighted) return;
+    delete this.highlighted.dataset['tourHighlighted'];
+    this.highlighted.style.removeProperty('z-index');
+    this.highlighted.style.removeProperty('outline');
+    this.highlighted.style.removeProperty('outline-offset');
+    this.highlighted.style.removeProperty('box-shadow');
+    this.highlighted = undefined;
   }
 }
