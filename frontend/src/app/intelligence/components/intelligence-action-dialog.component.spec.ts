@@ -50,7 +50,8 @@ describe('IntelligenceActionDialogComponent', () => {
     const confirm = fixture.nativeElement.querySelector('.dialog-actions .button.primary') as HTMLButtonElement;
     confirm.click();
 
-    expect(confirmed?.reason).toBe('Evidence reviewed by operator.');
+    expect(confirmed).not.toBeNull();
+    expect((confirmed as ConfirmedIntelligenceAction).reason).toBe('Evidence reviewed by operator.');
   });
 
   it('confirms a draft action without requiring a reason', () => {
@@ -63,7 +64,8 @@ describe('IntelligenceActionDialogComponent', () => {
     const confirm = fixture.nativeElement.querySelector('.dialog-actions .button.primary') as HTMLButtonElement;
     confirm.click();
 
-    expect(confirmed?.action).toBe(draftAction);
-    expect(confirmed?.reason).toBe('');
+    expect(confirmed).not.toBeNull();
+    expect((confirmed as ConfirmedIntelligenceAction).action).toBe(draftAction);
+    expect((confirmed as ConfirmedIntelligenceAction).reason).toBe('');
   });
 });
