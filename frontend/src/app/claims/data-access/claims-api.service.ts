@@ -23,7 +23,15 @@ export class ClaimsApiService {
   assign(id: string, adjusterId: string, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/assignment`, { adjusterId, actor }); }
   updateStatus(id: string, status: ClaimStatus, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/status`, { status, actor }); }
   generateRecommendation(id: string): Observable<Recommendation> { return this.http.post<Recommendation>(`${API_BASE_URL}/claims/${id}/recommendations`, {}); }
-  reviewRecommendation(id: string, recommendationId: string, decision: Exclude<RecommendationReviewState, 'PENDING'>, reviewer: string): Observable<Recommendation> { return this.http.patch<Recommendation>(`${API_BASE_URL}/claims/${id}/recommendations/${recommendationId}`, { decision, reviewer }); }
+  reviewRecommendation(
+    id: string,
+    recommendationId: string,
+    decision: Exclude<RecommendationReviewState, 'PENDING'>,
+    reviewer: string,
+    reason: string,
+  ): Observable<Recommendation> {
+    return this.http.patch<Recommendation>(`${API_BASE_URL}/claims/${id}/recommendations/${recommendationId}`, { decision, reviewer, reason });
+  }
   getAudit(id: string): Observable<AuditEvent[]> { return this.http.get<AuditEvent[]>(`${API_BASE_URL}/claims/${id}/audit`); }
   getAdjusters(): Observable<Adjuster[]> { return this.http.get<Adjuster[]>(`${API_BASE_URL}/adjusters`); }
 }
