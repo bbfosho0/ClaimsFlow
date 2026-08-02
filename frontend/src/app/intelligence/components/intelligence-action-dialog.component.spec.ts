@@ -24,23 +24,23 @@ describe('IntelligenceActionDialogComponent', () => {
   it('blocks consequential confirmation until a valid reason is entered', () => {
     const fixture = TestBed.createComponent(IntelligenceActionDialogComponent);
     fixture.componentRef.setInput('action', approvalAction);
-    let confirmed: ConfirmedIntelligenceAction | null = null;
-    fixture.componentInstance.confirmed.subscribe(value => confirmed = value);
+    const emitted: ConfirmedIntelligenceAction[] = [];
+    fixture.componentInstance.confirmed.subscribe(value => emitted.push(value));
     fixture.detectChanges();
 
     const confirm = fixture.nativeElement.querySelector('.dialog-actions .button.primary') as HTMLButtonElement;
     confirm.click();
     fixture.detectChanges();
 
-    expect(confirmed).toBeNull();
+    expect(emitted).toEqual([]);
     expect(fixture.nativeElement.textContent).toContain('Enter a reason of at least 8 characters.');
   });
 
   it('emits a normalized reason', () => {
     const fixture = TestBed.createComponent(IntelligenceActionDialogComponent);
     fixture.componentRef.setInput('action', approvalAction);
-    let confirmed: ConfirmedIntelligenceAction | null = null;
-    fixture.componentInstance.confirmed.subscribe(value => confirmed = value);
+    const emitted: ConfirmedIntelligenceAction[] = [];
+    fixture.componentInstance.confirmed.subscribe(value => emitted.push(value));
     fixture.detectChanges();
 
     const textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
@@ -50,22 +50,22 @@ describe('IntelligenceActionDialogComponent', () => {
     const confirm = fixture.nativeElement.querySelector('.dialog-actions .button.primary') as HTMLButtonElement;
     confirm.click();
 
-    expect(confirmed).not.toBeNull();
-    expect((confirmed as ConfirmedIntelligenceAction).reason).toBe('Evidence reviewed by operator.');
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].reason).toBe('Evidence reviewed by operator.');
   });
 
   it('confirms a draft action without requiring a reason', () => {
     const fixture = TestBed.createComponent(IntelligenceActionDialogComponent);
     fixture.componentRef.setInput('action', draftAction);
-    let confirmed: ConfirmedIntelligenceAction | null = null;
-    fixture.componentInstance.confirmed.subscribe(value => confirmed = value);
+    const emitted: ConfirmedIntelligenceAction[] = [];
+    fixture.componentInstance.confirmed.subscribe(value => emitted.push(value));
     fixture.detectChanges();
 
     const confirm = fixture.nativeElement.querySelector('.dialog-actions .button.primary') as HTMLButtonElement;
     confirm.click();
 
-    expect(confirmed).not.toBeNull();
-    expect((confirmed as ConfirmedIntelligenceAction).action).toBe(draftAction);
-    expect((confirmed as ConfirmedIntelligenceAction).reason).toBe('');
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].action).toBe(draftAction);
+    expect(emitted[0].reason).toBe('');
   });
 });
