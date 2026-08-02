@@ -1,0 +1,81 @@
+<section class="cf-page page-enter intelligence-page">
+  <header class="cf-page-header intelligence-header">
+    <div><p class="eyebrow">CLAIMS INTELLIGENCE / HUMAN-CONTROLLED ADVISORY</p><h1>Intelligence Review Center</h1><p>Review portfolio recommendations, inspect evidence provenance, investigate uncertainty, and prepare reversible actions for explicit operator confirmation.</p></div>
+    <div class="header-actions"><span class="cf-chip" data-tone="advisory">Advisory only</span><a class="button secondary" routerLink="/app/claims">Open claims queue</a></div>
+  </header>
+
+  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+  <div *ngIf="confirmationMessage()" class="confirmation-banner" role="status"><span aria-hidden="true">✓</span><strong>{{ confirmationMessage() }}</strong></div>
+
+  <div class="intelligence-layout">
+    <aside class="panel intelligence-queue" aria-label="Intelligence review queue">
+      <div class="queue-heading"><div><p class="eyebrow">REVIEW QUEUE</p><h2>Recommendations needing attention</h2></div><span>{{ queue().length }}</span></div>
+      <div *ngIf="loadingQueue()" class="queue-loading" role="status">Loading review queue…</div>
+      <button type="button" class="intelligence-row" *ngFor="let item of queue()" [class.selected]="selectedId() === item.claim.id" [attr.data-tone]="item.tone" (click)="select(item)">
+        <span class="attention-score">{{ item.attentionScore }}</span>
+        <span class="row-copy"><strong>{{ item.claim.claimNumber }}</strong><small>{{ item.claim.claimantName }}</small><em>{{ item.reason }}</em></span>
+        <span class="row-state"><b>{{ label(item.claim.priority) }}</b><small>{{ item.claim.completenessPercentage }}% evidence</small></span>
+      </button>
+      <div *ngIf="!loadingQueue() && !queue().length" class="empty">No claims are available for intelligence review.</div>
+    </aside>
+
+    <main class="intelligence-workspace">
+      <div *ngIf="loadingWorkspace()" class="panel workspace-loading" role="status">Loading intelligence dossier…</div>
+      <ng-container *ngIf="workspace() as data">
+        <section class="panel dossier-header">
+          <div class="dossier-identity"><p class="eyebrow">SELECTED INTELLIGENCE DOSSIER</p><h2>{{ data.claim.claimNumber }} · {{ data.claim.claimantName }}</h2><p>{{ label(data.claim.claimType) }} · {{ label(data.claim.status) }} · {{ label(data.claim.priority) }} priority</p></div>
+          <div class="dossier-signals"><article><span>ATTENTION</span><strong>{{ selectedQueueItem()?.attentionScore ?? 0 }}</strong><small>Composite review score</small></article><article><span>EVIDENCE</span><strong>{{ data.claim.completenessPercentage }}%</strong><small>{{ data.claim.missingEvidence.length }} missing</small></article><article><span>REVIEW</span><strong>{{ data.recommendation ? label(data.recommendation.reviewState) : 'Not generated' }}</strong><small>{{ data.recommendation ? data.recommendation.confidence + '% confidence' : 'Advisory available' }}</small></article></div>
+        </section>
+
+        <div class="dossier-grid">
+          <section class="panel recommendation-dossier">
+            <div class="section-heading"><div><p class="eyebrow">RECOMMENDATION DOSSIER</p><h2>Explainable guidance</h2></div><span class="cf-chip" data-tone="advisory">Human authority</span></div>
+            <ng-container *ngIf="data.recommendation as recommendation; else noRecommendation">
+              <div class="recommendation-state"><span>{{ label(recommendation.reviewState) }}</span><strong>{{ recommendation.confidence }}%</strong></div>
+              <h3>{{ label(recommendation.recommendedAction) }}</h3>
+              <p>{{ recommendation.explanation }}</p>
+              <div class="confidence-stack"><span><i><b [style.width.%]="recommendation.confidence"></b></i><em>Final advisory confidence</em><strong>{{ recommendation.confidence }}%</strong></span><span><i><b [style.width.%]="data.claim.completenessPercentage"></b></i><em>Evidence completeness</em><strong>{{ data.claim.completenessPercentage }}%</strong></span><span><i><b style="width:88%"></b></i><em>Policy alignment</em><strong>88%</strong></span></div>
+              <div class="recommendation-actions" *ngIf="recommendation.reviewState === 'PENDING'"><button class="button primary" type="button" (click)="openAction('APPROVE_RECOMMENDATION')">Approve guidance</button><button class="button danger" type="button" (click)="openAction('REJECT_RECOMMENDATION')">Reject guidance</button></div>
+              <div class="reviewed-state" *ngIf="recommendation.reviewState !== 'PENDING'"><span aria-hidden="true">{{ recommendation.reviewState === 'APPROVED' ? '✓' : '×' }}</span><div><strong>{{ label(recommendation.reviewState) }}</strong><small>Reviewed by {{ recommendation.reviewerName || 'operator' }}</small></div></div>
+            </ng-container>
+            <ng-template #noRecommendation><div class="empty-recommendation"><span aria-hidden="true">◆</span><h3>No recommendation generated</h3><p>Create advisory guidance using the configured provider and deterministic fallback. Generating guidance does not change claim status.</p><button class="button primary" type="button" [disabled]="acting()" (click)="generateRecommendation()">{{ acting() ? 'Generating…' : 'Generate recommendation' }}</button></div></ng-template>
+          </section>
+
+          <section class="panel source-classification">
+            <div class="section-heading"><div><p class="eyebrow">SOURCE CLASSIFICATION</p><h2>What the system knows</h2></div></div>
+            <div class="classification-list"><article *ngFor="let node of reasoningNodes()" [attr.data-classification]="node.classification"><span>{{ label(node.classification) }}</span><div><strong>{{ node.label }}</strong><p>{{ node.detail }}</p><small>{{ node.source }}</small></div></article></div>
+          </section>
+        </div>
+
+        <section class="panel reasoning-panel">
+          <div class="section-heading"><div><p class="eyebrow">EVIDENCE REASONING GRAPH</p><h2>Sources flow toward guidance, not authority</h2></div><span class="graph-note">Missing evidence interrupts confidence</span></div>
+          <app-evidence-reasoning-graph [nodes]="reasoningNodes().slice(0, 6)" [recommendationLabel]="data.recommendation ? label(data.recommendation.recommendedAction) : 'Guidance available'" />
+        </section>
+      </ng-container>
+    </main>
+
+    <aside class="panel assistant-panel" *ngIf="workspace() as data" aria-label="Contextual claim assistant">
+      <div class="assistant-heading"><div><p class="eyebrow">CLAIM ASSISTANT</p><h2>Evidence-grounded support</h2></div><span class="assistant-live" aria-hidden="true"></span></div>
+      <div class="assistant-modes" role="tablist" aria-label="Assistant mode"><button type="button" role="tab" [attr.aria-selected]="mode() === 'review'" [class.active]="mode() === 'review'" (click)="setMode('review')">Review</button><button type="button" role="tab" [attr.aria-selected]="mode() === 'investigation'" [class.active]="mode() === 'investigation'" (click)="setMode('investigation')">Investigate</button><button type="button" role="tab" [attr.aria-selected]="mode() === 'action'" [class.active]="mode() === 'action'" (click)="setMode('action')">Action</button></div>
+      <ng-container *ngIf="assistant() as answer">
+        <div class="assistant-response"><span class="assistant-icon" aria-hidden="true">◆</span><div><h3>{{ answer.title }}</h3><p>{{ answer.body }}</p></div></div>
+        <div class="assistant-facts"><article *ngFor="let fact of answer.facts" [attr.data-classification]="fact.classification"><span>{{ label(fact.classification) }}</span><strong>{{ fact.label }}</strong><small>{{ fact.source }}</small></article></div>
+      </ng-container>
+      <div class="assistant-actions" *ngIf="mode() === 'review'"><button class="assistant-prompt" type="button" (click)="setMode('investigation')">Which evidence is missing?</button><button class="assistant-prompt" type="button" (click)="setMode('action')">What can I prepare safely?</button></div>
+      <div class="assistant-actions" *ngIf="mode() === 'investigation'"><button class="assistant-prompt" type="button" (click)="openAction('DRAFT_EVIDENCE_REQUEST')">Draft an evidence request</button><a class="assistant-prompt" [routerLink]="['/app/claims', data.claim.id]">Open source claim</a></div>
+      <div class="assistant-actions action-buttons" *ngIf="mode() === 'action'"><button class="button secondary" type="button" (click)="openAction('DRAFT_EVIDENCE_REQUEST')">Prepare evidence request</button><button class="button primary" type="button" [disabled]="!data.recommendation || data.recommendation.reviewState !== 'PENDING'" (click)="openAction('APPROVE_RECOMMENDATION')">Prepare approval</button></div>
+      <div class="prepared-draft" *ngIf="preparedDraft()"><p class="eyebrow">PREPARED DRAFT / NOT SENT</p><p>{{ preparedDraft() }}</p></div>
+      <div class="authority-boundary"><strong>Assistant boundary</strong><p>Every material statement exposes its classification and source. Consequential actions require a preview, operator reason, confirmation, and audit event.</p></div>
+    </aside>
+  </div>
+
+  <div class="action-backdrop" *ngIf="preparedAction() as action" (click)="cancelAction()">
+    <section class="action-dialog" role="dialog" aria-modal="true" aria-labelledby="action-dialog-title" (click)="$event.stopPropagation()">
+      <p class="eyebrow">PREPARED ACTION / HUMAN CONFIRMATION</p><h2 id="action-dialog-title">{{ action.title }}</h2><p>{{ action.summary }}</p>
+      <div class="effect-preview"><strong>Exact result preview</strong><ul><li *ngFor="let effect of action.effects">{{ effect }}</li></ul></div>
+      <label *ngIf="action.requiresReason">Operator reason<textarea [formControl]="reason" rows="4" placeholder="Explain why this action is appropriate."></textarea><small *ngIf="reason.touched && reason.invalid">Enter a reason of at least 8 characters.</small></label>
+      <div class="dialog-authority"><span aria-hidden="true">!</span><p>No action occurs until you confirm. The assistant cannot bypass this boundary.</p></div>
+      <div class="dialog-actions"><button class="button secondary" type="button" [disabled]="acting()" (click)="cancelAction()">Cancel</button><button class="button" [class.primary]="!action.destructive" [class.danger]="action.destructive" type="button" [disabled]="acting()" (click)="confirmAction()">{{ acting() ? 'Recording…' : 'Confirm action' }}</button></div>
+    </section>
+  </div>
+</section>
