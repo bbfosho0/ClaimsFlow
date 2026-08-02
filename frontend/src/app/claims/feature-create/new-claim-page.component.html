@@ -1,77 +1,92 @@
-<div class="page-enter intake-page">
-  <header class="page-header">
-    <div><p class="eyebrow">Claim intake</p><h1>Create a claim</h1><p>Capture the initial facts and evidence. Backend rules perform authoritative triage.</p></div>
-    <a class="button secondary" routerLink="/claims">← Back to queue</a>
+<section class="cf-page page-enter intake-page">
+  <header class="cf-page-header intake-header">
+    <div><p class="eyebrow">COMMAND INTAKE / NEW CLAIM</p><h1>Create a claim</h1><p>Capture a review-ready dossier. Backend policies remain authoritative for completeness, priority, SLA, and workflow.</p></div>
+    <a class="button secondary" routerLink="/app/claims">← Back to queue</a>
   </header>
 
-  <div #errorSummary *ngIf="errors().length" class="alert error-summary" tabindex="-1" role="alert">
-    <strong>Review the following:</strong><ul><li *ngFor="let error of errors()">{{ error }}</li></ul>
-  </div>
+  <div #errorSummary *ngIf="errors().length" class="alert error-summary" tabindex="-1" role="alert"><strong>Review the following:</strong><ul><li *ngFor="let error of errors()">{{ error }}</li></ul></div>
 
   <form [formGroup]="form" (ngSubmit)="submit()">
-    <ol class="intake-progress" aria-label="Claim intake sections">
-      <li class="complete"><span>✓</span><div><strong>Claimant</strong><small>Identity</small></div></li>
-      <li><span>2</span><div><strong>Incident</strong><small>Facts</small></div></li>
-      <li><span>3</span><div><strong>Evidence</strong><small>Available items</small></div></li>
-      <li><span>4</span><div><strong>Review</strong><small>Submit</small></div></li>
-    </ol>
+    <nav class="intake-progress" aria-label="Claim intake gates">
+      <button type="button" *ngFor="let gate of [1,2,3,4]" [class.active]="currentGate() === gate" [class.complete]="gateComplete(gate)" (click)="setGate(gate)">
+        <span>{{ gateComplete(gate) ? '✓' : gate }}</span>
+        <div><strong>{{ gate === 1 ? 'Claimant' : gate === 2 ? 'Incident' : gate === 3 ? 'Evidence' : 'Review' }}</strong><small>{{ gate === 1 ? 'Identity' : gate === 2 ? 'Facts and loss' : gate === 3 ? 'Available items' : 'Submit dossier' }}</small></div>
+      </button>
+    </nav>
 
     <div class="intake-layout">
-      <div class="form-column">
-        <section class="panel form-section">
-          <div class="section-heading"><span>1</span><div><h2>Claimant</h2><p>Who is making the claim?</p></div></div>
+      <main class="form-column">
+        <section id="intake-gate-1" class="panel form-section" [class.active-gate]="currentGate() === 1">
+          <div class="section-heading"><span>01</span><div><p class="eyebrow">CLAIMANT IDENTITY</p><h2>Who is making the claim?</h2></div><button type="button" class="gate-jump" (click)="setGate(2)">Next gate →</button></div>
           <div class="field-grid two-column">
-            <label>Full name<input formControlName="claimantName" autocomplete="name"></label>
-            <label>Email<input type="email" formControlName="claimantEmail" autocomplete="email"></label>
+            <label>Full name<input formControlName="claimantName" autocomplete="name" placeholder="Taylor Morgan"><small *ngIf="form.controls.claimantName.touched && form.controls.claimantName.invalid">Claimant name is required.</small></label>
+            <label>Email<input type="email" formControlName="claimantEmail" autocomplete="email" placeholder="taylor@example.test"><small *ngIf="form.controls.claimantEmail.touched && form.controls.claimantEmail.invalid">Enter a valid email address.</small></label>
           </div>
         </section>
 
-        <section class="panel form-section">
-          <div class="section-heading"><span>2</span><div><h2>Incident</h2><p>Describe what happened and the known impact.</p></div></div>
+        <section id="intake-gate-2" class="panel form-section" [class.active-gate]="currentGate() === 2">
+          <div class="section-heading"><span>02</span><div><p class="eyebrow">INCIDENT DOSSIER</p><h2>Describe the event and known impact.</h2></div><button type="button" class="gate-jump" (click)="setGate(3)">Next gate →</button></div>
           <fieldset class="claim-type-fieldset">
             <legend>Claim type</legend>
             <div class="claim-type-grid">
               <label class="claim-type-card" *ngFor="let type of claimTypes" [class.selected]="form.controls.claimType.value === type.value">
                 <input type="radio" formControlName="claimType" [value]="type.value">
-                <span class="option-icon" aria-hidden="true">{{ type.icon }}</span>
-                <strong>{{ type.label }}</strong>
-                <small>{{ type.description }}</small>
+                <span class="option-icon" aria-hidden="true">{{ type.icon }}</span><strong>{{ type.label }}</strong><small>{{ type.description }}</small>
               </label>
             </div>
           </fieldset>
           <div class="field-grid two-column">
-            <label>Incident date<input type="date" [max]="today" formControlName="incidentDate"></label>
-            <label>Estimated loss<input type="number" min="0" step="0.01" formControlName="estimatedLoss"></label>
+            <label>Incident date<input type="date" [max]="today" formControlName="incidentDate"><small *ngIf="form.controls.incidentDate.touched && form.controls.incidentDate.invalid">Use today or an earlier date.</small></label>
+            <label>Estimated loss<input type="number" min="0" step="0.01" formControlName="estimatedLoss"><small>Enter the current known estimate.</small></label>
           </div>
-          <label>Description<textarea rows="5" formControlName="description" placeholder="Describe what happened and the known impact."></textarea><small>{{ form.controls.description.value.length }} / 2000</small></label>
+          <label>Description<textarea rows="6" formControlName="description" placeholder="Describe what happened, what was damaged, and any immediate safety concerns."></textarea><small [class.field-error]="form.controls.description.touched && form.controls.description.invalid">{{ form.controls.description.value.length }} / 2000 · minimum 20 characters</small></label>
         </section>
 
-        <section class="panel form-section">
-          <div class="section-heading"><span>3</span><div><h2>Evidence available</h2><p>Claims may be submitted incomplete. Missing evidence will be surfaced in triage.</p></div></div>
+        <section id="intake-gate-3" class="panel form-section" [class.active-gate]="currentGate() === 3">
+          <div class="section-heading"><span>03</span><div><p class="eyebrow">EVIDENCE GATE</p><h2>Mark available evidence and stage files.</h2></div><button type="button" class="gate-jump" (click)="setGate(4)">Review dossier →</button></div>
+          <p class="section-intro">Claims may be submitted incomplete. Missing evidence remains visible after backend triage.</p>
           <div class="evidence-grid">
             <label class="evidence-card" [class.selected]="form.controls.incidentReportPresent.value"><input type="checkbox" formControlName="incidentReportPresent"><span aria-hidden="true">✓</span><strong>Incident report</strong><small>Formal report or reference number</small></label>
             <label class="evidence-card" [class.selected]="form.controls.photosPresent.value"><input type="checkbox" formControlName="photosPresent"><span aria-hidden="true">▣</span><strong>Damage photos</strong><small>Images documenting the incident</small></label>
             <label class="evidence-card" [class.selected]="form.controls.proofOfOwnershipPresent.value"><input type="checkbox" formControlName="proofOfOwnershipPresent"><span aria-hidden="true">◇</span><strong>Proof of ownership</strong><small>Receipt, title, or ownership record</small></label>
             <label class="evidence-card" [class.selected]="form.controls.medicalDocumentationPresent.value"><input type="checkbox" formControlName="medicalDocumentationPresent"><span aria-hidden="true">+</span><strong>Medical documentation</strong><small>Records supporting an injury claim</small></label>
           </div>
-        </section>
-      </div>
 
-      <aside class="review-panel" aria-label="Claim review summary">
-        <p class="eyebrow">Review & submit</p>
-        <h2>Claim summary</h2>
-        <p>Review your entered facts before creating the claim.</p>
+          <div class="upload-zone" [class.has-error]="uploadError()">
+            <input #fileInput class="sr-only" id="evidence-files" type="file" multiple accept="image/*,.pdf,.doc,.docx" (change)="onFilesSelected($event)">
+            <label for="evidence-files"><span aria-hidden="true">⇧</span><div><strong>Stage supporting files</strong><small>Images and documents up to 10 MB each. Selection remains local in this portfolio build.</small></div><b>Choose files</b></label>
+            <div class="upload-error" *ngIf="uploadError()" role="alert"><strong>Upload validation failed</strong><span>{{ uploadError() }}</span><button type="button" (click)="fileInput.click()">Try another file</button></div>
+            <ul class="file-list" *ngIf="uploadedFiles().length"><li *ngFor="let file of uploadedFiles()"><span aria-hidden="true">✓</span><strong>{{ file }}</strong><small>Ready for provider integration</small></li></ul>
+            <button class="clear-files" type="button" *ngIf="uploadedFiles().length || uploadError()" (click)="clearUploadedFiles(fileInput)">Clear staged files</button>
+          </div>
+        </section>
+
+        <section id="intake-gate-4" class="panel form-section review-gate" [class.active-gate]="currentGate() === 4" data-tour-target="new-claim-submit">
+          <div class="section-heading"><span>04</span><div><p class="eyebrow">REVIEW GATE</p><h2>Confirm the dossier before submission.</h2></div><span class="cf-chip" [attr.data-tone]="form.valid ? 'healthy' : 'warning'">{{ form.valid ? 'Ready' : 'Needs attention' }}</span></div>
+          <div class="review-grid">
+            <article><span>CLAIMANT</span><strong>{{ form.controls.claimantName.value || 'Not entered' }}</strong><small>{{ form.controls.claimantEmail.value || 'Email required' }}</small></article>
+            <article><span>INCIDENT</span><strong>{{ selectedClaimTypeLabel() }}</strong><small>{{ form.controls.incidentDate.value || 'Date required' }}</small></article>
+            <article><span>ESTIMATED LOSS</span><strong>{{ form.controls.estimatedLoss.value | currency }}</strong><small>Backend policies calculate priority</small></article>
+            <article><span>EVIDENCE</span><strong>{{ evidenceCount() }} marked · {{ uploadedFiles().length }} files</strong><small>Incomplete claims are allowed</small></article>
+          </div>
+          <div class="authority-note"><span aria-hidden="true">i</span><div><strong>Backend-authoritative triage</strong><p>Completeness, priority, SLA, claim number, workflow state, and audit events are calculated or persisted by Spring application services.</p></div></div>
+          <div *ngIf="actionError()" class="inline-error" role="alert">{{ actionError() }}</div>
+          <div class="review-actions"><a class="button secondary" routerLink="/app/claims">Cancel</a><button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Creating claim…' : 'Create review-ready claim →' }}</button></div>
+        </section>
+      </main>
+
+      <aside class="review-panel" aria-label="Claim intake status">
+        <p class="eyebrow">INTAKE CONTROL</p><h2>Dossier status</h2><p>Use the four gates to collect a complete, traceable starting record.</p>
         <dl>
           <div><dt>Required fields</dt><dd>{{ requiredCompleted() }} of 6 complete</dd></div>
           <div><dt>Claim type</dt><dd>{{ selectedClaimTypeLabel() }}</dd></div>
           <div><dt>Evidence</dt><dd>{{ evidenceCount() }} evidence {{ evidenceCount() === 1 ? 'item' : 'items' }} selected</dd></div>
+          <div><dt>Staged files</dt><dd>{{ uploadedFiles().length }}</dd></div>
           <div><dt>Estimated loss</dt><dd>{{ form.controls.estimatedLoss.value | currency }}</dd></div>
         </dl>
-        <div class="authority-note"><span aria-hidden="true">i</span><p>Priority and completeness are calculated by backend rules after submission.</p></div>
-        <div *ngIf="actionError()" class="inline-error" role="alert">{{ actionError() }}</div>
-        <button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Creating…' : '✓ Create claim' }}</button>
-        <a class="button secondary" routerLink="/claims">Cancel</a>
+        <div class="completion-meter"><span><b>Required completion</b><strong>{{ requiredCompleted() }}/6</strong></span><i><b [style.width.%]="requiredCompleted() / 6 * 100"></b></i></div>
+        <ol class="gate-summary"><li *ngFor="let gate of [1,2,3,4]" [class.complete]="gateComplete(gate)" [class.active]="currentGate() === gate"><span>{{ gateComplete(gate) ? '✓' : gate }}</span><button type="button" (click)="setGate(gate)">Gate {{ gate }} · {{ gate === 1 ? 'Claimant' : gate === 2 ? 'Incident' : gate === 3 ? 'Evidence' : 'Review' }}</button></li></ol>
       </aside>
     </div>
   </form>
-</div>
+</section>
