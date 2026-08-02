@@ -8,16 +8,12 @@
   <div *ngIf="confirmationMessage()" class="confirmation-banner" role="status"><span aria-hidden="true">✓</span><strong>{{ confirmationMessage() }}</strong></div>
 
   <div class="intelligence-layout">
-    <aside class="panel intelligence-queue" aria-label="Intelligence review queue">
-      <div class="queue-heading"><div><p class="eyebrow">REVIEW QUEUE</p><h2>Recommendations needing attention</h2></div><span>{{ queue().length }}</span></div>
-      <div *ngIf="loadingQueue()" class="queue-loading" role="status">Loading review queue…</div>
-      <button type="button" class="intelligence-row" *ngFor="let item of queue()" [class.selected]="selectedId() === item.claim.id" [attr.data-tone]="item.tone" (click)="select(item)">
-        <span class="attention-score">{{ item.attentionScore }}</span>
-        <span class="row-copy"><strong>{{ item.claim.claimNumber }}</strong><small>{{ item.claim.claimantName }}</small><em>{{ item.reason }}</em></span>
-        <span class="row-state"><b>{{ label(item.claim.priority) }}</b><small>{{ item.claim.completenessPercentage }}% evidence</small></span>
-      </button>
-      <div *ngIf="!loadingQueue() && !queue().length" class="empty">No claims are available for intelligence review.</div>
-    </aside>
+    <app-intelligence-review-queue
+      [items]="queue()"
+      [selectedId]="selectedId()"
+      [loading]="loadingQueue()"
+      (selected)="select($event)"
+    />
 
     <main class="intelligence-workspace">
       <div *ngIf="loadingWorkspace()" class="panel workspace-loading" role="status">Loading intelligence dossier…</div>
