@@ -1,29 +1,121 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { WorkspaceDataService } from './workspace-data.service';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+
+interface LibraryItem {
+  readonly title: string;
+  readonly detail: string;
+  readonly tone: string;
+}
 
 @Component({
   standalone: true,
   imports: [CommonModule],
   template: `
     <section class="workspace-page workflow-workspace page-enter">
-      <div class="workflow-toolbar"><div><strong>Property claim triage</strong><span>Draft v8 · Last edited 4 min ago</span></div><button>Versions</button><button>Validate</button><button class="primary" type="button" (click)="runSimulation()">Run simulation</button></div>
-      <div class="workflow-layout">
-        <aside class="workspace-panel node-library"><header><strong>Components</strong><span>Drag to canvas</span></header><button><i data-tone="cyan"></i><span><strong>Trigger</strong><small>Starts a workflow</small></span></button><button><i data-tone="violet"></i><span><strong>Condition</strong><small>Branches by data</small></span></button><button><i data-tone="magenta"></i><span><strong>AI action</strong><small>Advisory analysis</small></span></button><button><i data-tone="green"></i><span><strong>Action</strong><small>Updates local state</small></span></button><button><i data-tone="amber"></i><span><strong>Approval</strong><small>Human authority</small></span></button><div class="library-note"><strong>Audit safe</strong><p>Approval and state-changing actions retain explicit actor intent.</p></div></aside>
-        <section class="workspace-panel workflow-canvas"><header><strong>Workflow canvas</strong><span>5 nodes · 1 branch</span></header><div class="canvas-grid" aria-label="Editable workflow canvas"><article *ngFor="let node of nodes; let index = index" class="workflow-node" [attr.data-tone]="node.tone" [class.selected]="selectedNode() === index" (click)="selectedNode.set(index)"><span>{{ node.kind }}</span><strong>{{ node.title }}</strong><small>{{ node.detail }}</small><i *ngIf="index < nodes.length - 1" aria-hidden="true"></i></article><div class="branch-label">NO → Manual evidence request</div></div></section>
-        <aside class="workspace-panel workflow-inspector"><header><strong>Condition inspector</strong><span>Node {{ selectedNode() + 1 }}</span></header><label>Field<select><option>Evidence completeness</option></select></label><label>Operator<select><option>Is below</option></select></label><label>Value<input value="80" /></label><div class="toggle-row"><span><strong>Stop on missing value</strong><small>Prevents uncertain routing.</small></span><i class="toggle active"></i></div><div class="test-result" [attr.data-state]="simulationState()"><span>TEST RESULT</span><strong>{{ simulationState() === 'passed' ? 'Local simulation passed' : 'Ready to simulate' }}</strong><p>{{ simulationState() === 'passed' ? 'The claim followed the evidence review branch. No server changes were made.' : 'Run deterministic test data through this workflow.' }}</p></div><button class="save-button">Save draft locally</button></aside>
+      <div class="workflow-topbar">
+        <nav aria-label="Workflow sections"><button class="active">Builder</button><button>Settings</button><button>Versions</button><button>Test & Simulate</button><button>Audit Trail</button></nav>
+        <span>All changes saved</span>
+        <button>Save</button><button>Validate</button><button class="primary">Activate</button>
       </div>
-      <div class="workflow-footer"><article><span>VALIDATION</span><strong>All nodes connected</strong></article><article><span>ESTIMATED IMPACT</span><strong>31% faster triage</strong></article><article><span>HUMAN AUTHORITY</span><strong>Approval preserved</strong></article><article><span>EXECUTION</span><strong>Local simulation only</strong></article></div>
+
+      <div class="figma-workflow-layout">
+        <aside class="workspace-panel component-library">
+          <header><strong>Components</strong></header>
+          <label><span class="sr-only">Search workflow components</span><input placeholder="Search components…" /></label>
+          <section *ngFor="let group of libraryGroups">
+            <h3>{{ group.label }}</h3>
+            <button *ngFor="let item of group.items"><i [attr.data-tone]="item.tone"></i><span><strong>{{ item.title }}</strong><small>{{ item.detail }}</small></span></button>
+          </section>
+        </aside>
+
+        <section class="workspace-panel figma-workflow-canvas">
+          <div class="canvas-toolbar"><span>Zoom 100% · − · +</span><button>Auto Arrange</button></div>
+          <div class="builder-canvas" aria-label="Property claim workflow canvas">
+            <svg class="workflow-connectors" viewBox="0 0 608 720" aria-hidden="true">
+              <path d="M304 88V118"/><path d="M304 198V238H175V270"/><path d="M304 238H438V270"/>
+              <path d="M175 352V392"/><path d="M438 352V392"/><path d="M175 474V518H304V548"/><path d="M438 474V518H304"/>
+              <path d="M304 630V670"/><path d="M304 670H165V694"/><path d="M304 670H444V694"/>
+            </svg>
+            <span class="branch-pill branch-yes">YES</span><span class="branch-pill branch-no">NO</span>
+            <article *ngFor="let node of nodes; let index = index" class="workflow-node-figma" [attr.data-index]="index" [attr.data-tone]="node.tone" [class.selected]="selectedNode() === index" (click)="selectedNode.set(index)">
+              <i aria-hidden="true"></i><div><span>{{ node.kind }}</span><strong>{{ node.title }}</strong><small>{{ node.detail }}</small></div>
+            </article>
+          </div>
+        </section>
+
+        <aside class="workspace-panel condition-inspector">
+          <header><div><span>CONDITION</span><strong>Policy Active?</strong><small>Check whether the policy is active and not expired.</small></div></header>
+          <label>Logic Type<select><option>All Conditions (AND)</option></select></label>
+          <h3>CONDITIONS</h3>
+          <div class="condition-row"><span>Policy Status</span><small>equals</small><strong>Active</strong></div>
+          <div class="condition-row"><span>Expiry Date</span><small>greater than</small><strong>Today</strong></div>
+          <button class="add-condition">+ Add Condition</button>
+          <label>Else Path<select><option>Policy inactive or expired</option></select></label>
+          <h3>ADVANCED</h3>
+          <div class="advanced-row"><span>Case Sensitivity</span><i></i></div>
+          <div class="advanced-row"><span>Stop on First Match</span><i class="active"></i></div>
+          <h3>TEST CONDITION</h3>
+          <div class="test-controls"><select><option>Active</option></select><button type="button" (click)="runSimulation()">Run Test</button></div>
+          <div class="matched-result"><strong>MATCHED</strong><span>True · 2 conditions · 12ms</span></div>
+        </aside>
+      </div>
+
+      <section class="workspace-panel simulation-mode">
+        <button class="simulation-play" type="button" (click)="runSimulation()" aria-label="Run workflow simulation">▶</button>
+        <div><span>STANDARD PROPERTY CLAIM</span><strong>$18,750 · Policy Active</strong></div>
+        <div class="simulation-progress"><strong>COMPLETED SUCCESSFULLY</strong><span>8 / 8 steps · 1.2s</span><i><b *ngFor="let step of simulationSteps"></b></i><span class="sr-only">{{ simulationState() === 'passed' ? 'Local simulation passed' : 'Ready to simulate' }}</span></div>
+        <div class="simulation-insights"><span>INSIGHTS</span><p>✓ Auto-adjudication path selected</p><p>✓ High confidence score: 82%</p><p>✓ Claim auto-approved</p></div>
+        <div class="simulation-metrics"><span>METRICS</span><strong>82% <em>SUCCESS</em></strong><p>Approval probability 82% · Risk low · 1.2s processing</p></div>
+      </section>
     </section>
   `,
   styleUrl: './workspace-pages.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkflowsPageComponent {
-  private readonly data = inject(WorkspaceDataService);
-  readonly nodes = this.data.workflowNodes;
   readonly selectedNode = signal(1);
-  readonly simulationState = signal<'idle' | 'passed'>('idle');
+  readonly simulationState = signal<'idle' | 'passed'>('passed');
+  readonly simulationSteps = Array.from({ length: 8 });
+  readonly libraryGroups: readonly { label: string; items: readonly LibraryItem[] }[] = [
+    {
+      label: 'TRIGGERS',
+      items: [
+        { title: 'Claim Created', detail: 'New claim submitted', tone: 'green' },
+        { title: 'Document Received', detail: 'Required document uploaded', tone: 'violet' },
+        { title: 'Event Occurred', detail: 'Specific system event', tone: 'critical' },
+      ],
+    },
+    {
+      label: 'LOGIC',
+      items: [
+        { title: 'Condition', detail: 'If / else logic', tone: 'green' },
+        { title: 'Decision Table', detail: 'Multi-branch decision', tone: 'blue' },
+        { title: 'Score Check', detail: 'Evaluate risk or score', tone: 'violet' },
+        { title: 'Business Rule', detail: 'Custom rule evaluation', tone: 'amber' },
+      ],
+    },
+    {
+      label: 'ACTIONS',
+      items: [
+        { title: 'Assign Task', detail: 'Create task for team', tone: 'amber' },
+        { title: 'Send Notification', detail: 'Email, SMS, in-app', tone: 'cyan' },
+        { title: 'Update Claim', detail: 'Update claim information', tone: 'green' },
+        { title: 'Create Document', detail: 'Generate document', tone: 'violet' },
+      ],
+    },
+  ];
+  readonly nodes = [
+    { kind: 'TRIGGER', title: 'Claim Created', detail: 'When property claim is submitted', tone: 'green' },
+    { kind: 'CONDITION', title: 'Policy Active?', detail: 'Is policy active and not expired?', tone: 'blue' },
+    { kind: 'CONDITION', title: 'Claim Amount', detail: 'Estimated amount ≤ $25,000?', tone: 'violet' },
+    { kind: 'ACTION', title: 'Send Notification', detail: 'Notify customer of ineligibility', tone: 'amber' },
+    { kind: 'AI ACTION', title: 'Auto-Adjudicate', detail: 'Evaluate and recommend settlement', tone: 'violet' },
+    { kind: 'APPROVAL', title: 'Manager Review', detail: 'Required for $25k–$100k', tone: 'amber' },
+    { kind: 'CONDITION', title: 'AI Confidence Score', detail: 'Confidence score ≥ 75%', tone: 'blue' },
+    { kind: 'ACTION', title: 'Approve Claim', detail: 'Update status automatically', tone: 'green' },
+    { kind: 'ACTION', title: 'Escalate to Adjuster', detail: 'Send for senior review', tone: 'amber' },
+    { kind: 'ACTION', title: 'Update Claim', detail: 'Close workflow and write audit', tone: 'cyan' },
+  ];
 
   runSimulation(): void {
     this.simulationState.set('passed');
