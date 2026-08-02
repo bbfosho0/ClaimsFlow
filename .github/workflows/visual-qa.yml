@@ -1,0 +1,81 @@
+name: Visual QA
+
+on:
+  push:
+    branches:
+      - 'design/midnight-command-v2-parity'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci --silent
+        working-directory: frontend
+      - name: Start Angular application
+        shell: bash
+        working-directory: frontend
+        run: |
+          npm start -- --host 127.0.0.1 --port 4200 > /tmp/claimsflow-ng.log 2>&1 &
+          echo $! > /tmp/claimsflow-ng.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4200/app/analytics > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/claimsflow-ng.log
+          exit 1
+      - name: Capture desktop routes
+        shell: bash
+        run: |
+          mkdir -p visual-qa
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          if [ -z "$CHROME" ]; then
+            echo "Chrome executable not found"
+            exit 1
+          fi
+          for route in analytics documents team-ops workflows; do
+            "$CHROME" \
+              --headless=new \
+              --no-sandbox \
+              --disable-gpu \
+              --hide-scrollbars \
+              --force-device-scale-factor=1 \
+              --window-size=1440,1180 \
+              --virtual-time-budget=5000 \
+              --screenshot="visual-qa/${route}-1440x1180.png" \
+              "http://127.0.0.1:4200/app/${route}"
+          done
+      - name: Capture mobile shell
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --hide-scrollbars \
+            --force-device-scale-factor=1 \
+            --window-size=390,844 \
+            --virtual-time-budget=5000 \
+            --screenshot="visual-qa/analytics-mobile-390x844.png" \
+            "http://127.0.0.1:4200/app/analytics"
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: claimsflow-visual-qa
+          path: visual-qa/*.png
+          if-no-files-found: error
+          retention-days: 3
