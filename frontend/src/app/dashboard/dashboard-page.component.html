@@ -49,15 +49,15 @@
       </article>
       <article class="instrument-cell" data-tone="critical">
         <span>PRIORITY LOAD</span><strong>{{ dashboard.highPriorityClaims }}</strong><small>High or critical</small>
-        <i [style.--meter.%]="dashboard.openClaims ? (dashboard.highPriorityClaims / dashboard.openClaims) * 100 : 0"></i>
+        <i [style.--meter]="(dashboard.openClaims ? (dashboard.highPriorityClaims / dashboard.openClaims) * 100 : 0) + '%'"></i>
       </article>
       <article class="instrument-cell" data-tone="healthy">
         <span>EVIDENCE READY</span><strong>{{ portfolioCompleteness(dashboard) }}%</strong><small>Portfolio completeness</small>
-        <i [style.--meter.%]="portfolioCompleteness(dashboard)"></i>
+        <i [style.--meter]="portfolioCompleteness(dashboard) + '%'"></i>
       </article>
       <article class="instrument-cell" data-tone="warning">
         <span>OWNERSHIP GAP</span><strong>{{ dashboard.unassignedClaims }}</strong><small>Unassigned claims</small>
-        <i [style.--meter.%]="dashboard.openClaims ? (dashboard.unassignedClaims / dashboard.openClaims) * 100 : 0"></i>
+        <i [style.--meter]="(dashboard.openClaims ? (dashboard.unassignedClaims / dashboard.openClaims) * 100 : 0) + '%'"></i>
       </article>
     </section>
 
