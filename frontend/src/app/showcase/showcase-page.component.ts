@@ -1,23 +1,42 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CommandFieldComponent } from '../shared/visualizations/command-field.component';
+
+type ShowcaseState = 'initial' | 'signalLock' | 'ready';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
-  template: `
-    <main class="showcase-placeholder">
-      <p class="eyebrow">ClaimsFlow / Operational signal intelligence</p>
-      <h1>Claims operations with evidence, authority, and audit built in.</h1>
-      <p>The complete cinematic showcase is loading into this route.</p>
-      <div><a class="button primary" routerLink="/tour">Take guided tour</a><a class="button secondary" routerLink="/app/dashboard">Open live system</a></div>
-    </main>
-  `,
-  styles: [`
-    .showcase-placeholder { min-height: 100vh; display: grid; align-content: center; gap: 18px; padding: clamp(28px, 8vw, 120px); background: radial-gradient(circle at 75% 20%, rgb(66 205 236 / .1), transparent 32%), var(--cf-color-canvas); }
-    h1 { max-width: 1000px; margin: 0; font-size: clamp(42px, 8vw, 96px); line-height: .95; letter-spacing: -.065em; }
-    p:not(.eyebrow) { max-width: 700px; color: var(--cf-color-text-secondary); }
-    div { display: flex; flex-wrap: wrap; gap: 10px; }
-  `],
+  imports: [RouterLink, CommandFieldComponent],
+  templateUrl: './showcase-page.component.html',
+  styleUrl: './showcase-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ShowcasePageComponent {}
+export class ShowcasePageComponent implements OnInit, OnDestroy {
+  readonly state = signal<ShowcaseState>('initial');
+  readonly reducedMotion = signal(false);
+  private readonly timers: number[] = [];
+
+  ngOnInit(): void {
+    const media = typeof globalThis.matchMedia === 'function'
+      ? globalThis.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+    this.reducedMotion.set(media?.matches ?? false);
+
+    if (this.reducedMotion()) {
+      this.state.set('ready');
+      return;
+    }
+
+    this.timers.push(globalThis.setTimeout(() => this.state.set('signalLock'), 650));
+    this.timers.push(globalThis.setTimeout(() => this.state.set('ready'), 1380));
+  }
+
+  ngOnDestroy(): void {
+    this.timers.forEach(timer => globalThis.clearTimeout(timer));
+  }
+
+  skipIntro(): void {
+    this.timers.forEach(timer => globalThis.clearTimeout(timer));
+    this.state.set('ready');
+  }
+}
