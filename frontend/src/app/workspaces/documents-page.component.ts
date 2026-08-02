@@ -7,31 +7,91 @@ import { DocumentRecord, WorkspaceDataService } from './workspace-data.service';
   imports: [CommonModule],
   template: `
     <section class="workspace-page documents-workspace page-enter">
-      <div class="workspace-tabs"><button class="active">Documents</button><button>Communications</button><button>Activity</button><button class="upload-button">Upload evidence</button></div>
-      <div class="documents-layout">
-        <aside class="workspace-panel folder-rail">
-          <header><strong>Folders</strong><span>128 files</span></header>
-          <button class="active">All documents <b>128</b></button><button>Evidence <b>54</b></button><button>Policy <b>18</b></button><button>Correspondence <b>36</b></button><button>Reports <b>20</b></button>
-          <div class="integrity-card"><span>DOCUMENT INTEGRITY</span><strong>96.4%</strong><i><b></b></i><small>All critical evidence has a verified source.</small></div>
+      <div class="workspace-tabs documents-toolbar" aria-label="Document workspace views">
+        <button class="active" type="button"><i data-tone="cyan"></i>All Items</button>
+        <button type="button"><i data-tone="blue"></i>Documents</button>
+        <button type="button"><i data-tone="violet"></i>Messages</button>
+        <button type="button"><i data-tone="green"></i>Approvals</button>
+        <button type="button" class="bulk-control">● Bulk Actions</button>
+        <button type="button" class="upload-button"><i data-tone="green"></i>Upload Documents</button>
+      </div>
+
+      <div class="documents-layout figma-documents-layout">
+        <aside class="workspace-panel folder-rail document-folders">
+          <header><strong>Document Folders</strong></header>
+          <button *ngFor="let folder of folders; let index = index" type="button" [class.active]="index === 0"><i aria-hidden="true"></i><span>{{ folder.label }}</span><b>{{ folder.count }}</b></button>
+          <div class="storage-block">
+            <span>STORAGE</span>
+            <p>2.4 GB of 10 GB used</p>
+            <i><b></b></i>
+          </div>
         </aside>
 
-        <section class="workspace-panel document-list">
-          <header><div><strong>Claim documents</strong><span>CF-2026-0142 · Morgan Ellis</span></div><button>Filter ⌄</button></header>
+        <section class="workspace-panel document-list figma-document-list">
+          <header><strong>All Documents (128)</strong><button type="button">● Filters</button></header>
           <button *ngFor="let document of documents" type="button" [class.active]="selectedDocument().name === document.name" (click)="selectDocument(document.name)">
-            <i aria-hidden="true">▤</i><span><strong>{{ document.name }}</strong><small>{{ document.type }} · {{ document.size }}</small></span><b>{{ document.status }}</b>
+            <i class="document-color" [attr.data-tone]="document.tone" aria-hidden="true"></i>
+            <span><strong>{{ document.displayName }}</strong><small>{{ document.version }} · {{ document.size }} · {{ document.date }}</small><em [attr.data-tone]="document.tone">{{ document.status }}</em></span>
           </button>
         </section>
 
-        <section class="workspace-panel document-preview">
-          <header><div><strong>{{ selectedDocument().name }}</strong><span>{{ selectedDocument().type }} · {{ selectedDocument().size }}</span></div><button aria-label="Document menu">•••</button></header>
-          <div class="preview-sheet"><span>CLAIM EVIDENCE</span><strong>{{ selectedDocument().name }}</strong><i></i><i></i><i></i><i></i><p>{{ selectedDocument().summary }}</p></div>
-          <div class="extraction-grid"><article><span>OCR confidence</span><strong>{{ selectedDocument().confidence }}%</strong></article><article><span>Integrity</span><strong>Verified</strong></article><article><span>Version</span><strong>v3</strong></article></div>
-          <div class="entity-tags"><span>Water damage</span><span>North wing</span><span>$48,200 estimate</span><span>Policy verified</span></div>
+        <section class="workspace-panel document-preview figma-document-preview">
+          <header>
+            <div><strong>{{ selectedDocument().displayName }}</strong></div>
+            <span class="version-pill">● {{ selectedDocument().version }}</span>
+          </header>
+          <nav class="preview-tabs" aria-label="Document preview tabs"><button class="active">Preview</button><button>Details</button><button>Versions (3)</button><button>Extraction</button><button>Activity</button></nav>
+          <div class="police-report-sheet" role="img" aria-label="Police incident report preview">
+            <div class="report-brand"><i aria-hidden="true"></i><strong>CITY OF SPRINGFIELD<br>POLICE DEPARTMENT<br>INCIDENT REPORT</strong></div>
+            <h3>INCIDENT INFORMATION</h3>
+            <div class="report-rule"></div>
+            <p>Driver 1: James Carter<br>Driver 2: Michael Anderson<br>Location: 123 Main St, Springfield, IL<br>Type: Vehicle Collision</p>
+            <i class="report-line"></i><i class="report-line"></i><i class="report-line short"></i><i class="report-line"></i><i class="report-line medium"></i>
+          </div>
+          <section class="ocr-section" aria-labelledby="ocr-title">
+            <h3 id="ocr-title">OCR & Extraction Tags</h3>
+            <div class="extraction-tags">
+              <article><b>Incident Date</b><span>May 19, 2025</span></article>
+              <article><b>Location</b><span>123 Main St</span></article>
+              <article><b>Incident Type</b><span>Vehicle Collision</span></article>
+              <article><b>Officer</b><span>James Thompson</span></article>
+              <article><b>Driver 1</b><span>James Carter</span></article>
+              <article><b>Policy</b><span>CLM-2025-10291</span></article>
+            </div>
+            <div class="confidence-row"><span>Confidence Score</span><i><b [style.width.%]="selectedDocument().confidence"></b></i><strong>{{ selectedDocument().confidence }}%</strong></div>
+          </section>
         </section>
 
-        <section class="workspace-panel communications-panel"><header><strong>Communication history</strong><button>New message</button></header><ol><li><i data-tone="cyan"></i><div><strong>Claimant email received</strong><span>Additional accommodation receipts attached.</span></div><time>09:42</time></li><li><i data-tone="green"></i><div><strong>Adjuster note</strong><span>Loss assessment reconciled with photo evidence.</span></div><time>Yesterday</time></li><li><i data-tone="violet"></i><div><strong>AI summary refreshed</strong><span>Three new entities and one policy conflict detected.</span></div><time>Jul 31</time></li></ol></section>
-        <section class="workspace-panel ai-summary-panel"><header><strong>AI evidence summary</strong><span>Advisory</span></header><p>{{ selectedDocument().summary }}</p><div><span>Coverage match</span><strong>High confidence</strong></div><div><span>Review item</span><strong>Confirm sublimit</strong></div></section>
-        <section class="workspace-panel comments-panel"><header><strong>Collaborative comments</strong><span>4 active</span></header><p><b>PS</b><span><strong>Priya Shah</strong> Confirm the accommodation sublimit before approval.</span></p><label><span class="sr-only">Add a comment</span><input placeholder="Add a comment…" /><button>Send</button></label></section>
+        <aside class="workspace-panel communication-stream">
+          <header><strong>Communication</strong><span>Approvals</span></header>
+          <div class="communication-filters"><button class="active">● All</button><button>● Email</button><button>● SMS</button><button>● Notes</button></div>
+          <ol>
+            <li *ngFor="let item of communications"><i [attr.data-tone]="item.tone"></i><div><strong>{{ item.title }}</strong><span>{{ item.detail }}</span></div><time>{{ item.time }}</time></li>
+          </ol>
+          <button class="compose-button">● Compose New Message</button>
+          <section class="ai-summary-card">
+            <header><strong>AI Summary</strong></header>
+            <small>Generated from 3 documents</small>
+            <dl>
+              <div><dt>Incident Overview</dt><dd>Vehicle collision at Main St and 2nd Ave.</dd></div>
+              <div><dt>Parties Involved</dt><dd>James Carter and Michael Anderson.</dd></div>
+              <div><dt>Key Findings</dt><dd>Driver 2 failed to yield right of way.</dd></div>
+              <div><dt>Estimated Damages</dt><dd>$4,730 from repair estimate.</dd></div>
+            </dl>
+          </section>
+        </aside>
+
+        <section class="workspace-panel collaborative-comments">
+          <header><strong>Collaborative Comments (3)</strong></header>
+          <div class="comment-composer">Add a comment… @mention users</div>
+          <article *ngFor="let comment of comments"><i [attr.data-tone]="comment.tone"></i><div><strong>{{ comment.name }}</strong><p>{{ comment.message }}</p><small>May 19, 2025 · {{ comment.time }}</small></div></article>
+        </section>
+
+        <aside class="workspace-panel document-integrity">
+          <header><strong>Document Integrity</strong></header>
+          <div class="integrity-score"><strong>96</strong><span>HIGH CONFIDENCE</span></div>
+          <dl><div><dt>OCR coverage</dt><dd>98%</dd></div><div><dt>Entity matching</dt><dd>94%</dd></div><div><dt>Version integrity</dt><dd>100%</dd></div><div><dt>Audit readiness</dt><dd>91%</dd></div></dl>
+        </aside>
       </div>
     </section>
   `,
@@ -42,6 +102,30 @@ export class DocumentsPageComponent {
   private readonly data = inject(WorkspaceDataService);
   readonly documents = this.data.documents;
   readonly selectedDocument = signal<DocumentRecord>(this.documents[0]!);
+  readonly folders = [
+    { label: 'All Documents', count: 128 },
+    { label: 'Claim Forms', count: 14 },
+    { label: 'Police Reports', count: 6 },
+    { label: 'Medical Records', count: 22 },
+    { label: 'Photos & Videos', count: 36 },
+    { label: 'Estimates', count: 12 },
+    { label: 'Correspondence', count: 18 },
+    { label: 'Legal', count: 8 },
+    { label: 'Other', count: 12 },
+    { label: 'Archived', count: 5 },
+  ];
+  readonly communications = [
+    { title: 'Email Sent', detail: 'Request for additional documents…', time: '10:28', tone: 'blue' },
+    { title: 'SMS Sent', detail: 'We need your police report…', time: '10:25', tone: 'cyan' },
+    { title: 'Email Received', detail: 'Re: additional documents', time: '11:02', tone: 'blue' },
+    { title: 'Note Added', detail: 'Extracted key report details.', time: '11:15', tone: 'amber' },
+    { title: 'SMS Received', detail: 'I uploaded the police report.', time: '11:16', tone: 'cyan' },
+  ];
+  readonly comments = [
+    { name: 'Alex Morgan', message: 'Reviewed report. Evidence supports liability for Driver 2.', time: '11:15', tone: 'green' },
+    { name: 'Sarah Johnson', message: 'Confirm repair estimate is within policy limits.', time: '11:20', tone: 'violet' },
+    { name: 'Mike Thompson', message: 'Photos match damage described in the report.', time: '11:25', tone: 'blue' },
+  ];
 
   selectDocument(name: string): void {
     const document = this.documents.find(item => item.name === name);
