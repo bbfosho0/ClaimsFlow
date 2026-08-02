@@ -1,0 +1,27 @@
+@media (max-width: 1080px) {
+  .metric-grid.six-up { grid-template-columns: repeat(3, 1fr); }
+  .span-2, .span-3, .span-4, .span-5 { grid-column: span 6; }
+  .documents-layout { grid-template-columns: 180px 280px 1fr; }
+  .workflow-layout { grid-template-columns: 190px minmax(420px, 1fr); }.workflow-inspector { grid-column: 1 / -1; }
+  .team-grid > .workspace-panel { grid-column: span 6; }
+}
+
+@media (max-width: 760px) {
+  .workspace-page { min-height: calc(100vh - 144px); padding: 14px 0 34px; }
+  .workspace-filterbar, .workspace-tabs, .workflow-toolbar { overflow-x: auto; }.workspace-filterbar button, .workspace-tabs button { flex: 0 0 auto; }.workspace-filterbar .export-control, .workspace-tabs .upload-button { margin-left: 0; }
+  .metric-grid.six-up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analytics-grid, .team-grid { display: block; }.analytics-grid > .workspace-panel, .team-grid > .workspace-panel { margin-bottom: 12px; }
+  .documents-layout { display: block; }.documents-layout > .workspace-panel { margin-bottom: 12px; }.folder-rail { display: none; }.ai-summary-panel, .comments-panel { width: 100%; margin: 0 0 12px; }
+  .workflow-layout { display: block; }.workflow-layout > .workspace-panel { margin-bottom: 12px; }.node-library { display: none; }.canvas-grid { grid-template-columns: 1fr; min-height: 640px; }.workflow-node > i { width: 1px; height: 42px; right: 50%; top: 104px; }.workflow-footer { grid-template-columns: 1fr 1fr; }
+  .placeholder-grid { grid-template-columns: 1fr 1fr; }.placeholder-hero { padding: 28px; }
+}
+
+@media (max-width: 480px) {
+  .metric-grid.six-up, .placeholder-grid, .workflow-footer { grid-template-columns: 1fr; }
+  .workspace-metric { min-height: 104px; }
+  .fraud-panel > div { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-page *, .workspace-page *::before, .workspace-page *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
