@@ -29,6 +29,7 @@ describe('DashboardPageComponent', () => {
 
     const fixture = TestBed.createComponent(DashboardPageComponent);
     fixture.detectChanges();
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-tour-target="priority-command"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('.instrument-cell').length).toBe(4);
