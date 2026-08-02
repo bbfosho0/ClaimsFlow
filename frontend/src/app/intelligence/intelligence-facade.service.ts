@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, switchMap } from 'rxjs';
-import { ClaimDetail, ClaimSummary, Recommendation } from '../shared/models/claim.models';
+import { Observable, forkJoin, map } from 'rxjs';
 import { DEFAULT_FILTERS } from '../claims/data-access/claim-filter-codec';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
+import { ClaimDetail, ClaimSummary, Recommendation } from '../shared/models/claim.models';
 import { AssistantAnswer, EvidenceReasoningNode, IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, PreparedAction, PreparedActionType } from './intelligence.models';
 
 @Injectable({ providedIn: 'root' })
@@ -27,17 +27,6 @@ export class IntelligenceFacadeService {
 
   generateRecommendation(claimId: string): Observable<Recommendation> {
     return this.api.generateRecommendation(claimId);
-  }
-
-  reviewRecommendation(
-    claimId: string,
-    recommendationId: string,
-    decision: 'APPROVED' | 'REJECTED',
-    reason: string,
-  ): Observable<IntelligenceWorkspace> {
-    return this.api.reviewRecommendation(claimId, recommendationId, decision, 'Interview User', reason).pipe(
-      switchMap(() => this.loadWorkspace(claimId)),
-    );
   }
 
   evidenceNodes(claim: ClaimDetail, recommendation: Recommendation | null): EvidenceReasoningNode[] {
@@ -106,7 +95,7 @@ export class IntelligenceFacadeService {
       return {
         title: missing.length ? `${missing.length} evidence gaps require investigation` : 'No evidence contradiction is currently visible',
         body: missing.length
-          ? `The unresolved items can affect completeness and review confidence. ClaimsFlow is surfacing them, not inferring that they exist.`
+          ? 'The unresolved items can affect completeness and review confidence. ClaimsFlow is surfacing them, not inferring that they exist.'
           : 'The available structured evidence is internally consistent. A human should still inspect source documents before a consequential decision.',
         facts: missing.length ? missing : nodes.filter(node => node.classification === 'verified').slice(0, 3),
       };
