@@ -57,7 +57,7 @@ const approvedRecommendation: Recommendation = {
 };
 
 describe('ClaimDetailPageComponent', () => {
-  it('presents advisory decision support and preserves human approval', async () => {
+  it('presents advisory decision support and requires a human reason before approval', async () => {
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', [
       'get',
       'getAdjusters',
@@ -95,9 +95,29 @@ describe('ClaimDetailPageComponent', () => {
     expect(root.querySelectorAll('.audit-event').length).toBe(2);
 
     const approve = Array.from(root.querySelectorAll('button'))
-      .find(button => button.textContent?.includes('Approve')) as HTMLButtonElement | undefined;
+      .find(button => button.textContent?.includes('Approve guidance')) as HTMLButtonElement | undefined;
     approve?.click();
+    harness.detectChanges();
 
-    expect(api.reviewRecommendation).toHaveBeenCalledWith('claim-1', 'recommendation-1', 'APPROVED', 'Interview User');
+    expect(api.reviewRecommendation).not.toHaveBeenCalled();
+    expect(root.querySelector('[role="dialog"]')).not.toBeNull();
+
+    const reason = root.querySelector('textarea') as HTMLTextAreaElement;
+    reason.value = 'Evidence gaps should be resolved before the claim advances.';
+    reason.dispatchEvent(new Event('input'));
+    harness.detectChanges();
+
+    const confirm = Array.from(root.querySelectorAll('button'))
+      .find(button => button.textContent?.includes('Confirm approved')) as HTMLButtonElement | undefined;
+    confirm?.click();
+    harness.detectChanges();
+
+    expect(api.reviewRecommendation).toHaveBeenCalledWith(
+      'claim-1',
+      'recommendation-1',
+      'APPROVED',
+      'Interview User',
+      'Evidence gaps should be resolved before the claim advances.',
+    );
   });
 });
