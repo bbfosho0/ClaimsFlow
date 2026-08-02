@@ -7,6 +7,7 @@ import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class RecommendationController {
     private final RecommendationService service;
     public RecommendationController(RecommendationService service) { this.service = service; }
+
+    @GetMapping("/latest")
+    public ResponseEntity<RecommendationResponse> latest(@PathVariable UUID claimId) {
+        return service.latest(claimId)
+                .map(value -> ResponseEntity.ok(RecommendationResponse.from(value)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
