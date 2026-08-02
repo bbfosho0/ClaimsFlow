@@ -1,0 +1,142 @@
+<main class="showcase" [attr.data-showcase-state]="state()">
+  <div class="showcase-grid" aria-hidden="true"></div>
+  <div class="showcase-orb showcase-orb-a" aria-hidden="true"></div>
+  <div class="showcase-orb showcase-orb-b" aria-hidden="true"></div>
+
+  <header class="showcase-nav">
+    <a class="showcase-brand" href="#top" aria-label="ClaimsFlow home">
+      <span class="showcase-monogram" aria-hidden="true">CF</span>
+      <span><strong>ClaimsFlow</strong><small>Operational signal intelligence</small></span>
+    </a>
+    <nav aria-label="Showcase navigation">
+      <a href="#system">System</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#authority">Human authority</a>
+      <a class="nav-github" href="https://github.com/bbfosho0/ClaimsFlow" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <section id="top" class="hero">
+    <div class="hero-copy">
+      <div class="hero-kicker"><span class="live-dot" aria-hidden="true"></span> AUDIT-READY CLAIMS OPERATIONS</div>
+      <h1><span>Turn claim pressure</span><span>into controlled action.</span></h1>
+      <p>ClaimsFlow gives adjusters one evidence-grounded command system for prioritization, investigation, human-controlled recommendations, and immutable audit history.</p>
+      <div class="hero-actions">
+        <a class="button primary" routerLink="/tour">Take the guided tour <span aria-hidden="true">→</span></a>
+        <a class="button secondary" routerLink="/app/dashboard">Open live application</a>
+      </div>
+      <dl class="proof-rail">
+        <div><dt>Java 21</dt><dd>Transactional workflow</dd></div>
+        <div><dt>Angular 20</dt><dd>Typed operational UI</dd></div>
+        <div><dt>PostgreSQL</dt><dd>Immutable audit trail</dd></div>
+        <div><dt>Advisory AI</dt><dd>Human confirmation</dd></div>
+      </dl>
+    </div>
+
+    <div class="hero-visual">
+      <div class="initialization-copy" aria-live="polite">
+        <span>CLAIMSFLOW / COMMAND FIELD</span>
+        <strong>{{ state() === 'initial' ? 'Initializing operational signals' : state() === 'signalLock' ? 'Signal lock acquired' : 'Portfolio pressure resolved' }}</strong>
+      </div>
+      <app-command-field [activeCount]="17" variant="showcase" [reducedMotion]="reducedMotion()" />
+      <div class="signal-readout">
+        <div><span>17</span><small>require intervention</small></div>
+        <div><span>248</span><small>active claims</small></div>
+        <div><span>4</span><small>signal classes</small></div>
+      </div>
+    </div>
+
+    <button class="skip-intro" type="button" data-skip-intro (click)="skipIntro()" [class.hidden]="state() === 'ready'">Skip opening</button>
+  </section>
+
+  <section id="system" class="chapter chapter-problem">
+    <div class="chapter-heading">
+      <p class="eyebrow">01 / THE OPERATIONAL PROBLEM</p>
+      <h2>A claim is not a row. It is a live concentration of evidence, ownership, risk, and time.</h2>
+    </div>
+    <div class="signal-taxonomy">
+      <article data-tone="critical"><span>01</span><h3>SLA pressure</h3><p>Deadline exposure is visible before it becomes a breach.</p></article>
+      <article data-tone="warning"><span>02</span><h3>Evidence gaps</h3><p>Missing documentation is classified by review impact.</p></article>
+      <article data-tone="live"><span>03</span><h3>Ownership</h3><p>Assignment and capacity stay connected to the work.</p></article>
+      <article data-tone="advisory"><span>04</span><h3>Decision support</h3><p>Recommendations expose sources, uncertainty, and limits.</p></article>
+    </div>
+  </section>
+
+  <section class="chapter lifecycle-section">
+    <div class="chapter-heading compact">
+      <p class="eyebrow">02 / CLAIM LIFECYCLE</p>
+      <h2>Every transition stays controlled and observable.</h2>
+    </div>
+    <ol class="lifecycle" aria-label="ClaimsFlow claim lifecycle">
+      <li><span>01</span><strong>Intake</strong><small>Typed evidence dossier</small></li>
+      <li><span>02</span><strong>Triage</strong><small>Deterministic priority</small></li>
+      <li><span>03</span><strong>Investigate</strong><small>Provenance and gaps</small></li>
+      <li><span>04</span><strong>Review</strong><small>Advisory intelligence</small></li>
+      <li><span>05</span><strong>Decide</strong><small>Human confirmation</small></li>
+      <li><span>06</span><strong>Audit</strong><small>Immutable event trail</small></li>
+    </ol>
+  </section>
+
+  <section id="architecture" class="chapter architecture-section">
+    <div class="chapter-heading compact">
+      <p class="eyebrow">03 / ENGINEERING SYSTEM</p>
+      <h2>A focused modular monolith, not a portfolio mockup.</h2>
+    </div>
+    <div class="architecture-map cf-material-grid">
+      <div class="architecture-node angular"><span>ANGULAR 20</span><strong>Operational interface</strong><small>Standalone routes · Signals · Reactive Forms</small></div>
+      <div class="architecture-flow" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="architecture-node spring"><span>SPRING BOOT 3.5</span><strong>Application services</strong><small>Transactions · Policies · Problem Details</small></div>
+      <div class="architecture-flow" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="architecture-node data"><span>POSTGRESQL 16</span><strong>Claims and audit</strong><small>Flyway · Constraints · Fictional seed data</small></div>
+      <div class="architecture-branches">
+        <span>Claims</span><span>Adjusters</span><span>Recommendations</span><span>Audit</span><span>Dashboard</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="authority" class="chapter authority-section">
+    <div class="authority-copy">
+      <p class="eyebrow">04 / HUMAN-CONTROLLED INTELLIGENCE</p>
+      <h2>Human authority remains explicit.</h2>
+      <p>Claims Intelligence can explain, investigate, draft, and prepare reversible actions. It cannot silently approve, deny, pay, close, or reassign a claim.</p>
+      <ul>
+        <li><span>Verified</span> Source-linked claim facts</li>
+        <li><span>Missing</span> Evidence required before review</li>
+        <li><span>Inferred</span> Clearly bounded interpretation</li>
+        <li><span>Policy</span> Deterministic rule references</li>
+      </ul>
+    </div>
+    <div class="authority-card cf-material-mesh">
+      <div class="authority-card-header"><span class="cf-chip" data-tone="advisory">Recommendation</span><span>84% confidence</span></div>
+      <h3>Request a repair estimate before final review.</h3>
+      <div class="confidence-stack">
+        <span><b style="--value:91%"></b><em>Evidence quality</em><strong>91%</strong></span>
+        <span><b style="--value:88%"></b><em>Policy match</em><strong>88%</strong></span>
+        <span><b style="--value:82%"></b><em>Claim consistency</em><strong>82%</strong></span>
+      </div>
+      <div class="authority-boundary"><strong>Operator confirmation required</strong><small>Reason · exact result preview · immutable audit event</small></div>
+    </div>
+  </section>
+
+  <section class="chapter reliability-section">
+    <div class="chapter-heading compact">
+      <p class="eyebrow">05 / RELIABILITY</p>
+      <h2>Designed to prove the implementation, not conceal it.</h2>
+    </div>
+    <div class="reliability-grid">
+      <article><span>TEST</span><strong>Backend and frontend verification</strong><p>JUnit, MockMvc, Testcontainers, Jasmine, Karma, and production builds.</p></article>
+      <article><span>ACCESS</span><strong>Keyboard and reduced motion</strong><p>Semantic tables, focus management, text alternatives, and immediate meaningful states.</p></article>
+      <article><span>FAILURE</span><strong>Explicit recovery</strong><p>Problem Details, preserved drafts, manual retry, and deterministic recommendation fallback.</p></article>
+      <article><span>AUDIT</span><strong>Evidence before assertion</strong><p>Important workflow actions are appended to an immutable timeline.</p></article>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <p class="eyebrow">ENTER THE LIVE SYSTEM</p>
+    <h2>Follow the complete claim path.</h2>
+    <p>Read portfolio pressure, investigate the urgent claim, review evidence, keep authority human, create a claim, and inspect the engineering proof.</p>
+    <div><a class="button primary" routerLink="/tour">Start guided tour</a><a class="button secondary" routerLink="/app/dashboard">Open application</a></div>
+  </section>
+
+  <footer class="showcase-footer"><span>ClaimsFlow · Portfolio engineering project</span><span>Angular 20 · Spring Boot 3.5 · PostgreSQL 16</span></footer>
+</main>
