@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ClaimDetail, Recommendation } from '../../shared/models/claim.models';
+import { RecommendationReviewCoordinator } from '../../shared/recommendation-review/recommendation-review-coordinator.service';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 import { ClaimDetailPageComponent } from './claim-detail-page.component';
 
@@ -65,20 +66,24 @@ describe('ClaimDetailPageComponent', () => {
       'assign',
       'updateStatus',
       'generateRecommendation',
-      'reviewRecommendation',
     ]);
+    const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>(
+      'RecommendationReviewCoordinator',
+      ['review'],
+    );
     api.get.and.returnValue(of(claim));
     api.getAdjusters.and.returnValue(of([claim.assignedAdjuster!]));
     api.getAudit.and.returnValue(of([
       { id: 'audit-1', actor: 'System', actionType: 'CLAIM_CREATED', summary: 'Claim created', occurredAt: '2026-07-23T09:32:00Z' },
       { id: 'audit-2', actor: 'Interview User', actionType: 'ASSIGNED', summary: 'Assigned to Maya Chen', occurredAt: '2026-07-23T09:41:00Z' },
     ]));
-    api.reviewRecommendation.and.returnValue(of(approvedRecommendation));
+    reviewCoordinator.review.and.returnValue(of(approvedRecommendation));
 
     await TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'claims/:id', component: ClaimDetailPageComponent }]),
         { provide: ClaimsApiService, useValue: api },
+        { provide: RecommendationReviewCoordinator, useValue: reviewCoordinator },
       ],
     }).compileComponents();
 
@@ -89,24 +94,31 @@ describe('ClaimDetailPageComponent', () => {
 
     let root = harness.routeNativeElement!;
     expect(root.querySelector('[data-tour-target="decision-support"]')).not.toBeNull();
-    expect(root.textContent).toContain('Advisory only');
+    expect(root.querySelector('.decision-panel')?.textContent).toContain('Human-controlled recommendation');
+    expect(root.querySelector('.decision-panel')?.textContent).toContain('Advisory only');
     expect(root.textContent).not.toContain('OpenAI recommendation');
     expect(root.querySelector('.identity-instruments article:nth-child(2) strong')?.textContent?.trim()).toBe('50%');
+    expect(root.querySelector('.workspace-tabs button:last-child')?.textContent).toContain('2');
 
     const auditTab = Array.from(root.querySelectorAll('.workspace-tabs button'))
-      .find(button => button.textContent?.includes('Audit')) as HTMLButtonElement | undefined;
-    auditTab?.click();
+      .find(button => button.textContent?.includes('Audit')) as HTMLButtonElement;
+    auditTab.click();
     harness.detectChanges();
     root = harness.routeNativeElement!;
     expect(root.querySelectorAll('.audit-event').length).toBe(2);
 
+    const dossierTab = root.querySelector('.workspace-tabs button:first-child') as HTMLButtonElement;
+    dossierTab.click();
+    harness.detectChanges();
+    root = harness.routeNativeElement!;
+
     const approve = Array.from(root.querySelectorAll('button'))
-      .find(button => button.textContent?.includes('Approve guidance')) as HTMLButtonElement | undefined;
-    approve?.click();
+      .find(button => button.textContent?.includes('Approve guidance')) as HTMLButtonElement;
+    approve.click();
     harness.detectChanges();
 
     root = harness.routeNativeElement!;
-    expect(api.reviewRecommendation).not.toHaveBeenCalled();
+    expect(reviewCoordinator.review).not.toHaveBeenCalled();
     expect(root.querySelector('[role="dialog"]')).not.toBeNull();
 
     const reason = root.querySelector('textarea') as HTMLTextAreaElement;
@@ -116,16 +128,15 @@ describe('ClaimDetailPageComponent', () => {
 
     root = harness.routeNativeElement!;
     const confirm = Array.from(root.querySelectorAll('button'))
-      .find(button => button.textContent?.includes('Confirm approved')) as HTMLButtonElement | undefined;
-    confirm?.click();
+      .find(button => button.textContent?.includes('Confirm approved')) as HTMLButtonElement;
+    confirm.click();
     harness.detectChanges();
 
-    expect(api.reviewRecommendation).toHaveBeenCalledWith(
-      'claim-1',
-      'recommendation-1',
-      'APPROVED',
-      'Interview User',
-      'Evidence gaps should be resolved before the claim advances.',
-    );
+    expect(reviewCoordinator.review).toHaveBeenCalledWith({
+      claimId: 'claim-1',
+      recommendationId: 'recommendation-1',
+      decision: 'APPROVED',
+      reason: 'Evidence gaps should be resolved before the claim advances.',
+    });
   });
 });
