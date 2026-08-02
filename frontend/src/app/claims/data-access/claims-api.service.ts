@@ -22,6 +22,7 @@ export class ClaimsApiService {
   get(id: string): Observable<ClaimDetail> { return this.http.get<ClaimDetail>(`${API_BASE_URL}/claims/${id}`); }
   assign(id: string, adjusterId: string, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/assignment`, { adjusterId, actor }); }
   updateStatus(id: string, status: ClaimStatus, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/status`, { status, actor }); }
+  getLatestRecommendation(id: string): Observable<Recommendation | null> { return this.http.get<Recommendation | null>(`${API_BASE_URL}/claims/${id}/recommendations/latest`); }
   generateRecommendation(id: string): Observable<Recommendation> { return this.http.post<Recommendation>(`${API_BASE_URL}/claims/${id}/recommendations`, {}); }
   reviewRecommendation(
     id: string,
