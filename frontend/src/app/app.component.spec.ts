@@ -10,15 +10,11 @@ describe('AppComponent', () => {
     }).compileComponents();
   });
 
-  it('renders the accessible ClaimsOps application shell', () => {
+  it('delegates public and application layout to the route tree', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('ClaimsFlow');
-    expect(fixture.nativeElement.textContent).toContain('Operations Intelligence');
-    expect(fixture.nativeElement.textContent).toContain('Decision support available');
-    expect(fixture.nativeElement.querySelector('.app-sidebar')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('a.skip-link')?.getAttribute('href')).toBe('#main-content');
-    expect(fixture.nativeElement.querySelector('#main-content')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.app-sidebar')).toBeNull();
   });
 });
