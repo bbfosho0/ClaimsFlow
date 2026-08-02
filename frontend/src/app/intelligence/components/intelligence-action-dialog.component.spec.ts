@@ -54,6 +54,22 @@ describe('IntelligenceActionDialogComponent', () => {
     expect(emitted[0].reason).toBe('Evidence reviewed by operator.');
   });
 
+  it('preserves the entered reason while the parent toggles the acting state', () => {
+    const fixture = TestBed.createComponent(IntelligenceActionDialogComponent);
+    fixture.componentRef.setInput('action', approvalAction);
+    fixture.detectChanges();
+
+    const textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+    textarea.value = 'Evidence reviewed by the assigned operator.';
+    textarea.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('acting', true);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.reason.value).toBe('Evidence reviewed by the assigned operator.');
+  });
+
   it('confirms a draft action without requiring a reason', () => {
     const fixture = TestBed.createComponent(IntelligenceActionDialogComponent);
     fixture.componentRef.setInput('action', draftAction);
