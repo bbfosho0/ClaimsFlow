@@ -1,104 +1,140 @@
-<div class="page-enter claim-page">
-  <a class="back-link" routerLink="/claims">← Back to claims</a>
+<section class="cf-page page-enter claim-page">
+  <a class="back-link" routerLink="/app/claims">← Back to Claims Queue</a>
   <div *ngIf="loading()" class="panel loading-state" role="status">Loading claim workspace…</div>
   <div *ngIf="pageError()" class="alert" role="alert">{{ pageError() }}</div>
 
   <ng-container *ngIf="claim() as item">
-    <header class="panel claim-header">
-      <div class="claim-identity">
-        <p class="eyebrow">{{ item.claimNumber }}</p>
+    <header class="claim-identity-band panel">
+      <div class="claim-title-block">
+        <div class="identity-kicker"><span class="live-dot" aria-hidden="true"></span> CLAIM DOSSIER / {{ item.claimNumber }}</div>
         <h1>{{ item.claimantName }}</h1>
         <p>{{ label(item.claimType) }} claim · Incident {{ item.incidentDate | date:'mediumDate' }}</p>
         <div class="header-badges">
           <app-status-badge [label]="label(item.priority) + ' priority'" [tone]="priorityTone(item.priority)" [icon]="priorityIcon(item.priority)" />
           <app-status-badge [label]="label(item.status)" [tone]="statusTone(item.status)" [icon]="statusIcon(item.status)" />
+          <span class="cf-chip" data-tone="advisory">Human review required</span>
         </div>
       </div>
-      <div class="header-stats">
-        <article><span aria-hidden="true">▲</span><small>SLA</small><strong [attr.data-tone]="sla(item.slaDeadline).tone">{{ sla(item.slaDeadline).label }}</strong><em>{{ sla(item.slaDeadline).detail }}</em></article>
-        <article><span aria-hidden="true">◔</span><small>Complete</small><app-progress-indicator [value]="item.completenessPercentage" label="Claim completeness" [tone]="completenessTone(item.completenessPercentage)" /></article>
-        <article><span aria-hidden="true">↗</span><small>Assigned</small><strong>{{ item.assignedAdjuster?.displayName || 'Unassigned' }}</strong><em *ngIf="item.assignedAdjuster">Capacity {{ item.assignedAdjuster.workloadCapacity }}</em></article>
+      <div class="identity-instruments">
+        <article><span>SLA PRESSURE</span><strong [attr.data-tone]="sla(item.slaDeadline).tone">{{ sla(item.slaDeadline).label }}</strong><small>{{ sla(item.slaDeadline).detail }}</small></article>
+        <article><span>EVIDENCE</span><strong>{{ item.completenessPercentage }}%</strong><small>{{ item.missingEvidence.length }} missing items</small><i><b [style.width.%]="item.completenessPercentage"></b></i></article>
+        <article><span>OWNER</span><strong>{{ item.assignedAdjuster?.displayName || 'Unassigned' }}</strong><small>{{ item.assignedAdjuster ? 'Capacity ' + item.assignedAdjuster.workloadCapacity : 'Assignment required' }}</small></article>
       </div>
     </header>
 
+    <nav class="workspace-tabs" aria-label="Claim workspace views">
+      <button type="button" [class.active]="activeTab() === 'dossier'" (click)="setTab('dossier')">Dossier</button>
+      <button type="button" [class.active]="activeTab() === 'evidence'" (click)="setTab('evidence')" data-tour-target="evidence-ledger">Evidence <span>{{ item.missingEvidence.length }}</span></button>
+      <button type="button" [class.active]="activeTab() === 'communications'" (click)="setTab('communications')">Communications</button>
+      <button type="button" [class.active]="activeTab() === 'audit'" (click)="setTab('audit')">Audit <span>{{ audit().length }}</span></button>
+    </nav>
+
     <div class="claim-workspace">
-      <div class="main-column">
-        <section class="panel claim-overview">
-          <h2>Claim overview</h2>
-          <dl>
+      <main class="main-column">
+        <section class="panel dossier-panel" *ngIf="activeTab() === 'dossier'">
+          <div class="section-heading"><div><p class="eyebrow">CLAIM DOSSIER</p><h2>Authoritative claim record</h2></div><span class="record-state">BACKEND AUTHORITATIVE</span></div>
+          <dl class="dossier-facts">
             <div><dt>Claimant email</dt><dd>{{ item.claimantEmail }}</dd></div>
             <div><dt>Estimated loss</dt><dd>{{ item.estimatedLoss | currency }}</dd></div>
             <div><dt>Incident date</dt><dd>{{ item.incidentDate | date:'mediumDate' }}</dd></div>
             <div><dt>Created</dt><dd>{{ item.createdAt | date:'medium' }}</dd></div>
           </dl>
-          <div class="description"><h3>Incident description</h3><p>{{ item.description }}</p></div>
-        </section>
-
-        <section class="panel triage-panel">
-          <div class="section-heading"><div><h2>Evidence and triage</h2><p>Evidence indicators and authoritative priority factors</p></div><app-status-badge [label]="item.missingEvidence.length ? item.missingEvidence.length + ' missing' : 'Complete'" [tone]="item.missingEvidence.length ? 'warning' : 'success'" [icon]="item.missingEvidence.length ? '!' : '✓'" /></div>
-          <div class="evidence-matrix">
-            <article *ngFor="let evidence of evidenceItems(item)" [class.missing]="!evidence.present">
-              <span aria-hidden="true">{{ evidence.present ? '✓' : '!' }}</span>
-              <strong>{{ evidence.label }}</strong>
-              <small>{{ evidence.present ? 'Present' : 'Missing' }}</small>
-            </article>
+          <div class="description"><p class="eyebrow">INCIDENT NARRATIVE</p><h3>Reported event</h3><p>{{ item.description }}</p></div>
+          <div class="priority-rationale">
+            <div><p class="eyebrow">PRIORITY RATIONALE</p><h3>Why {{ label(item.priority).toLowerCase() }}</h3></div>
+            <ul><li *ngFor="let value of item.priorityFactors"><span aria-hidden="true"></span>{{ value }}</li></ul>
           </div>
-          <h3>Priority factors</h3>
-          <ul class="factor-list"><li *ngFor="let value of item.priorityFactors">{{ value }}</li></ul>
         </section>
 
-        <section class="decision-panel">
-          <div class="decision-heading"><div><span class="decision-icon" aria-hidden="true">◆</span><h2>Decision support</h2></div><app-status-badge label="Advisory only" tone="info" icon="i" /></div>
-          <p class="human-warning">Recommendations require explicit human review and never change claim status automatically.</p>
-          <button *ngIf="!recommendation()" class="button primary" [disabled]="acting()" (click)="generate()">◆ Generate recommendation</button>
-          <ng-container *ngIf="recommendation() as insight">
-            <p class="recommended-action">{{ label(insight.recommendedAction) }}</p>
-            <p class="recommendation-explanation">{{ insight.explanation }}</p>
-            <app-progress-indicator [value]="insight.confidence" label="Recommendation confidence" tone="success" />
-            <ul class="missing-information" *ngIf="insight.missingInformation.length"><li *ngFor="let value of insight.missingInformation">! {{ value }}</li></ul>
-            <div *ngIf="insight.reviewState === 'PENDING'" class="review-actions">
-              <button class="button primary" [disabled]="acting()" (click)="review('APPROVED')">✓ Approve</button>
-              <button class="button danger" [disabled]="acting()" (click)="review('REJECTED')">× Reject</button>
-            </div>
-            <div class="review-result" *ngIf="insight.reviewState !== 'PENDING'">
-              <app-status-badge [label]="label(insight.reviewState)" [tone]="insight.reviewState === 'APPROVED' ? 'success' : 'critical'" [icon]="insight.reviewState === 'APPROVED' ? '✓' : '×'" />
-              <span>Reviewed by {{ insight.reviewerName }}</span>
-            </div>
-          </ng-container>
-          <div *ngIf="recommendationError()" class="inline-error" role="alert">{{ recommendationError() }}</div>
+        <section class="panel evidence-ledger" *ngIf="activeTab() === 'evidence'">
+          <div class="section-heading"><div><p class="eyebrow">EVIDENCE LEDGER</p><h2>Provenance and review impact</h2></div><app-status-badge [label]="item.missingEvidence.length ? item.missingEvidence.length + ' missing' : 'Complete'" [tone]="item.missingEvidence.length ? 'warning' : 'success'" [icon]="item.missingEvidence.length ? '!' : '✓'" /></div>
+          <div class="ledger-head"><span>Evidence</span><span>State</span><span>Review impact</span><span>Source</span></div>
+          <article *ngFor="let evidence of evidenceItems(item)" [class.missing]="!evidence.present">
+            <div class="evidence-name"><span aria-hidden="true">{{ evidence.present ? '✓' : '!' }}</span><strong>{{ evidence.label }}</strong></div>
+            <span class="evidence-state">{{ evidence.present ? 'Verified' : 'Missing' }}</span>
+            <p>{{ evidence.impact }}</p>
+            <span class="evidence-source">{{ evidence.present ? 'Claim intake' : 'Required follow-up' }}</span>
+          </article>
         </section>
 
-        <section class="panel audit-panel">
-          <div class="section-heading"><div><h2>Audit timeline</h2><p>Immutable operational history</p></div></div>
+        <section class="panel communications-panel" *ngIf="activeTab() === 'communications'">
+          <div class="section-heading"><div><p class="eyebrow">COMMUNICATIONS</p><h2>Prepared, not automatically sent</h2></div><span class="cf-chip" data-tone="advisory">Operator approval</span></div>
+          <article class="communication-draft">
+            <div><span>DRAFT / EVIDENCE REQUEST</span><strong>Request outstanding documentation</strong></div>
+            <p>Hello {{ item.claimantName }}, we are reviewing claim {{ item.claimNumber }}. Please provide the outstanding evidence listed in your claim portal so the review can continue.</p>
+            <div class="communication-actions"><button class="button secondary" type="button">Edit draft</button><button class="button primary" type="button">Prepare for sending</button></div>
+          </article>
+          <p class="communication-note">This portfolio implementation demonstrates controlled drafting. It does not send claimant communications without a configured provider and explicit operator action.</p>
+        </section>
+
+        <section class="panel audit-panel" *ngIf="activeTab() === 'audit'">
+          <div class="section-heading"><div><p class="eyebrow">IMMUTABLE HISTORY</p><h2>Audit timeline</h2></div><span>{{ audit().length }} events</span></div>
           <div *ngIf="!audit().length" class="empty">No events recorded.</div>
           <ol class="timeline">
-            <li class="audit-event" *ngFor="let event of audit()">
-              <span class="event-marker" aria-hidden="true">•</span>
+            <li class="audit-event" *ngFor="let event of audit(); let index = index">
+              <span class="event-marker" aria-hidden="true">{{ index + 1 }}</span>
               <div><strong>{{ event.summary }}</strong><span>{{ event.actor }} · {{ event.occurredAt | date:'medium' }}</span><small *ngIf="event.previousValue || event.newValue">{{ event.previousValue || 'None' }} → {{ event.newValue || 'None' }}</small></div>
+              <span class="event-type">{{ event.actionType }}</span>
             </li>
           </ol>
         </section>
-      </div>
+
+        <section class="decision-panel" data-tour-target="decision-support">
+          <div class="decision-heading"><div><span class="decision-icon" aria-hidden="true">◆</span><div><p class="eyebrow">DECISION SUPPORT</p><h2>Human-controlled recommendation</h2></div></div><app-status-badge label="Advisory only" tone="info" icon="i" /></div>
+          <div class="authority-rule"><strong>Authority boundary</strong><span>ClaimsFlow may prepare guidance. Only an operator can confirm a consequential review.</span></div>
+          <button *ngIf="!recommendation()" class="button primary generate-button" [disabled]="acting()" (click)="generate()">◆ Generate recommendation</button>
+          <ng-container *ngIf="recommendation() as insight">
+            <div class="recommendation-topline"><span class="cf-chip" data-tone="advisory">{{ label(insight.reviewState) }}</span><strong>{{ insight.confidence }}% confidence</strong></div>
+            <p class="recommended-action">{{ label(insight.recommendedAction) }}</p>
+            <p class="recommendation-explanation">{{ insight.explanation }}</p>
+            <div class="confidence-composition">
+              <span><i><b [style.width.%]="insight.confidence"></b></i><em>Recommendation confidence</em><strong>{{ insight.confidence }}%</strong></span>
+              <span><i><b [style.width.%]="item.completenessPercentage"></b></i><em>Evidence completeness</em><strong>{{ item.completenessPercentage }}%</strong></span>
+              <span><i><b style="width:88%"></b></i><em>Policy alignment</em><strong>88%</strong></span>
+            </div>
+            <ul class="missing-information" *ngIf="insight.missingInformation.length"><li *ngFor="let value of insight.missingInformation">Missing · {{ value }}</li></ul>
+            <div *ngIf="insight.reviewState === 'PENDING'" class="review-actions">
+              <button class="button primary" [disabled]="acting()" (click)="openReview('APPROVED')">✓ Approve guidance</button>
+              <button class="button danger" [disabled]="acting()" (click)="openReview('REJECTED')">× Reject guidance</button>
+            </div>
+            <div class="review-result" *ngIf="insight.reviewState !== 'PENDING'"><app-status-badge [label]="label(insight.reviewState)" [tone]="insight.reviewState === 'APPROVED' ? 'success' : 'critical'" [icon]="insight.reviewState === 'APPROVED' ? '✓' : '×'" /><span>Reviewed by {{ insight.reviewerName }}</span></div>
+          </ng-container>
+          <div *ngIf="reviewSuccess()" class="success-message" role="status">{{ reviewSuccess() }}</div>
+          <div *ngIf="recommendationError()" class="inline-error" role="alert">{{ recommendationError() }}</div>
+        </section>
+      </main>
 
       <aside class="action-rail" aria-label="Claim actions">
         <section class="panel action-card">
-          <h2>Assignment</h2><p>Choose an active adjuster with available capacity.</p>
+          <p class="eyebrow">OWNERSHIP</p><h2>Assignment</h2><p>Choose an active adjuster with available capacity.</p>
           <label>Assigned adjuster<select [formControl]="adjusterId"><option value="">Select adjuster</option><option *ngFor="let adjuster of adjusters()" [value]="adjuster.id">{{ adjuster.displayName }} · capacity {{ adjuster.workloadCapacity }}</option></select></label>
-          <button class="button primary" [disabled]="!adjusterId.value || acting()" (click)="assign()">↗ Update assignment</button>
+          <button class="button secondary" [disabled]="!adjusterId.value || acting()" (click)="assign()">Update assignment</button>
           <div *ngIf="assignmentError()" class="inline-error" role="alert">{{ assignmentError() }}</div>
         </section>
 
         <section class="panel action-card">
-          <h2>Status transition</h2><p>Only valid next states are available.</p>
+          <p class="eyebrow">WORKFLOW</p><h2>Status transition</h2><p>Only backend-authorized next states are selectable.</p>
           <label>Next status<select [formControl]="nextStatus"><option value="">Select next status</option><option *ngFor="let status of item.allowedNextStatuses" [value]="status">{{ label(status) }}</option></select></label>
-          <button class="button primary" [disabled]="!nextStatus.value || acting()" (click)="updateStatus()">→ Update status</button>
+          <button class="button secondary" [disabled]="!nextStatus.value || acting()" (click)="updateStatus()">Update status</button>
           <div *ngIf="statusError()" class="inline-error" role="alert">{{ statusError() }}</div>
         </section>
 
         <section class="sla-signal" [attr.data-tone]="sla(item.slaDeadline).tone">
-          <span aria-hidden="true">▲</span><h2>SLA attention</h2><p>{{ sla(item.slaDeadline).label }}. Review evidence and workflow status before the deadline.</p>
+          <span aria-hidden="true">▲</span><div><p class="eyebrow">SLA ATTENTION</p><h2>{{ sla(item.slaDeadline).label }}</h2></div><p>Review evidence and workflow state before the deadline.</p>
         </section>
       </aside>
     </div>
+
+    <div class="dialog-backdrop" *ngIf="pendingReview() as decision" (click)="cancelReview()">
+      <section class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="review-dialog-title" (click)="$event.stopPropagation()">
+        <p class="eyebrow">HUMAN AUTHORITY / {{ decision === 'APPROVED' ? 'APPROVE' : 'REJECT' }}</p>
+        <h2 id="review-dialog-title">{{ decision === 'APPROVED' ? 'Approve this guidance?' : 'Reject this guidance?' }}</h2>
+        <p>The recommendation itself does not change claim status. This records the operator review and appends an immutable audit event.</p>
+        <div class="result-preview"><strong>Exact result</strong><ul><li>Recommendation state becomes {{ label(decision) }}.</li><li>Claim workflow state remains {{ label(item.status) }}.</li><li>Your reason is written to the audit timeline.</li></ul></div>
+        <label>Operator reason<textarea [formControl]="reviewReason" rows="4" placeholder="Explain why this guidance is appropriate or should be rejected."></textarea></label>
+        <small class="field-error" *ngIf="reviewReason.touched && reviewReason.invalid">Enter a reason of at least 8 characters.</small>
+        <div class="dialog-actions"><button class="button secondary" type="button" [disabled]="acting()" (click)="cancelReview()">Cancel</button><button class="button" [class.primary]="decision === 'APPROVED'" [class.danger]="decision === 'REJECTED'" type="button" [disabled]="acting()" (click)="confirmReview()">{{ acting() ? 'Recording…' : 'Confirm ' + label(decision).toLowerCase() }}</button></div>
+      </section>
+    </div>
   </ng-container>
-</div>
+</section>
