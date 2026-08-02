@@ -1,0 +1,31 @@
+<main class="intelligence-workspace">
+  <section class="panel dossier-header">
+    <div class="dossier-identity"><p class="eyebrow">SELECTED INTELLIGENCE DOSSIER</p><h2>{{ workspace().claim.claimNumber }} · {{ workspace().claim.claimantName }}</h2><p>{{ label(workspace().claim.claimType) }} · {{ label(workspace().claim.status) }} · {{ label(workspace().claim.priority) }} priority</p></div>
+    <div class="dossier-signals"><article><span>ATTENTION</span><strong>{{ selectedItem()?.attentionScore ?? 0 }}</strong><small>Composite review score</small></article><article><span>EVIDENCE</span><strong>{{ workspace().claim.completenessPercentage }}%</strong><small>{{ workspace().claim.missingEvidence.length }} missing</small></article><article><span>REVIEW</span><strong>{{ workspace().recommendation ? label(workspace().recommendation!.reviewState) : 'Not generated' }}</strong><small>{{ workspace().recommendation ? workspace().recommendation!.confidence + '% confidence' : 'Advisory available' }}</small></article></div>
+  </section>
+
+  <div class="dossier-grid">
+    <section class="panel recommendation-dossier">
+      <div class="section-heading"><div><p class="eyebrow">RECOMMENDATION DOSSIER</p><h2>Explainable guidance</h2></div><span class="cf-chip" data-tone="advisory">Human authority</span></div>
+      <ng-container *ngIf="workspace().recommendation as recommendation; else noRecommendation">
+        <div class="recommendation-state"><span>{{ label(recommendation.reviewState) }}</span><strong>{{ recommendation.confidence }}%</strong></div>
+        <h3>{{ label(recommendation.recommendedAction) }}</h3>
+        <p>{{ recommendation.explanation }}</p>
+        <div class="confidence-stack"><span><i><b [style.width.%]="recommendation.confidence"></b></i><em>Final advisory confidence</em><strong>{{ recommendation.confidence }}%</strong></span><span><i><b [style.width.%]="workspace().claim.completenessPercentage"></b></i><em>Evidence completeness</em><strong>{{ workspace().claim.completenessPercentage }}%</strong></span><span><i><b style="width:88%"></b></i><em>Policy alignment</em><strong>88%</strong></span></div>
+        <div class="recommendation-actions" *ngIf="recommendation.reviewState === 'PENDING'"><button class="button primary" type="button" (click)="prepareApproval.emit()">Approve guidance</button><button class="button danger" type="button" (click)="prepareRejection.emit()">Reject guidance</button></div>
+        <div class="reviewed-state" *ngIf="recommendation.reviewState !== 'PENDING'"><span aria-hidden="true">{{ recommendation.reviewState === 'APPROVED' ? '✓' : '×' }}</span><div><strong>{{ label(recommendation.reviewState) }}</strong><small>Reviewed by {{ recommendation.reviewerName || 'operator' }}</small></div></div>
+      </ng-container>
+      <ng-template #noRecommendation><div class="empty-recommendation"><span aria-hidden="true">◆</span><h3>No recommendation generated</h3><p>Create advisory guidance using the configured provider and deterministic fallback. Generating guidance does not change claim status.</p><button class="button primary" type="button" [disabled]="acting()" (click)="generateRecommendation.emit()">{{ acting() ? 'Generating…' : 'Generate recommendation' }}</button></div></ng-template>
+    </section>
+
+    <section class="panel source-classification">
+      <div class="section-heading"><div><p class="eyebrow">SOURCE CLASSIFICATION</p><h2>What the system knows</h2></div></div>
+      <div class="classification-list"><article *ngFor="let node of reasoningNodes()" [attr.data-classification]="node.classification"><span>{{ label(node.classification) }}</span><div><strong>{{ node.label }}</strong><p>{{ node.detail }}</p><small>{{ node.source }}</small></div></article></div>
+    </section>
+  </div>
+
+  <section class="panel reasoning-panel">
+    <div class="section-heading"><div><p class="eyebrow">EVIDENCE REASONING GRAPH</p><h2>Sources flow toward guidance, not authority</h2></div><span class="graph-note">Missing evidence interrupts confidence</span></div>
+    <app-evidence-reasoning-graph [nodes]="reasoningNodes().slice(0, 6)" [recommendationLabel]="workspace().recommendation ? label(workspace().recommendation!.recommendedAction) : 'Guidance available'" />
+  </section>
+</main>
