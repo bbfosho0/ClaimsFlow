@@ -4,7 +4,7 @@ import { of, Subject } from 'rxjs';
 import { RecommendationReviewCoordinator } from '../shared/recommendation-review/recommendation-review-coordinator.service';
 import { ClaimsIntelligencePageComponent } from './claims-intelligence-page.component';
 import { IntelligenceFacadeService } from './intelligence-facade.service';
-import { IntelligenceQueueItem, IntelligenceWorkspace } from './intelligence.models';
+import { IntelligenceQueueItem, IntelligenceWorkspace, PreparedAction } from './intelligence.models';
 
 const firstItem: IntelligenceQueueItem = {
   claim: {
@@ -64,23 +64,28 @@ function workspaceFor(item: IntelligenceQueueItem): IntelligenceWorkspace {
   };
 }
 
+function facadeSpy(): jasmine.SpyObj<IntelligenceFacadeService> {
+  const facade = jasmine.createSpyObj<IntelligenceFacadeService>('IntelligenceFacadeService', [
+    'loadReviewQueue',
+    'loadWorkspace',
+    'evidenceNodes',
+    'assistantAnswer',
+    'generateRecommendation',
+    'prepareAction',
+  ]);
+  facade.loadReviewQueue.and.returnValue(of([]));
+  facade.evidenceNodes.and.returnValue([]);
+  facade.assistantAnswer.and.returnValue({ title: 'Review', body: 'Evidence-grounded answer.', facts: [] });
+  return facade;
+}
+
 describe('ClaimsIntelligencePageComponent', () => {
   it('keeps the latest selected dossier when an older request completes later', () => {
     const firstWorkspace = new Subject<IntelligenceWorkspace>();
     const secondWorkspace = new Subject<IntelligenceWorkspace>();
-    const facade = jasmine.createSpyObj<IntelligenceFacadeService>('IntelligenceFacadeService', [
-      'loadReviewQueue',
-      'loadWorkspace',
-      'evidenceNodes',
-      'assistantAnswer',
-      'generateRecommendation',
-      'prepareAction',
-    ]);
+    const facade = facadeSpy();
     const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>('RecommendationReviewCoordinator', ['review']);
-    facade.loadReviewQueue.and.returnValue(of([]));
     facade.loadWorkspace.and.callFake(id => id === 'claim-1' ? firstWorkspace : secondWorkspace);
-    facade.evidenceNodes.and.returnValue([]);
-    facade.assistantAnswer.and.returnValue({ title: 'Review', body: 'Evidence-grounded answer.', facts: [] });
 
     TestBed.configureTestingModule({
       imports: [ClaimsIntelligencePageComponent],
@@ -106,5 +111,72 @@ describe('ClaimsIntelligencePageComponent', () => {
     expect(component.selectedId()).toBe('claim-2');
     expect(component.workspace()?.claim.id).toBe('claim-2');
     expect(component.loadingWorkspace()).toBeFalse();
+  });
+
+  it('reloads recommendation and audit data after a confirmed review', () => {
+    const facade = facadeSpy();
+    const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>('RecommendationReviewCoordinator', ['review']);
+    const pendingWorkspace = workspaceFor(firstItem);
+    pendingWorkspace.recommendation = {
+      id: 'recommendation-1',
+      recommendedAction: 'REQUEST_INFORMATION',
+      explanation: 'Collect missing evidence.',
+      confidence: 92,
+      missingInformation: ['Damage photos'],
+      generatedAt: '2026-08-02T12:30:00Z',
+      reviewState: 'PENDING',
+    };
+    const refreshedWorkspace: IntelligenceWorkspace = {
+      ...pendingWorkspace,
+      recommendation: {
+        ...pendingWorkspace.recommendation,
+        reviewState: 'APPROVED',
+        reviewerName: 'Interview User',
+      },
+      audit: [{
+        id: 'audit-review',
+        actor: 'Interview User',
+        actionType: 'RECOMMENDATION_REVIEWED',
+        summary: 'Recommendation approved with operator reason.',
+        occurredAt: '2026-08-02T13:00:00Z',
+      }],
+    };
+    reviewCoordinator.review.and.returnValue(of(refreshedWorkspace.recommendation!));
+    facade.loadWorkspace.and.returnValue(of(refreshedWorkspace));
+
+    TestBed.configureTestingModule({
+      imports: [ClaimsIntelligencePageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: IntelligenceFacadeService, useValue: facade },
+        { provide: RecommendationReviewCoordinator, useValue: reviewCoordinator },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(ClaimsIntelligencePageComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.workspace.set(pendingWorkspace);
+    const action: PreparedAction = {
+      type: 'APPROVE_RECOMMENDATION',
+      title: 'Approve recommendation',
+      summary: 'Record the human review.',
+      effects: ['Audit event is appended.'],
+      requiresReason: true,
+      destructive: false,
+    };
+
+    component.confirmAction({ action, reason: 'Evidence reviewed by the assigned operator.' });
+    fixture.detectChanges();
+
+    expect(reviewCoordinator.review).toHaveBeenCalledWith({
+      claimId: 'claim-1',
+      recommendationId: 'recommendation-1',
+      decision: 'APPROVED',
+      reason: 'Evidence reviewed by the assigned operator.',
+    });
+    expect(facade.loadWorkspace).toHaveBeenCalledWith('claim-1');
+    expect(component.workspace()?.recommendation?.reviewState).toBe('APPROVED');
+    expect(component.workspace()?.audit.length).toBe(1);
   });
 });
