@@ -41,8 +41,9 @@ describe('AppShellComponent', () => {
     const fixture = TestBed.createComponent(AppShellComponent);
     fixture.detectChanges();
 
+    const search = fixture.nativeElement.querySelector('.global-search input') as HTMLInputElement;
     expect(fixture.nativeElement.querySelector('.app-topbar')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.global-search')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Search claims, policies, documents, people');
+    expect(search).not.toBeNull();
+    expect(search.placeholder).toBe('Search claims, policies, documents, people…');
   });
 });
