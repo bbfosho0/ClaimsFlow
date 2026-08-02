@@ -1,0 +1,27 @@
+{
+  "version": "2026-08-02-final",
+  "sectionNodeId": "221:2",
+  "startNodeId": "223:139",
+  "mvpRoutes": {
+    "overview": "225:2",
+    "claimsQueue": "225:296",
+    "claimWorkspace": "227:2",
+    "newClaim": "229:2",
+    "claimsIntelligence": "322:1202"
+  },
+  "claimsIntelligence": {
+    "review": "322:1202",
+    "investigation": "322:1398",
+    "confirmed": "322:1597",
+    "actionOverlay": "322:1795"
+  },
+  "mobile": {
+    "showcase": "230:2",
+    "tourController": "230:33",
+    "claimsIntelligence": "287:4",
+    "actionPreview": "296:721",
+    "confirmed": "297:721"
+  },
+  "technicalProof": "229:839",
+  "reducedMotion": "230:63"
+}
