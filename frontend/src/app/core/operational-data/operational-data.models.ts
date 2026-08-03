@@ -56,6 +56,15 @@ export interface OperationalFilterOptions {
   readonly adjusters: readonly OperationalAdjusterOption[];
 }
 
+export const EMPTY_OPERATIONAL_FILTER_OPTIONS: OperationalFilterOptions = {
+  claimTypes: [],
+  priorities: [],
+  statuses: [],
+  regions: [],
+  teams: [],
+  adjusters: [],
+};
+
 export interface AnalyticsKpis {
   readonly estimatedExposure: number;
   readonly totalClaims: number;
