@@ -17,19 +17,7 @@ import { StatusBadgeComponent } from '../shared/ui/status-badge/status-badge.com
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    MetricCardComponent,
-    MetricRadialComponent,
-    MetricSparklineComponent,
-    AutoAnimateDirective,
-    GsapRevealDirective,
-    StatusBadgeComponent,
-    AnimatedNumberComponent,
-    ChangedValueDirective,
-    OperationalRefreshStatusComponent,
-  ],
+  imports: [CommonModule, RouterLink, MetricCardComponent, MetricRadialComponent, MetricSparklineComponent, AutoAnimateDirective, GsapRevealDirective, StatusBadgeComponent, AnimatedNumberComponent, ChangedValueDirective, OperationalRefreshStatusComponent],
   templateUrl: './my-work-page.component.html',
   styleUrls: ['./my-work-page.component.css', './my-work-midnight-violet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,7 +29,10 @@ export class MyWorkPageComponent implements OnInit, OnDestroy {
   readonly state = this.operational.myWork;
   readonly snapshot = computed(() => this.state().value);
   readonly loading = computed(() => this.state().loading && !this.state().value);
-  readonly error = computed(() => !this.state().value ? this.state().error : '');
+  readonly error = computed(() => {
+    if (!this.adjusterId()) return 'Reset the golden journey to resolve Jordan Lee’s adjuster ID.';
+    return !this.state().value ? this.state().error : '';
+  });
   readonly assignedClaims = computed<readonly MyWorkClaim[]>(() => this.snapshot()?.claims ?? []);
   readonly demoClaimId = signal(this.readSession('claimsflow.demoClaimId'));
   readonly adjusterId = signal(this.readSession('claimsflow.demoAdjusterId'));
@@ -61,6 +52,7 @@ export class MyWorkPageComponent implements OnInit, OnDestroy {
   }
 
   refresh(): void {
+    if (!this.adjusterId()) return;
     this.operational.refresh('myWork');
   }
 
