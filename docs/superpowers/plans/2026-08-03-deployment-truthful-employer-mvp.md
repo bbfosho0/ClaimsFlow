@@ -2,79 +2,40 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace fixture-driven employer-demo surfaces with backend-derived operational data, truthful interactions, hybrid reactive refresh, and restrained state-driven motion so ClaimsFlow is credible to deploy and present to employers.
+**Goal:** Replace fixture-driven employer-demo surfaces with backend-derived operational data, truthful controls, hybrid reactive refresh, and restrained state-driven motion.
 
-**Architecture:** Extend the persisted claim model with the minimum reporting fields, seed a deterministic fictional historical dataset when demo mode is enabled, and expose cohesive Dashboard, Analytics, Team Operations, and Evidence Operations snapshots from Spring. Add a bounded Angular `OperationalDataStore` that owns caching, invalidation, 45-second visibility-aware polling, stale-state retention, and changed-record metadata, then rebuild each employer-facing surface against those snapshots.
+**Architecture:** Persist the minimum reporting fields, seed a deterministic fictional 48-claim history when demo mode is enabled, and calculate coherent Dashboard, Analytics, Team Operations, Queue, and Evidence Operations responses in Spring. A bounded Angular `OperationalDataStore` caches those snapshots, invalidates them after successful mutations, polls every 45 seconds only while visible, retains stale data during transient errors, and drives state-change animation.
 
-**Tech Stack:** Java 21, Spring Boot, Spring Data JPA Specifications, PostgreSQL, Flyway, JUnit 5, Angular 20 standalone components, TypeScript 5.8, Angular signals, RxJS 7.8, Jasmine/Karma, CSS/SVG motion, GitHub Actions.
+**Tech Stack:** Java 21, Spring Boot, Spring Data JPA Specifications, PostgreSQL, Flyway, JUnit 5, Angular 20 standalone components, Angular signals, RxJS 7.8, Jasmine/Karma, CSS/SVG, GitHub Actions.
 
 ## Global Constraints
 
-- Work on `design/role-aware-claims-journey`; do not merge the pull request without explicit user approval.
-- Every KPI visible in deployed navigation must be traceable to a backend response.
-- Every visible control must perform a real action, navigate to a real surface, be disabled with a specific explanation, or be removed.
+- Work on `design/role-aware-claims-journey`; do not merge without explicit user approval.
+- Every KPI on deployed navigation traces to a backend response.
+- Every visible control performs a real action, navigates, is specifically disabled, or is removed.
 - Poll every **45 seconds** only while `document.visibilityState === 'visible'`.
-- Preserve the last successful snapshot during transient background failures.
-- Use immediate invalidation after claim creation, evidence updates, assignment changes, status changes, claimant-visible messages, and demo reset.
-- Supported filters are date range, claim type, priority, status, assigned team or adjuster, and region.
-- Do not add WebSockets, server-sent events, production authentication/RBAC, object storage, OCR, email/SMS, payments, carrier integrations, or production workflow activation.
-- Use deterministic fictional seed data; tests inject a fixed `Clock` and do not depend on random wall-clock timing.
-- Motion communicates live state, change, risk, progress, or feedback. Standard transitions remain 160–280 ms and hover movement remains 1–3 px.
-- Respect `prefers-reduced-motion`; reduced mode updates values immediately and disables interpolation, breathing, scanning, orbiting, chart drawing, and animated scrolling.
-- Preserve the independent claimant portal and human authority over consequential claim decisions.
-- Reports and Settings remain in source for future work but are absent from deployed role navigation.
-- Workflow Automation remains local, deterministic, explanatory, and nonconsequential.
+- Preserve the last valid snapshot during background failures.
+- Immediately invalidate affected resources after claim creation, assignment, status, evidence, claimant-visible message, or demo reset.
+- Supported filters: date range, claim type, priority, status, team/adjuster, and region.
+- No WebSockets/SSE, production auth/RBAC, binary storage, OCR, email/SMS, payments, carrier integrations, autonomous claim decisions, or production workflow activation.
+- Inject `Clock`; tests use `Clock.fixed(...)`.
+- State transitions remain 160–280 ms; hover movement remains 1–3 px.
+- `prefers-reduced-motion` disables interpolation, breathing, scanning, orbiting, chart drawing, and animated scrolling.
+- Reports and Settings remain source-only and disappear from deployed navigation and the employer tour.
+- Workflow Automation remains real-claim input plus local draft, validation, and simulation only.
 
 ---
 
-## File Structure
-
-### Backend
-
-- `backend/src/main/resources/db/migration/V4__operational_reporting_fields.sql`
-- `backend/src/main/java/com/claimsflow/claim/domain/ClaimRegion.java`
-- `backend/src/main/java/com/claimsflow/claim/domain/Claim.java`
-- `backend/src/main/java/com/claimsflow/adjuster/domain/Adjuster.java`
-- `backend/src/main/java/com/claimsflow/demo/application/OperationalSeedScenario.java`
-- `backend/src/main/java/com/claimsflow/demo/application/OperationalDemoDatasetService.java`
-- `backend/src/main/java/com/claimsflow/demo/application/OperationalDemoDatasetRunner.java`
-- `backend/src/main/java/com/claimsflow/operations/application/OperationalFilters.java`
-- `backend/src/main/java/com/claimsflow/operations/application/OperationalQueryService.java`
-- `backend/src/main/java/com/claimsflow/operations/api/OperationalResponses.java`
-- `backend/src/main/java/com/claimsflow/dashboard/application/DashboardService.java`
-- `backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java`
-- `backend/src/main/java/com/claimsflow/analytics/api/AnalyticsController.java`
-- `backend/src/main/java/com/claimsflow/analytics/api/AnalyticsResponses.java`
-- `backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java`
-- `backend/src/main/java/com/claimsflow/team/api/TeamOperationsController.java`
-- `backend/src/main/java/com/claimsflow/team/api/TeamOperationsResponses.java`
-- `backend/src/main/java/com/claimsflow/evidence/application/EvidenceOperationsService.java`
-- `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsController.java`
-- `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsResponses.java`
-
-### Frontend
-
-- `frontend/src/app/core/operational-data/operational-data.models.ts`
-- `frontend/src/app/core/operational-data/operational-api.service.ts`
-- `frontend/src/app/core/operational-data/operational-data.store.ts`
-- `frontend/src/app/shared/operational/reduced-motion.service.ts`
-- `frontend/src/app/shared/operational/animated-number.component.ts`
-- `frontend/src/app/shared/operational/changed-value.directive.ts`
-- `frontend/src/app/shared/operational/operational-refresh-status.component.ts`
-- `frontend/src/app/shared/operational/operational-filter-bar.component.ts`
-- Existing Dashboard, Queue, My Work, Analytics, Team Operations, Documents, AI Insights, Workflow Automation, role-navigation, and tour files listed in the tasks below.
-
----
-
-### Task 1: Persist the minimum operational reporting model
+### Task 1: Add operational domain fields and an injectable clock
 
 **Files:**
 - Create: `backend/src/main/resources/db/migration/V4__operational_reporting_fields.sql`
 - Create: `backend/src/main/java/com/claimsflow/claim/domain/ClaimRegion.java`
+- Create: `backend/src/main/java/com/claimsflow/shared/time/ClockConfiguration.java`
 - Modify: `backend/src/main/java/com/claimsflow/claim/domain/Claim.java`
 - Modify: `backend/src/main/java/com/claimsflow/adjuster/domain/Adjuster.java`
 - Modify: `backend/src/main/java/com/claimsflow/claim/application/ClaimApplicationService.java`
-- Modify: existing claim-domain tests that construct `Claim` directly
+- Modify: `backend/src/main/java/com/claimsflow/dashboard/application/DashboardService.java`
 - Test: `backend/src/test/java/com/claimsflow/claim/domain/ClaimOperationalFieldsTest.java`
 - Test: `backend/src/test/java/com/claimsflow/claim/persistence/OperationalFieldsMigrationTest.java`
 
@@ -83,6 +44,16 @@
 ```java
 public enum ClaimRegion {
     NORTHEAST, SOUTHEAST, MIDWEST, SOUTHWEST, WEST
+}
+```
+
+```java
+@Configuration
+public class ClockConfiguration {
+    @Bean
+    Clock applicationClock() {
+        return Clock.systemUTC();
+    }
 }
 ```
 
@@ -116,7 +87,7 @@ public static Claim createSeeded(
 
 ```java
 @Test
-void resolvedStatusRecordsResolutionTimeAndReopenClearsIt() {
+void resolvedStatusRecordsResolutionAndReopenClearsIt() {
     Instant created = Instant.parse("2026-07-01T12:00:00Z");
     Claim claim = Claim.create(
         "CLM-2026-TEST", "Taylor Reed", "taylor@example.com",
@@ -132,55 +103,37 @@ void resolvedStatusRecordsResolutionTimeAndReopenClearsIt() {
     claim.changeStatus(ClaimStatus.UNDER_REVIEW, created.plus(Duration.ofHours(13)));
     assertThat(claim.getResolvedAt()).isNull();
 }
-
-@Test
-void seededClaimUsesProvidedIdentityAndDatasetKey() {
-    UUID id = UUID.fromString("d7fbd89a-d6fd-3dd7-8f25-36d53cf20f51");
-    Instant created = Instant.parse("2026-07-01T12:00:00Z");
-    Claim claim = Claim.createSeeded(
-        id, "CLM-DEMO-001", "Morgan Diaz", "morgan.diaz@example.com",
-        ClaimType.AUTO, ClaimRegion.WEST, LocalDate.parse("2026-06-30"),
-        new BigDecimal("7800.00"), "Rear-end collision with documented bumper damage.",
-        true, true, false, false, 100, ClaimPriority.MEDIUM,
-        ClaimStatus.RESOLVED, null, created.plus(Duration.ofHours(72)),
-        created, created.plus(Duration.ofHours(28)), created.plus(Duration.ofHours(28)),
-        "EMPLOYER_MVP");
-
-    assertThat(claim.getId()).isEqualTo(id);
-    assertThat(claim.getDemoDatasetKey()).isEqualTo("EMPLOYER_MVP");
-}
 ```
 
-- [ ] **Step 2: Run the failing tests**
+- [ ] **Step 2: Run the failing test**
 
 ```bash
 cd backend
 mvn -q -Dtest=ClaimOperationalFieldsTest test
 ```
 
-Expected: compilation failure because the new region, fields, getters, and seeded factory do not exist.
-
 - [ ] **Step 3: Add the migration**
 
 ```sql
 ALTER TABLE adjusters ADD COLUMN team VARCHAR(80) NOT NULL DEFAULT 'Claims Operations';
+UPDATE adjusters SET team = 'Claims Intake' WHERE email = 'maya.chen@example.test';
+UPDATE adjusters SET team = 'Adjusting Team' WHERE email = 'daniel.brooks@example.test';
+UPDATE adjusters SET team = 'Medical Review' WHERE email = 'priya.shah@example.test';
 UPDATE adjusters SET team = 'SIU Investigations' WHERE email = 'jordan.lee@example.com';
 
 ALTER TABLE claims ADD COLUMN region VARCHAR(40) NOT NULL DEFAULT 'SOUTHEAST';
 ALTER TABLE claims ADD COLUMN resolved_at TIMESTAMPTZ;
 ALTER TABLE claims ADD COLUMN demo_dataset_key VARCHAR(64);
-
-UPDATE claims
-SET resolved_at = updated_at
+UPDATE claims SET resolved_at = updated_at
 WHERE status IN ('RESOLVED', 'CLOSED') AND resolved_at IS NULL;
 
-CREATE INDEX idx_claims_created_at ON claims (created_at);
-CREATE INDEX idx_claims_region ON claims (region);
-CREATE INDEX idx_claims_demo_dataset_key ON claims (demo_dataset_key);
-CREATE INDEX idx_adjusters_team ON adjusters (team);
+CREATE INDEX idx_claims_created_at ON claims(created_at);
+CREATE INDEX idx_claims_region ON claims(region);
+CREATE INDEX idx_claims_demo_dataset_key ON claims(demo_dataset_key);
+CREATE INDEX idx_adjusters_team ON adjusters(team);
 ```
 
-- [ ] **Step 4: Implement the entity fields and state rules**
+- [ ] **Step 4: Implement fields and state rules**
 
 ```java
 @Enumerated(EnumType.STRING)
@@ -193,16 +146,16 @@ private Instant resolvedAt;
 private String demoDatasetKey;
 
 public void changeStatus(ClaimStatus next, Instant now) {
-    this.status = next;
-    this.resolvedAt = switch (next) {
+    status = next;
+    resolvedAt = switch (next) {
         case RESOLVED, CLOSED -> now;
         default -> null;
     };
-    this.updatedAt = now;
+    updatedAt = now;
 }
 ```
 
-Normal intake continues without a new user-visible region field; `ClaimApplicationService.create()` passes `ClaimRegion.SOUTHEAST`. `Adjuster` receives a non-null `team` field and getter.
+Normal intake passes `ClaimRegion.SOUTHEAST`. Replace `Clock.systemUTC()` fields with constructor-injected `Clock`.
 
 - [ ] **Step 5: Run focused and full verification**
 
@@ -218,13 +171,15 @@ mvn -q verify
 git add backend/src/main/resources/db/migration/V4__operational_reporting_fields.sql \
   backend/src/main/java/com/claimsflow/claim \
   backend/src/main/java/com/claimsflow/adjuster/domain/Adjuster.java \
+  backend/src/main/java/com/claimsflow/shared/time \
+  backend/src/main/java/com/claimsflow/dashboard/application/DashboardService.java \
   backend/src/test/java/com/claimsflow/claim
 git commit -m "feat(backend): add operational reporting fields"
 ```
 
 ---
 
-### Task 2: Seed a deterministic 48-claim historical dataset
+### Task 2: Seed deterministic historical demo data
 
 **Files:**
 - Create: `backend/src/main/java/com/claimsflow/demo/application/OperationalSeedScenario.java`
@@ -254,39 +209,30 @@ public record OperationalSeedScenario(
     int slaHours,
     Integer resolvedHoursAfterCreation) {
 
-    public UUID stableId() {
-        return UUID.nameUUIDFromBytes(("claimsflow:" + key).getBytes(StandardCharsets.UTF_8));
+    UUID stableId() {
+        return UUID.nameUUIDFromBytes(("claimsflow:" + key)
+            .getBytes(StandardCharsets.UTF_8));
     }
 }
 ```
 
-- [ ] **Step 1: Write failing idempotency and isolation tests**
+- [ ] **Step 1: Write failing idempotency/isolation tests**
 
 ```java
 @Test
-void ensureSeededCreatesExactlyFortyEightRepeatableClaims() {
+void ensureSeededCreatesExactlyFortyEightClaimsOnce() {
     service.ensureSeeded();
     service.ensureSeeded();
-
-    List<Claim> claims = repository.findAllByDemoDatasetKey("EMPLOYER_MVP");
-    assertThat(claims).hasSize(48);
-    assertThat(claims).extracting(Claim::getRegion)
-        .contains(ClaimRegion.NORTHEAST, ClaimRegion.SOUTHEAST,
-            ClaimRegion.MIDWEST, ClaimRegion.SOUTHWEST, ClaimRegion.WEST);
-    assertThat(claims).extracting(Claim::getStatus)
-        .contains(ClaimStatus.NEW, ClaimStatus.UNDER_REVIEW,
-            ClaimStatus.WAITING_FOR_INFORMATION, ClaimStatus.READY_FOR_DECISION,
-            ClaimStatus.RESOLVED, ClaimStatus.CLOSED);
+    assertThat(claims.findAllByDemoDatasetKey("EMPLOYER_MVP")).hasSize(48);
 }
 
 @Test
-void reservedJourneyResetPreservesHistoricalClaims() {
+void journeyResetPreservesHistoricalData() {
     dataset.ensureSeeded();
     journey.reset();
     journey.reset();
-
-    assertThat(repository.findAllByDemoDatasetKey("EMPLOYER_MVP")).hasSize(48);
-    assertThat(repository.findAllByClaimantEmail(DemoJourneyService.CLAIMANT_EMAIL)).hasSize(1);
+    assertThat(claims.findAllByDemoDatasetKey("EMPLOYER_MVP")).hasSize(48);
+    assertThat(claims.findAllByClaimantEmail(DemoJourneyService.CLAIMANT_EMAIL)).hasSize(1);
 }
 ```
 
@@ -297,9 +243,9 @@ cd backend
 mvn -q -Dtest=OperationalDemoDatasetServiceTest,DemoJourneyServiceTransactionTest test
 ```
 
-- [ ] **Step 3: Define exactly 48 explicit scenarios**
+- [ ] **Step 3: Define 48 explicit scenarios**
 
-The immutable list covers every claim type, region, status, priority, completeness band, assigned/unassigned state, and SLA state. Stable IDs use `UUID.nameUUIDFromBytes`. The anchor is the injected clock rounded to UTC noon:
+The list covers all claim types, regions, statuses, priorities, completeness bands, four teams, assigned/unassigned states, overdue, at-risk, healthy SLA, and resolved-within/after-SLA cases. Use an injected-clock anchor:
 
 ```java
 Instant anchor = LocalDate.now(clock)
@@ -308,7 +254,7 @@ Instant anchor = LocalDate.now(clock)
     .plus(Duration.ofHours(12));
 ```
 
-- [ ] **Step 4: Implement idempotent cleanup and seeding**
+- [ ] **Step 4: Implement scoped cleanup and idempotent seeding**
 
 ```java
 @Transactional
@@ -322,15 +268,13 @@ public void resetHistoricalDataset() {
 
 @Transactional
 public void ensureSeeded() {
-    if (claims.countByDemoDatasetKey(DATASET_KEY) != SCENARIOS.size()) {
+    if (claims.countByDemoDatasetKey(DATASET_KEY) != 48) {
         resetHistoricalDataset();
     }
 }
 ```
 
-Repository methods are explicit JPQL bulk deletes scoped by `claim.demoDatasetKey`; no email or global table delete is used.
-
-- [ ] **Step 5: Seed only when demo mode is enabled**
+- [ ] **Step 5: Enable startup seeding only in demo mode**
 
 ```java
 @Component
@@ -349,33 +293,27 @@ public final class OperationalDemoDatasetRunner implements ApplicationRunner {
 }
 ```
 
-`DemoJourneyService.reset()` calls `dataset.ensureSeeded()` and continues deleting only `taylor.reed@example.com`.
+`DemoJourneyService.reset()` calls `dataset.ensureSeeded()` and still deletes only the reserved claimant email.
 
-- [ ] **Step 6: Run focused and full verification**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd backend
 mvn -q -Dtest=OperationalDemoDatasetServiceTest,DemoJourneyServiceTransactionTest test
 mvn -q verify
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/demo \
-  backend/src/main/java/com/claimsflow/claim/persistence/ClaimJpaRepository.java \
-  backend/src/main/java/com/claimsflow/audit/persistence/AuditEventJpaRepository.java \
-  backend/src/main/java/com/claimsflow/portal/persistence/ClaimMessageJpaRepository.java \
-  backend/src/test/java/com/claimsflow/demo
+git add src/main/java/com/claimsflow/demo src/main/java/com/claimsflow/claim/persistence \
+  src/main/java/com/claimsflow/audit/persistence src/main/java/com/claimsflow/portal/persistence \
+  src/test/java/com/claimsflow/demo
 git commit -m "feat(backend): seed deterministic operational history"
 ```
 
 ---
 
-### Task 3: Establish one operational filter and query contract
+### Task 3: Create the canonical filter/query layer
 
 **Files:**
 - Create: `backend/src/main/java/com/claimsflow/operations/application/OperationalFilters.java`
+- Create: `backend/src/main/java/com/claimsflow/operations/application/OperationalFilterFactory.java`
 - Create: `backend/src/main/java/com/claimsflow/operations/application/OperationalQueryService.java`
 - Create: `backend/src/main/java/com/claimsflow/operations/api/OperationalResponses.java`
 - Modify: `backend/src/main/java/com/claimsflow/claim/persistence/ClaimSpecifications.java`
@@ -383,7 +321,7 @@ git commit -m "feat(backend): seed deterministic operational history"
 - Modify: `backend/src/main/java/com/claimsflow/claim/application/ClaimApplicationService.java`
 - Modify: `backend/src/main/java/com/claimsflow/claim/api/ClaimController.java`
 - Modify: `backend/src/main/java/com/claimsflow/claim/api/ClaimResponses.java`
-- Test: `backend/src/test/java/com/claimsflow/operations/application/OperationalFiltersTest.java`
+- Test: `backend/src/test/java/com/claimsflow/operations/application/OperationalFilterFactoryTest.java`
 - Test: `backend/src/test/java/com/claimsflow/claim/persistence/ClaimSpecificationsIntegrationTest.java`
 
 **Interfaces:**
@@ -402,34 +340,42 @@ public record OperationalFilters(
 ```
 
 ```java
-public record OperationalFilterOptions(
-    List<String> claimTypes,
-    List<String> priorities,
-    List<String> statuses,
-    List<String> regions,
-    List<String> teams,
-    List<AdjusterOption> adjusters) {}
+public final class OperationalFilterFactory {
+    OperationalFilters create(
+        LocalDate from,
+        LocalDate to,
+        ClaimType claimType,
+        ClaimPriority priority,
+        ClaimStatus status,
+        UUID adjusterId,
+        String team,
+        ClaimRegion region,
+        boolean unassigned);
+}
+```
+
+```java
+public final class OperationalQueryService {
+    List<Claim> find(OperationalFilters filters);
+    List<Claim> findAllForDashboard();
+    OperationalFilterOptions options();
+}
 ```
 
 - [ ] **Step 1: Write failing validation and combination tests**
 
 ```java
 @Test
-void rejectsInvertedAndOverlongDateWindows() {
-    assertThatThrownBy(() -> filters.create(
+void rejectsInvalidDateWindows() {
+    assertThatThrownBy(() -> factory.create(
         LocalDate.parse("2026-08-01"), LocalDate.parse("2026-07-01"),
-        null, null, null, null, null, null, false))
-        .isInstanceOf(IllegalArgumentException.class);
-
-    assertThatThrownBy(() -> filters.create(
-        LocalDate.parse("2025-01-01"), LocalDate.parse("2026-08-01"),
         null, null, null, null, null, null, false))
         .isInstanceOf(IllegalArgumentException.class);
 }
 
 @Test
-void combinesDateRegionTeamPriorityAndStatus() {
-    List<Claim> result = query.find(filters.create(
+void combinesRegionTeamPriorityAndStatus() {
+    List<Claim> result = query.find(factory.create(
         LocalDate.parse("2026-07-03"), LocalDate.parse("2026-08-01"),
         ClaimType.PROPERTY, ClaimPriority.HIGH, ClaimStatus.UNDER_REVIEW,
         null, "Claims Operations", ClaimRegion.SOUTHEAST, false));
@@ -447,10 +393,10 @@ void combinesDateRegionTeamPriorityAndStatus() {
 
 ```bash
 cd backend
-mvn -q -Dtest=OperationalFiltersTest,ClaimSpecificationsIntegrationTest test
+mvn -q -Dtest=OperationalFilterFactoryTest,ClaimSpecificationsIntegrationTest test
 ```
 
-- [ ] **Step 3: Implement date defaults and validation using the injected `Clock`**
+- [ ] **Step 3: Implement date defaults and validation**
 
 ```java
 LocalDate effectiveTo = to == null ? LocalDate.now(clock) : to;
@@ -463,7 +409,7 @@ if (ChronoUnit.DAYS.between(effectiveFrom, effectiveTo) > 366) {
 }
 ```
 
-- [ ] **Step 4: Implement a canonical JPA Specification**
+- [ ] **Step 4: Implement one JPA Specification**
 
 ```java
 public static Specification<Claim> operational(OperationalFilters filters) {
@@ -477,9 +423,9 @@ public static Specification<Claim> operational(OperationalFilters filters) {
 }
 ```
 
-`ClaimJpaRepository` adds an `@EntityGraph(attributePaths = "assignedAdjuster")` overload for `findAll(Specification<Claim>, Sort)`.
+Add an eager `findAll(Specification<Claim>, Sort)` repository overload.
 
-- [ ] **Step 5: Expand the queue endpoint without breaking old links**
+- [ ] **Step 5: Expand the queue contract**
 
 ```java
 @GetMapping
@@ -494,44 +440,37 @@ public ClaimResponses.ClaimPage list(
     @RequestParam(required = false) UUID adjusterId,
     @RequestParam(required = false) String team,
     @RequestParam(required = false) ClaimRegion region,
-    @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+    Pageable pageable) {
     return ClaimResponses.page(service.list(
         q, from, to, claimType, status, priority, assignment,
         adjusterId, team, region, pageable));
 }
 ```
 
-`assignment=unassigned` and legacy UUID assignment links remain valid. Claim queue/detail responses add `region` and assigned `team`.
+Preserve `assignment=unassigned` and legacy UUID assignment. Queue/detail responses add region and team.
 
-- [ ] **Step 6: Run focused and full verification**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd backend
-mvn -q -Dtest=OperationalFiltersTest,ClaimSpecificationsIntegrationTest test
+mvn -q -Dtest=OperationalFilterFactoryTest,ClaimSpecificationsIntegrationTest test
 mvn -q verify
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/operations \
-  backend/src/main/java/com/claimsflow/claim \
-  backend/src/test/java/com/claimsflow/operations \
-  backend/src/test/java/com/claimsflow/claim
+git add src/main/java/com/claimsflow/operations src/main/java/com/claimsflow/claim \
+  src/test/java/com/claimsflow/operations src/test/java/com/claimsflow/claim
 git commit -m "feat(backend): unify operational filtering"
 ```
 
 ---
 
-### Task 4: Make the Dashboard snapshot internally coherent and fully derived
+### Task 4: Upgrade the Dashboard API
 
 **Files:**
 - Modify: `backend/src/main/java/com/claimsflow/dashboard/application/DashboardService.java`
-- Modify: `backend/src/main/java/com/claimsflow/dashboard/api/DashboardController.java`
 - Test: `backend/src/test/java/com/claimsflow/dashboard/application/DashboardServiceTest.java`
 - Test: `backend/src/test/java/com/claimsflow/dashboard/api/DashboardControllerTest.java`
 
-**Interfaces:**
+**Produces:**
 
 ```java
 public record DashboardSnapshot(
@@ -548,22 +487,17 @@ public record DashboardSnapshot(
     List<SignalCount> signalCounts,
     List<Workload> workload,
     List<Activity> recentActivity) {}
-
-public record SignalCount(String category, String tone, long count) {}
 ```
 
-- [ ] **Step 1: Write failing snapshot tests**
+- [ ] **Step 1: Write failing reconciliation tests**
 
 ```java
 @Test
-void snapshotReconcilesMetersAndSignalCounts() {
+void metersAndSignalsReconcile() {
     DashboardSnapshot snapshot = service.snapshot();
-
-    assertThat(snapshot.activePortfolioPercentage())
-        .isEqualTo(snapshot.totalClaims() == 0
-            ? 0
+    assertThat(snapshot.activePortfolioPercentage()).isEqualTo(
+        snapshot.totalClaims() == 0 ? 0
             : Math.round(snapshot.openClaims() * 100f / snapshot.totalClaims()));
-    assertThat(snapshot.evidenceReadinessPercentage()).isBetween(0, 100);
     assertThat(snapshot.signalCounts()).extracting(SignalCount::category)
         .containsExactly("SLA", "EVIDENCE", "OWNERSHIP", "PRIORITY", "ADVISORY");
 }
@@ -576,121 +510,54 @@ cd backend
 mvn -q -Dtest=DashboardServiceTest,DashboardControllerTest test
 ```
 
-- [ ] **Step 3: Calculate the complete response from one loaded claim set**
+- [ ] **Step 3: Calculate one coherent snapshot**
 
 ```java
-@Transactional(readOnly = true)
-public DashboardSnapshot snapshot() {
-    Instant now = clock.instant();
-    List<Claim> all = operational.findAllForDashboard();
-    List<Claim> open = all.stream().filter(this::isOpen).toList();
-
-    long high = open.stream().filter(this::isHighPriority).count();
-    long atRisk = open.stream().filter(claim -> isWithin24Hours(claim, now)).count();
-    long overdue = open.stream().filter(claim -> claim.getSlaDeadline().isBefore(now)).count();
-    long unassigned = open.stream().filter(claim -> claim.getAssignedAdjuster() == null).count();
-    long incomplete = open.stream().filter(claim -> claim.getCompletenessPercentage() < 100).count();
-    int readiness = averageCompleteness(all);
-    int activePercent = percent(open.size(), all.size());
-
-    return buildSnapshot(now, all, open, high, atRisk, overdue,
-        unassigned, incomplete, readiness, activePercent);
-}
+Instant now = clock.instant();
+List<Claim> all = operational.findAllForDashboard();
+List<Claim> open = all.stream().filter(this::isOpen).toList();
+long high = open.stream().filter(this::isHighPriority).count();
+long atRisk = open.stream().filter(claim -> isWithin24Hours(claim, now)).count();
+long overdue = open.stream().filter(claim -> claim.getSlaDeadline().isBefore(now)).count();
+long unassigned = open.stream().filter(claim -> claim.getAssignedAdjuster() == null).count();
+long incomplete = open.stream().filter(claim -> claim.getCompletenessPercentage() < 100).count();
 ```
 
-- [ ] **Step 4: Define exact signal categories**
+Signal categories are exact backend counts. No meter remains hard-coded.
 
-```java
-List<SignalCount> signals = List.of(
-    new SignalCount("SLA", "critical", atRisk + overdue),
-    new SignalCount("EVIDENCE", "warning", incomplete),
-    new SignalCount("OWNERSHIP", "live", unassigned),
-    new SignalCount("PRIORITY", "advisory", high),
-    new SignalCount("ADVISORY", "healthy", Math.max(0, open.size() - high - atRisk - overdue))
-);
-```
-
-- [ ] **Step 5: Run focused and full verification**
+- [ ] **Step 4: Verify and commit**
 
 ```bash
 cd backend
 mvn -q -Dtest=DashboardServiceTest,DashboardControllerTest test
 mvn -q verify
-```
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/dashboard backend/src/test/java/com/claimsflow/dashboard
+git add src/main/java/com/claimsflow/dashboard src/test/java/com/claimsflow/dashboard
 git commit -m "feat(backend): derive complete dashboard snapshot"
 ```
 
 ---
 
-### Task 5: Add the Analytics aggregate API
+### Task 5: Add Analytics, Team Operations, and Evidence Operations APIs
 
 **Files:**
 - Create: `backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java`
 - Create: `backend/src/main/java/com/claimsflow/analytics/api/AnalyticsController.java`
 - Create: `backend/src/main/java/com/claimsflow/analytics/api/AnalyticsResponses.java`
-- Test: `backend/src/test/java/com/claimsflow/analytics/application/AnalyticsServiceTest.java`
-- Test: `backend/src/test/java/com/claimsflow/analytics/api/AnalyticsControllerTest.java`
+- Create: `backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java`
+- Create: `backend/src/main/java/com/claimsflow/team/api/TeamOperationsController.java`
+- Create: `backend/src/main/java/com/claimsflow/team/api/TeamOperationsResponses.java`
+- Create: `backend/src/main/java/com/claimsflow/evidence/application/EvidenceOperationsService.java`
+- Create: `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsController.java`
+- Create: `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsResponses.java`
+- Test: corresponding application and controller tests under `backend/src/test/java/com/claimsflow/{analytics,team,evidence}`
 
-**Interfaces:**
-
-```java
-public record AnalyticsSnapshot(
-    Instant generatedAt,
-    OperationalFilterOptions options,
-    AnalyticsKpis kpis,
-    AnalyticsComparison comparison,
-    List<TimePoint> claimVolume,
-    List<TimePoint> resolvedVolume,
-    List<DistributionPoint> statusDistribution,
-    List<DistributionPoint> priorityDistribution,
-    List<DistributionPoint> regionDistribution,
-    List<DistributionPoint> agingBands,
-    List<CohortRow> cohorts) {}
-```
-
-Truthful labels are `Estimated exposure`, `Resolved claims`, `Evidence readiness`, and `SLA compliance`. Do not expose payouts, approval rate, fraud savings, or confirmed fraud rate.
-
-- [ ] **Step 1: Write failing reconciliation and comparison tests**
-
-```java
-@Test
-void currentAndPreviousPeriodsUseEqualInclusiveLengths() {
-    AnalyticsSnapshot result = service.snapshot(filters(
-        LocalDate.parse("2026-07-03"), LocalDate.parse("2026-08-01")));
-
-    assertThat(result.comparison().previousFrom()).isEqualTo(LocalDate.parse("2026-06-03"));
-    assertThat(result.comparison().previousTo()).isEqualTo(LocalDate.parse("2026-07-02"));
-    assertThat(result.claimVolume()).hasSize(30);
-}
-
-@Test
-void distributionsReconcileToFilteredTotal() {
-    AnalyticsSnapshot result = service.snapshot(filters);
-    assertThat(result.statusDistribution().stream().mapToLong(DistributionPoint::count).sum())
-        .isEqualTo(result.kpis().totalClaims());
-}
-```
-
-- [ ] **Step 2: Run the failing tests**
-
-```bash
-cd backend
-mvn -q -Dtest=AnalyticsServiceTest,AnalyticsControllerTest test
-```
-
-- [ ] **Step 3: Implement exact KPI formulas**
+**Analytics formulas:**
 
 ```java
 long total = claims.size();
 long open = claims.stream().filter(this::isOpen).count();
 long resolved = claims.stream().filter(claim -> claim.getResolvedAt() != null).count();
-BigDecimal exposure = claims.stream()
-    .map(Claim::getEstimatedLoss)
+BigDecimal exposure = claims.stream().map(Claim::getEstimatedLoss)
     .reduce(BigDecimal.ZERO, BigDecimal::add);
 int readiness = averagePercent(claims, Claim::getCompletenessPercentage);
 int slaCompliance = percent(
@@ -701,111 +568,7 @@ int slaCompliance = percent(
     resolved);
 ```
 
-Average resolution is the mean `Duration.between(createdAt, resolvedAt)` across resolved claims. Aging bands are `0–2`, `3–7`, `8–14`, `15–30`, and `31+ days` for open claims.
-
-- [ ] **Step 4: Zero-fill dates and derive cohort percentages**
-
-Every date in the inclusive range appears in both time series. Cohorts group by creation week and report resolved within 7, 14, and 30 days. Empty denominators return zero, not fabricated values.
-
-- [ ] **Step 5: Expose canonical filter parameters**
-
-```java
-@GetMapping
-public AnalyticsSnapshot get(
-    @RequestParam(required = false) LocalDate from,
-    @RequestParam(required = false) LocalDate to,
-    @RequestParam(required = false) ClaimType claimType,
-    @RequestParam(required = false) ClaimPriority priority,
-    @RequestParam(required = false) ClaimStatus status,
-    @RequestParam(required = false) UUID adjusterId,
-    @RequestParam(required = false) String team,
-    @RequestParam(required = false) ClaimRegion region) {
-    OperationalFilters selected = filters.create(
-        from, to, claimType, priority, status, adjusterId, team, region, false);
-    return service.snapshot(selected);
-}
-```
-
-- [ ] **Step 6: Run focused and full verification**
-
-```bash
-cd backend
-mvn -q -Dtest=AnalyticsServiceTest,AnalyticsControllerTest test
-mvn -q verify
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/analytics backend/src/test/java/com/claimsflow/analytics
-git commit -m "feat(backend): add operational analytics snapshots"
-```
-
----
-
-### Task 6: Add the Team Operations aggregate API
-
-**Files:**
-- Create: `backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java`
-- Create: `backend/src/main/java/com/claimsflow/team/api/TeamOperationsController.java`
-- Create: `backend/src/main/java/com/claimsflow/team/api/TeamOperationsResponses.java`
-- Test: `backend/src/test/java/com/claimsflow/team/application/TeamOperationsServiceTest.java`
-- Test: `backend/src/test/java/com/claimsflow/team/api/TeamOperationsControllerTest.java`
-
-**Interfaces:**
-
-```java
-public record TeamOperationsSnapshot(
-    Instant generatedAt,
-    OperationalFilterOptions options,
-    TeamKpis kpis,
-    List<TeamWorkload> teams,
-    List<AdjusterWorkload> adjusters,
-    List<Escalation> escalations,
-    List<Advisory> advisories,
-    IntegrityScore integrity) {}
-```
-
-- [ ] **Step 1: Write failing capacity, SLA, and integrity tests**
-
-```java
-@Test
-void capacityUsesPersistedAdjusterCapacity() {
-    TeamOperationsSnapshot result = service.snapshot(filters);
-    TeamWorkload operations = result.teams().stream()
-        .filter(team -> team.name().equals("Claims Operations"))
-        .findFirst().orElseThrow();
-
-    assertThat(operations.capacity()).isEqualTo(expectedClaimsOperationsCapacity());
-    assertThat(operations.activeClaims()).isEqualTo(expectedClaimsOperationsOpenClaims());
-}
-
-@Test
-void integrityScoreUsesDocumentedWeights() {
-    IntegrityScore score = service.snapshot(filters).integrity();
-    int expected = Math.round(
-        score.slaCompliance() * 0.40f +
-        score.evidenceReadiness() * 0.30f +
-        score.assignmentCoverage() * 0.30f);
-    assertThat(score.overall()).isEqualTo(expected);
-}
-```
-
-- [ ] **Step 2: Run the failing tests**
-
-```bash
-cd backend
-mvn -q -Dtest=TeamOperationsServiceTest,TeamOperationsControllerTest test
-```
-
-- [ ] **Step 3: Implement exact definitions**
-
-- Active: status is not `RESOLVED` or `CLOSED`.
-- At risk: open deadline is between `now` and `now + 24h`.
-- Overdue: open deadline is before `now`.
-- Utilization: active assigned claims divided by summed active-adjuster capacity, capped at 100.
-- Assignment coverage: assigned open claims divided by all open claims.
-- Escalations: overdue first, then at-risk, then critical priority; sort by deadline and claim number.
+**Team integrity formula:**
 
 ```java
 int overall = Math.round(
@@ -814,157 +577,58 @@ int overall = Math.round(
     assignmentCoverage * 0.30f);
 ```
 
-- [ ] **Step 4: Return navigational advisories only**
+- [ ] **Step 1: Write failing service tests**
+
+Tests cover equal-length prior periods, zero-filled daily series, distribution reconciliation, average resolution, aging bands, cohorts, capacity from persisted adjusters, at-risk/overdue boundaries, escalation ordering, integrity weights, and claimant-message audience filtering.
 
 ```java
-new Advisory(
-    "SLA pressure",
-    overdue + " overdue claims need review.",
-    "/app/claims",
-    Map.of("sort", "slaDeadline,asc"),
-    "critical");
-```
+assertThat(analytics.statusDistribution().stream()
+    .mapToLong(DistributionPoint::count).sum())
+    .isEqualTo(analytics.kpis().totalClaims());
 
-Additional advisories cover unassigned claims and evidence gaps. There is no apply, rebalance, staffing, assignment, or mutation endpoint.
-
-- [ ] **Step 5: Expose `GET /api/team-operations` with the canonical filter contract**
-
-The response includes live team and adjuster options so the frontend does not hard-code filter values.
-
-- [ ] **Step 6: Run focused and full verification**
-
-```bash
-cd backend
-mvn -q -Dtest=TeamOperationsServiceTest,TeamOperationsControllerTest test
-mvn -q verify
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/team backend/src/test/java/com/claimsflow/team
-git commit -m "feat(backend): add team operations snapshots"
-```
-
----
-
-### Task 7: Add the truthful Evidence Operations API
-
-**Files:**
-- Create: `backend/src/main/java/com/claimsflow/evidence/application/EvidenceOperationsService.java`
-- Create: `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsController.java`
-- Create: `backend/src/main/java/com/claimsflow/evidence/api/EvidenceOperationsResponses.java`
-- Modify: `backend/src/main/java/com/claimsflow/portal/persistence/ClaimMessageJpaRepository.java`
-- Test: `backend/src/test/java/com/claimsflow/evidence/application/EvidenceOperationsServiceTest.java`
-- Test: `backend/src/test/java/com/claimsflow/evidence/api/EvidenceOperationsControllerTest.java`
-
-**Interfaces:**
-
-```java
-public record EvidenceOperationsSnapshot(
-    Instant generatedAt,
-    OperationalFilterOptions options,
-    List<EvidenceClaimSummary> claims,
-    EvidenceClaimDetail selected) {}
-
-public record EvidenceClaimDetail(
-    UUID id,
-    String claimNumber,
-    String claimantName,
-    String claimantEmail,
-    ClaimType claimType,
-    ClaimStatus status,
-    ClaimPriority priority,
-    ClaimRegion region,
-    int completenessPercentage,
-    Instant slaDeadline,
-    String adjusterName,
-    String team,
-    List<EvidenceCategory> evidence,
-    List<ClaimantMessage> claimantMessages) {}
-```
-
-- [ ] **Step 1: Write failing truthfulness tests**
-
-```java
-@Test
-void selectedClaimContainsOnlyPersistedEvidenceAndClaimantMessages() {
-    EvidenceClaimDetail detail = service.snapshot(filters, claimId).selected();
-
-    assertThat(detail.evidence()).extracting(EvidenceCategory::kind)
-        .containsExactlyInAnyOrder(
-            "INCIDENT_REPORT", "PHOTOS",
-            "PROOF_OF_OWNERSHIP", "MEDICAL_DOCUMENTATION");
-    assertThat(detail.claimantMessages())
-        .allMatch(message -> message.audience().equals("CLAIMANT"));
-}
-
-@Test
-void responseDoesNotClaimUnsupportedFileFeatures() throws Exception {
-    String json = objectMapper.writeValueAsString(service.snapshot(filters, claimId));
-    assertThat(json).doesNotContain(
-        "ocr", "confidence", "storage", "version", "fileSize", "sms", "upload");
-}
+assertThat(evidence.selected().claimantMessages())
+    .allMatch(message -> message.audience().equals("CLAIMANT"));
 ```
 
 - [ ] **Step 2: Run the failing tests**
 
 ```bash
 cd backend
-mvn -q -Dtest=EvidenceOperationsServiceTest,EvidenceOperationsControllerTest test
+mvn -q -Dtest=AnalyticsServiceTest,AnalyticsControllerTest,TeamOperationsServiceTest,TeamOperationsControllerTest,EvidenceOperationsServiceTest,EvidenceOperationsControllerTest test
 ```
 
-- [ ] **Step 3: Implement summary and selected-detail behavior**
+- [ ] **Step 3: Implement truthful response contracts**
 
-- Sort summaries by overdue, at-risk, priority, SLA deadline, and claim number.
-- Select the requested claim when it remains in the filtered result.
-- Otherwise select the first result.
-- Return `selected = null` when the result set is empty.
-- Derive the four evidence rows directly from persisted booleans.
-- Read only `MessageAudience.CLAIMANT` messages in ascending creation order.
+Analytics exposes Estimated exposure, Total/Open/Resolved claims, Average resolution, Evidence readiness, SLA compliance, daily created/resolved series, status/priority/region distributions, aging bands, and weekly cohorts. It does not expose payout, approval, or fraud metrics.
 
-- [ ] **Step 4: Expose the read-only endpoint**
+Team Operations exposes persisted capacity/utilization, SLA risk, overdue, assignment coverage, workload, escalations, performance summaries, integrity inputs, and router advisories. Advisories contain route/query parameters and never mutate staffing.
 
-```java
-@GetMapping
-public EvidenceOperationsSnapshot get(
-    @RequestParam(required = false) UUID selectedClaimId,
-    @RequestParam(required = false) LocalDate from,
-    @RequestParam(required = false) LocalDate to,
-    @RequestParam(required = false) ClaimType claimType,
-    @RequestParam(required = false) ClaimPriority priority,
-    @RequestParam(required = false) ClaimStatus status,
-    @RequestParam(required = false) UUID adjusterId,
-    @RequestParam(required = false) String team,
-    @RequestParam(required = false) ClaimRegion region) {
-    OperationalFilters selected = filters.create(
-        from, to, claimType, priority, status, adjusterId, team, region, false);
-    return service.snapshot(selected, selectedClaimId);
-}
+Evidence Operations exposes filtered claim summaries, four persisted evidence categories, completeness, status, priority, region, SLA, owner/team, claimant context, and claimant-visible messages. It exposes no upload, OCR, storage, version, comment, email, or SMS contract.
+
+- [ ] **Step 4: Expose canonical GET endpoints**
+
+```text
+GET /api/analytics
+GET /api/team-operations
+GET /api/evidence-operations?selectedClaimId=<uuid>
 ```
 
-No POST, upload, OCR, extraction, version, comment, storage, email, or SMS endpoint is added.
+All accept the Task 3 filter parameters and return `OperationalFilterOptions`.
 
-- [ ] **Step 5: Run focused and full verification**
+- [ ] **Step 5: Verify and commit**
 
 ```bash
 cd backend
-mvn -q -Dtest=EvidenceOperationsServiceTest,EvidenceOperationsControllerTest test
 mvn -q verify
-```
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add backend/src/main/java/com/claimsflow/evidence \
-  backend/src/main/java/com/claimsflow/portal/persistence/ClaimMessageJpaRepository.java \
-  backend/src/test/java/com/claimsflow/evidence
-git commit -m "feat(backend): add truthful evidence operations API"
+git add src/main/java/com/claimsflow/analytics src/main/java/com/claimsflow/team \
+  src/main/java/com/claimsflow/evidence src/test/java/com/claimsflow/analytics \
+  src/test/java/com/claimsflow/team src/test/java/com/claimsflow/evidence
+git commit -m "feat(backend): add employer operational snapshots"
 ```
 
 ---
 
-### Task 8: Add the Angular operational API and reactive store
+### Task 6: Add the Angular operational store
 
 **Files:**
 - Create: `frontend/src/app/core/operational-data/operational-data.models.ts`
@@ -988,69 +652,7 @@ export interface OperationalResource<T> {
   readonly updatedAt: Date | null;
   readonly changedClaimIds: readonly string[];
 }
-
-export interface OperationalFilters {
-  readonly from: string;
-  readonly to: string;
-  readonly claimType: ClaimType | '';
-  readonly priority: ClaimPriority | '';
-  readonly status: ClaimStatus | '';
-  readonly adjusterId: string;
-  readonly team: string;
-  readonly region: ClaimRegion | '';
-}
 ```
-
-- [ ] **Step 1: Write failing polling, visibility, cache, stale, and invalidation tests**
-
-```ts
-it('polls every 45 seconds only while visible', fakeAsync(() => {
-  visibility.set('visible');
-  store.activateDashboard();
-  http.expectOne('/api/dashboard').flush(snapshotA);
-
-  tick(44_999);
-  http.expectNone('/api/dashboard');
-  tick(1);
-  http.expectOne('/api/dashboard').flush(snapshotB);
-
-  visibility.set('hidden');
-  tick(90_000);
-  http.expectNone('/api/dashboard');
-}));
-
-it('retains the last valid snapshot after background failure', fakeAsync(() => {
-  store.activateDashboard();
-  http.expectOne('/api/dashboard').flush(snapshotA);
-  store.refresh('dashboard');
-  http.expectOne('/api/dashboard')
-    .flush({ message: 'offline' }, { status: 503, statusText: 'Unavailable' });
-
-  expect(store.dashboard().value).toEqual(snapshotA);
-  expect(store.dashboard().stale).toBeTrue();
-}));
-```
-
-- [ ] **Step 2: Run the failing store tests**
-
-```bash
-cd frontend
-npm run test:ci -- --include='src/app/core/operational-data/operational-data.store.spec.ts'
-```
-
-- [ ] **Step 3: Implement typed HTTP reads**
-
-```ts
-loadDashboard(): Observable<DashboardSnapshot>;
-loadQueue(filters: ClaimFilters): Observable<ClaimPage>;
-loadAnalytics(filters: OperationalFilters): Observable<AnalyticsSnapshot>;
-loadTeam(filters: OperationalFilters): Observable<TeamOperationsSnapshot>;
-loadEvidence(filters: OperationalFilters, selectedClaimId: string): Observable<EvidenceOperationsSnapshot>;
-```
-
-One pure `operationalFiltersToParams()` function builds the common query parameters.
-
-- [ ] **Step 4: Implement activation, caching, refresh, and invalidation**
 
 ```ts
 activateDashboard(): () => void;
@@ -1062,106 +664,99 @@ refresh(family: OperationalFamily): void;
 invalidate(families: readonly OperationalFamily[], changedClaimIds?: readonly string[]): void;
 ```
 
-Each activation returns a cleanup function. Poll active slots only. Revisit uses cached data immediately and refreshes in the background when the cached snapshot is older than 15 seconds.
-
-- [ ] **Step 5: Implement visible-tab polling**
+- [ ] **Step 1: Write failing store tests**
 
 ```ts
-private onVisibilityChange(): void {
-  if (document.visibilityState === 'visible') {
-    this.refreshActiveFamilies();
-    this.startPolling(45_000);
-  } else {
-    this.stopPolling();
-  }
-}
+it('polls every 45 seconds only while visible', fakeAsync(() => {
+  visibility.set('visible');
+  store.activateDashboard();
+  http.expectOne('/api/dashboard').flush(snapshotA);
+  tick(45_000);
+  http.expectOne('/api/dashboard').flush(snapshotB);
+  visibility.set('hidden');
+  tick(90_000);
+  http.expectNone('/api/dashboard');
+}));
+
+it('retains the last snapshot after background failure', () => {
+  expect(store.dashboard().value).toEqual(snapshotA);
+  expect(store.dashboard().stale).toBeTrue();
+});
 ```
 
-Successful refresh clears stale/error state. Background failure leaves value and update time intact.
-
-- [ ] **Step 6: Run focused and full frontend verification**
+- [ ] **Step 2: Run the failing tests**
 
 ```bash
 cd frontend
 npm run test:ci -- --include='src/app/core/operational-data/operational-data.store.spec.ts'
-npm run test:ci
-npm run build
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 3: Implement typed HTTP methods and keyed cache slots**
+
+```ts
+loadDashboard(): Observable<DashboardSnapshot>;
+loadQueue(filters: ClaimFilters): Observable<ClaimPage>;
+loadAnalytics(filters: OperationalFilters): Observable<AnalyticsSnapshot>;
+loadTeam(filters: OperationalFilters): Observable<TeamOperationsSnapshot>;
+loadEvidence(filters: OperationalFilters, selectedClaimId: string): Observable<EvidenceOperationsSnapshot>;
+```
+
+Activation returns cleanup. Poll active slots only. Revisit displays cache immediately and refreshes in the background after 15 seconds. Successful refresh clears stale/error state; failed background refresh leaves value/update time intact.
+
+- [ ] **Step 4: Verify and commit**
 
 ```bash
-git add frontend/src/app/core/operational-data frontend/src/app/shared/models
+cd frontend
+npm run test:ci
+npm run build
+git add src/app/core/operational-data src/app/shared/models
 git commit -m "feat(frontend): add reactive operational data store"
 ```
 
 ---
 
-### Task 9: Connect queue, My Work, and mutation invalidation
+### Task 7: Connect queue, My Work, and successful-mutation invalidation
 
 **Files:**
 - Modify: `frontend/src/app/claims/data-access/claim-filter-codec.ts`
 - Modify: `frontend/src/app/claims/data-access/claim-filter-codec.spec.ts`
 - Modify: `frontend/src/app/claims/data-access/claims-api.service.ts`
-- Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.ts`
-- Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.html`
-- Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.css`
-- Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.spec.ts`
+- Modify: `frontend/src/app/claims/feature-queue/claims-queue-page.component.*`
 - Modify: `frontend/src/app/workspaces/my-work-page.component.ts`
 - Modify: `frontend/src/app/portal/data-access/portal-api.service.ts`
 - Modify: `frontend/src/app/core/demo-journey/demo-journey.service.ts`
-- Modify: affected service specs
+- Modify: affected specs
 
-**Interfaces:**
-
-- Create/reset invalidates all five families.
-- Assignment/status/evidence invalidates Dashboard, Queue, Analytics, Team, and Evidence.
-- Claimant-visible message invalidates Evidence and refreshes current claim detail/audit.
-
-- [ ] **Step 1: Write failing filter round-trip tests**
+- [ ] **Step 1: Write failing URL round-trip tests**
 
 ```ts
-it('round-trips every curated queue filter', () => {
-  const filters: ClaimFilters = {
-    ...DEFAULT_FILTERS,
-    from: '2026-07-03',
-    to: '2026-08-01',
-    claimType: 'PROPERTY',
-    priority: 'HIGH',
-    status: 'UNDER_REVIEW',
-    assignment: 'unassigned',
-    adjusterId: '',
-    team: 'Claims Operations',
-    region: 'SOUTHEAST',
-  };
-
-  expect(parseClaimFilters(serializeClaimFilters(filters))).toEqual(filters);
-});
+const filters: ClaimFilters = {
+  ...DEFAULT_FILTERS,
+  from: '2026-07-03',
+  to: '2026-08-01',
+  claimType: 'PROPERTY',
+  priority: 'HIGH',
+  status: 'UNDER_REVIEW',
+  assignment: 'unassigned',
+  adjusterId: '',
+  team: 'Claims Operations',
+  region: 'SOUTHEAST',
+};
+expect(parseClaimFilters(serializeClaimFilters(filters))).toEqual(filters);
 ```
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [ ] **Step 2: Run the failing tests**
 
 ```bash
 cd frontend
 npm run test:ci -- --include='src/app/claims/**/*.spec.ts'
 ```
 
-- [ ] **Step 3: Extend URL parsing and HTTP parameters**
+- [ ] **Step 3: Use the store for Queue and My Work**
 
-Unknown enum values normalize to `''`; they are not cast through blindly. Preserve legacy `assignment=unassigned` and UUID assignment values.
+My Work activates Queue with `adjusterId = sessionStorage['claimsflow.demoAdjusterId']`. Unknown enum query values normalize to empty strings. Existing `assignment=unassigned` and UUID links remain valid.
 
-- [ ] **Step 4: Move Queue and My Work reads to the store**
-
-```ts
-private reconnectQueue(filters: ClaimFilters): void {
-  this.releaseQueue?.();
-  this.releaseQueue = this.operational.activateQueue(filters);
-}
-```
-
-My Work uses the same queue family with `adjusterId = sessionStorage['claimsflow.demoAdjusterId']` and does not maintain a second fixture dataset.
-
-- [ ] **Step 5: Invalidate after successful mutations only**
+- [ ] **Step 4: Invalidate only after successful mutations**
 
 ```ts
 return this.http.patch<ClaimDetail>(url, body).pipe(
@@ -1172,171 +767,99 @@ return this.http.patch<ClaimDetail>(url, body).pipe(
 );
 ```
 
-Apply this pattern to create, assign, status, evidence, claimant-visible message, and demo reset calls. Failed requests do not invalidate.
+Create/reset invalidates all five families. Claimant-visible message invalidates Evidence and refreshes current claim detail/audit.
 
-- [ ] **Step 6: Add changed-row and empty-filter behavior**
+- [ ] **Step 5: Add changed-row and empty-filter states**
 
-Rows whose IDs appear in `changedClaimIds` receive a 1.2-second semantic highlight. Empty results list active filters and offer one `Reset filters` action that navigates to `/app/claims` without query parameters.
+Changed IDs receive a 1.2-second semantic highlight. Empty results list active filters and provide `Reset filters`.
 
-- [ ] **Step 7: Run frontend tests and build**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd frontend
 npm run test:ci
 npm run build
-```
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add frontend/src/app/claims frontend/src/app/workspaces/my-work-page.component.ts \
-  frontend/src/app/portal/data-access frontend/src/app/core/demo-journey
+git add src/app/claims src/app/workspaces/my-work-page.component.ts \
+  src/app/portal/data-access src/app/core/demo-journey
 git commit -m "feat(frontend): connect queue and mutation refresh"
 ```
 
 ---
 
-### Task 10: Add shared state-driven motion and refresh primitives
+### Task 8: Add shared motion, refresh, and filter primitives
 
 **Files:**
 - Create: `frontend/src/app/shared/operational/reduced-motion.service.ts`
-- Create: `frontend/src/app/shared/operational/reduced-motion.service.spec.ts`
 - Create: `frontend/src/app/shared/operational/animated-number.component.ts`
-- Create: `frontend/src/app/shared/operational/animated-number.component.spec.ts`
 - Create: `frontend/src/app/shared/operational/changed-value.directive.ts`
-- Create: `frontend/src/app/shared/operational/changed-value.directive.spec.ts`
 - Create: `frontend/src/app/shared/operational/operational-refresh-status.component.ts`
-- Create: `frontend/src/app/shared/operational/operational-refresh-status.component.spec.ts`
 - Create: `frontend/src/app/shared/operational/operational-filter-bar.component.ts`
-- Create: `frontend/src/app/shared/operational/operational-filter-bar.component.spec.ts`
+- Create: matching specs
 - Modify: `frontend/src/styles.css`
 
-**Interfaces:**
-
-```html
-<app-animated-number [value]="metric" format="integer" />
-<app-operational-refresh-status
-  [resource]="state()"
-  (refreshRequested)="refresh()" />
-<div [appChangedValue]="metric" [changeTone]="tone"></div>
-```
-
-- [ ] **Step 1: Write failing animation and reduced-motion tests**
+- [ ] **Step 1: Write failing interpolation/reduced-motion tests**
 
 ```ts
-it('interpolates only after a value changes', fakeAsync(() => {
+it('interpolates a changed value over 220ms', fakeAsync(() => {
   fixture.componentRef.setInput('value', 10);
   fixture.detectChanges();
   fixture.componentRef.setInput('value', 20);
   fixture.detectChanges();
-
   tick(110);
   expect(Number(text())).toBeGreaterThan(10);
   expect(Number(text())).toBeLessThan(20);
   tick(110);
   expect(text()).toBe('20');
 }));
-
-it('updates immediately under reduced motion', () => {
-  reducedMotion.set(true);
-  fixture.componentRef.setInput('value', 20);
-  fixture.detectChanges();
-  expect(text()).toBe('20');
-});
 ```
 
-- [ ] **Step 2: Run the failing focused tests**
+- [ ] **Step 2: Run the failing tests**
 
 ```bash
 cd frontend
 npm run test:ci -- --include='src/app/shared/operational/**/*.spec.ts'
 ```
 
-- [ ] **Step 3: Implement bounded number interpolation**
+- [ ] **Step 3: Implement bounded primitives**
 
-```ts
-const durationMs = 220;
-const progress = Math.min(1, elapsed / durationMs);
-const eased = 1 - Math.pow(1 - progress, 3);
-this.displayValue.set(start + (target - start) * eased);
-```
-
-Cancel old animation frames before starting new ones. Do not animate initial values. Support integer, decimal, percentage, currency, and duration formatting with `Intl.NumberFormat`.
-
-- [ ] **Step 4: Implement update age, stale state, and filter behavior**
-
-Refresh status renders `Updated just now`, `Updated 32 seconds ago`, `Refresh`, `Updating…`, and `Showing the last successful update.` The filter bar emits complete `OperationalFilters`, uses backend options, and writes URL query parameters.
-
-- [ ] **Step 5: Add global motion tokens**
+Use `requestAnimationFrame`, cancel prior frames, skip initial-value animation, use `Intl.NumberFormat`, and update immediately under reduced motion. Refresh status renders update age, Refresh/Updating, and stale copy. Filter options come from backend snapshots and emit complete URL-representable filters.
 
 ```css
 :root {
   --cf-duration-state: 220ms;
   --cf-duration-highlight: 1200ms;
 }
-
 @media (prefers-reduced-motion: reduce) {
-  :root {
-    --cf-duration-state: 0ms;
-    --cf-duration-highlight: 0ms;
-  }
-
+  :root { --cf-duration-state: 0ms; --cf-duration-highlight: 0ms; }
   html { scroll-behavior: auto; }
 }
 ```
 
-- [ ] **Step 6: Run focused and full frontend verification**
+- [ ] **Step 4: Verify and commit**
 
 ```bash
 cd frontend
-npm run test:ci -- --include='src/app/shared/operational/**/*.spec.ts'
 npm run test:ci
 npm run build
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add frontend/src/app/shared/operational frontend/src/styles.css
+git add src/app/shared/operational src/styles.css
 git commit -m "feat(frontend): add state-driven motion primitives"
 ```
 
 ---
 
-### Task 11: Rebuild the Manager Dashboard against the reactive snapshot
+### Task 9: Rebuild the Dashboard and command field
 
 **Files:**
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.ts`
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.html`
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.css`
-- Modify: `frontend/src/app/dashboard/dashboard-page.component.spec.ts`
-- Modify: `frontend/src/app/shared/visualizations/command-field.component.ts`
-- Modify: `frontend/src/app/shared/visualizations/command-field.component.html`
-- Modify: `frontend/src/app/shared/visualizations/command-field.component.css`
-- Modify: `frontend/src/app/shared/visualizations/command-field.component.spec.ts`
+- Modify: `frontend/src/app/dashboard/dashboard-page.component.*`
+- Modify: `frontend/src/app/shared/visualizations/command-field.component.*`
+- Modify: matching specs
 
-**Interfaces:**
-- Dashboard reads only `OperationalDataStore.dashboard()` for operational metrics.
-- Command field accepts `signalCounts`, not only `activeCount`.
-
-- [ ] **Step 1: Write failing meter and signal tests**
+- [ ] **Step 1: Write failing meter/signal tests**
 
 ```ts
-it('renders backend percentages instead of fixed meters', () => {
-  store.dashboard.set(resource({
-    ...snapshot,
-    activePortfolioPercentage: 63,
-    evidenceReadinessPercentage: 78,
-  }));
-  fixture.detectChanges();
-
-  expect(meter('ACTIVE PORTFOLIO')).toBe('63%');
-  expect(meter('EVIDENCE READY')).toBe('78%');
-});
-
-it('passes exact signal categories to the command field', () => {
-  expect(commandField.signalCounts()).toEqual(snapshot.signalCounts);
-});
+expect(meter('ACTIVE PORTFOLIO')).toBe('63%');
+expect(meter('EVIDENCE READY')).toBe('78%');
+expect(commandField.signalCounts()).toEqual(snapshot.signalCounts);
 ```
 
 - [ ] **Step 2: Run the failing tests**
@@ -1346,63 +869,39 @@ cd frontend
 npm run test:ci -- --include='src/app/dashboard/*.spec.ts' --include='src/app/shared/visualizations/*.spec.ts'
 ```
 
-- [ ] **Step 3: Replace direct Dashboard service loading with store activation**
+- [ ] **Step 3: Bind every KPI and meter to the store**
 
-```ts
-readonly state = this.operational.dashboard;
-private readonly releaseDashboard = this.operational.activateDashboard();
+Remove literal `82%`. Add layout-matched skeletons, retry, background stale state, update age, and manual refresh. Existing content remains during background refresh.
 
-ngOnDestroy(): void {
-  this.releaseDashboard();
-}
+- [ ] **Step 4: Make intervention links canonical**
 
-refresh(): void {
-  this.operational.refresh('dashboard');
-}
-```
+- SLA: `sort=slaDeadline,asc`
+- Evidence: `sort=completenessPercentage,asc`
+- Ownership: `assignment=unassigned`
+- Priority: `priority=HIGH`
 
-- [ ] **Step 4: Bind every KPI, meter, workload, event, and intervention to response data**
-
-Remove the literal `82%`. Use `app-animated-number` for changed values. Use shared refresh/stale/loading/error components. Initial skeleton geometry matches the final command layout and KPI band; background refresh leaves existing content visible.
-
-- [ ] **Step 5: Make intervention links canonical**
-
-- SLA links to `sort=slaDeadline,asc`.
-- Evidence links to `sort=completenessPercentage,asc`.
-- Ownership links to `assignment=unassigned`.
-- Priority links to `priority=HIGH`.
-
-- [ ] **Step 6: Allocate command nodes by category**
+- [ ] **Step 5: Allocate command nodes from category counts**
 
 ```ts
 readonly renderedSignals = computed(() =>
   allocateSignals(this.signalCounts(), 17));
 ```
 
-`allocateSignals` proportionally assigns at most 17 nodes and gives every nonzero category at least one. Nodes change tone and opacity when counts change. Ambient orbit, scan, and halo motion remain restrained and freeze under reduced motion.
+Every nonzero category receives at least one node. Node tone/opacity reacts to state. Orbit/scan/halo motion is restrained and freezes under reduced motion. Announce meaningful changes only.
 
-- [ ] **Step 7: Add concise accessible change announcements**
-
-Announce meaningful changes only, such as `Dashboard updated: 2 additional SLA-risk claims.` Do not announce unchanged polling cycles.
-
-- [ ] **Step 8: Run tests and build**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd frontend
 npm run test:ci
 npm run build
-```
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add frontend/src/app/dashboard frontend/src/app/shared/visualizations
+git add src/app/dashboard src/app/shared/visualizations
 git commit -m "feat(frontend): make dashboard reactive and truthful"
 ```
 
 ---
 
-### Task 12: Rebuild Analytics and Team Operations from backend snapshots
+### Task 10: Rebuild Analytics and Team Operations
 
 **Files:**
 - Modify: `frontend/src/app/workspaces/analytics-page.component.ts`
@@ -1415,28 +914,14 @@ git commit -m "feat(frontend): make dashboard reactive and truthful"
 - Modify: `frontend/src/app/workspaces/workspace-team.css`
 - Modify: `frontend/src/app/workspaces/workspace-responsive.css`
 
-**Interfaces:**
-- Both pages use the shared operational filter bar and refresh status.
-- Every chart has a visible/keyboard value path and an adjacent nonvisual summary.
-
-- [ ] **Step 1: Write failing filter and accessibility tests**
+- [ ] **Step 1: Write failing filter/accessibility tests**
 
 ```ts
-it('requests Analytics again when region changes', () => {
-  filterBar.filtersChange.emit({ ...DEFAULT_OPERATIONAL_FILTERS, region: 'WEST' });
-  expect(store.activateAnalytics)
-    .toHaveBeenCalledWith(jasmine.objectContaining({ region: 'WEST' }));
-});
-
-it('renders one accessible summary per chart', () => {
-  expect(queryAll('[data-chart-summary]').length)
-    .toBe(queryAll('[data-operational-chart]').length);
-});
-
-it('team advisories navigate and never expose apply actions', () => {
-  expect(advisoryLink('SLA pressure').getAttribute('href')).toContain('/app/claims');
-  expect(query('button[data-action="apply"]')).toBeNull();
-});
+expect(store.activateAnalytics)
+  .toHaveBeenCalledWith(jasmine.objectContaining({ region: 'WEST' }));
+expect(queryAll('[data-chart-summary]').length)
+  .toBe(queryAll('[data-operational-chart]').length);
+expect(query('button[data-action="apply"]')).toBeNull();
 ```
 
 - [ ] **Step 2: Run the failing tests**
@@ -1446,107 +931,60 @@ cd frontend
 npm run test:ci -- --include='src/app/workspaces/analytics-page.component.spec.ts' --include='src/app/workspaces/team-operations-page.component.spec.ts'
 ```
 
-- [ ] **Step 3: Replace Analytics fixture data and unsupported controls**
+- [ ] **Step 3: Replace Analytics fixtures**
 
-Render only Estimated exposure, Total claims, Open claims, Resolved claims, Average resolution time, Evidence readiness, and SLA compliance. Remove payout, fraud, approval-rate, line-of-business, channel, and export controls.
+Render Estimated exposure, Total/Open/Resolved claims, Average resolution, Evidence readiness, and SLA compliance. Remove payout, fraud, approval, line-of-business, channel, and export claims. Render data-driven SVG lines, proportional distributions, aging bars, and cohort heatmap. Every chart includes focusable exact values and an adjacent visually hidden table.
 
-Charts:
-- claim and resolved volume: SVG polylines
-- status, priority, and region: proportional bars
-- aging: ordered bars
-- cohorts: percentage heatmap
+- [ ] **Step 4: Replace Team Operations fixtures**
 
-Each chart includes exact text values, focusable data points, and a visually hidden table marked `data-chart-summary`.
+Render backend KPI, workload, capacity, adjuster, escalation, advisory, and integrity data. Remove fake shift planner, performance sparklines, priority heatmap, static names, and apply buttons. Advisories navigate to filtered Queue states.
 
-- [ ] **Step 4: Replace Team Operations fixture arrays**
+- [ ] **Step 5: Add real countdown and complete states**
 
-Render backend KPIs, team workloads, adjuster workloads, escalations, advisories, and integrity inputs. Remove fake shift planner, fake performance sparklines, fake priority heatmap, static names, and nonfunctional recommendation buttons.
+Update `now` once per second only while visible; stop at `Overdue`; clear timer on destroy. Both pages implement skeleton, retry, no-results/reset, background stale, changed-value transitions, and reduced motion.
 
-- [ ] **Step 5: Calculate real SLA countdowns from response deadlines**
-
-```ts
-readonly now = signal(Date.now());
-private clockId = window.setInterval(() => {
-  if (document.visibilityState === 'visible') {
-    this.now.set(Date.now());
-  }
-}, 1_000);
-```
-
-Countdowns stop at `Overdue`; they never become negative. The clock is cleared on destroy.
-
-- [ ] **Step 6: Apply state-driven motion and complete data states**
-
-Bars, rings, paths, and changed numbers transition for 220 ms only when values change. SLA-risk dots may breathe. Whole cards remain still. Both pages implement initial skeleton, retry, no-results/reset, background stale, and reduced-motion states.
-
-- [ ] **Step 7: Run tests and build**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd frontend
 npm run test:ci
 npm run build
-```
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add frontend/src/app/workspaces/analytics-page.component.* \
-  frontend/src/app/workspaces/team-operations-page.component.* \
-  frontend/src/app/workspaces/workspace-base.css \
-  frontend/src/app/workspaces/workspace-team.css \
-  frontend/src/app/workspaces/workspace-responsive.css
+git add src/app/workspaces/analytics-page.component.* \
+  src/app/workspaces/team-operations-page.component.* \
+  src/app/workspaces/workspace-base.css src/app/workspaces/workspace-team.css \
+  src/app/workspaces/workspace-responsive.css
 git commit -m "feat(frontend): connect analytics and team operations"
 ```
 
 ---
 
-### Task 13: Replace Documents fixtures and audit the remaining deployed surfaces
+### Task 11: Replace Documents fixtures and audit remaining deployed surfaces
 
 **Files:**
 - Modify: `frontend/src/app/workspaces/documents-page.component.ts`
 - Create: `frontend/src/app/workspaces/documents-page.component.html`
 - Create: `frontend/src/app/workspaces/documents-page.component.spec.ts`
 - Modify: `frontend/src/app/workspaces/workspace-documents.css`
-- Modify: `frontend/src/app/intelligence/claims-intelligence-page.component.ts`
-- Modify: `frontend/src/app/intelligence/claims-intelligence-page.component.html`
-- Modify: `frontend/src/app/intelligence/claims-intelligence-page.component.spec.ts`
+- Modify: `frontend/src/app/intelligence/claims-intelligence-page.component.*`
 - Modify: `frontend/src/app/workspaces/workflows-page.component.ts`
-- Modify: `frontend/src/app/workspaces/workflows-page.component.spec.ts`
+- Modify: matching AI/Workflow specs
 - Modify: `frontend/src/app/core/demo-role/demo-role.model.ts`
 - Modify: `frontend/src/app/core/demo-role/demo-role.model.spec.ts`
 - Modify: `frontend/src/app/tour/tour-step-registry.ts`
 - Modify: `frontend/src/app/app.routes.ts`
 
-**Interfaces:**
-- `/app/documents` becomes Evidence Operations.
-- AI Insights remains backend-backed and advisory.
-- Workflow Automation remains real-claim input plus local simulation, draft, and validation only.
-- Reports and Settings disappear from role navigation and tour links.
-
-- [ ] **Step 1: Write failing truthfulness and navigation tests**
+- [ ] **Step 1: Write failing truthfulness/navigation tests**
 
 ```ts
-it('does not render unsupported evidence capabilities', () => {
-  fixture.detectChanges();
-  const text = fixture.nativeElement.textContent;
-  [
-    'OCR', 'Storage', 'Versions', 'Bulk Actions',
-    'Upload Documents', 'Compose New Message', 'SMS'
-  ].forEach(label => expect(text).not.toContain(label));
-});
+[
+  'OCR', 'Storage', 'Versions', 'Bulk Actions',
+  'Upload Documents', 'Compose New Message', 'SMS'
+].forEach(label => expect(text()).not.toContain(label));
 
-it('hides Reports and Settings from every role', () => {
-  for (const role of Object.values(DEMO_ROLES)) {
-    expect(role.navigation.map(item => item.id)).not.toContain('reports');
-    expect(role.navigation.map(item => item.id)).not.toContain('settings');
-  }
-});
-
-it('keeps workflow activation disabled with exact boundary copy', () => {
-  expect(text()).toContain(
-    'Production workflow activation is not connected in this portfolio demo.');
-  expect(activateButton().disabled).toBeTrue();
-});
+for (const role of Object.values(DEMO_ROLES)) {
+  expect(role.navigation.map(item => item.id)).not.toContain('reports');
+  expect(role.navigation.map(item => item.id)).not.toContain('settings');
+}
 ```
 
 - [ ] **Step 2: Run the failing tests**
@@ -1558,56 +996,35 @@ npm run test:ci -- --include='src/app/workspaces/documents-page.component.spec.t
 
 - [ ] **Step 3: Rebuild Documents as Evidence Operations**
 
-Layout:
-- shared filter bar
-- claim/evidence result list
-- selected claim context
-- four evidence-category presence cards
-- claimant-visible message timeline
-- `Open authoritative Claim Workspace` link
+Use shared filters, claim/evidence list, selected claim context, four evidence-category cards, claimant-visible messages, and `Open authoritative Claim Workspace`. Store `selectedClaimId` in query parameters. Remove fake folders, storage, preview, OCR, confidence, versions, comments, bulk/upload, email/SMS, and AI summary.
 
-Selection is represented by `selectedClaimId` in URL query parameters. Changing filters or selection reconnects the Evidence store slot.
+- [ ] **Step 4: Verify AI Insights and Workflow boundaries**
 
-- [ ] **Step 4: Remove unsupported fixture content**
+AI actions must call existing recommendation generation/review APIs or navigate to a real claim. Workflow keeps real claim loading, local Save Draft, Validate, and simulation. Activation remains disabled with:
 
-Remove fake folder counts, storage totals, police-report preview, OCR tags, confidence, versions, collaborative comments, bulk actions, upload controls, email/SMS stream, AI summary, and corresponding arrays. Delete `WorkspaceDataService` only after repository search confirms no remaining consumer.
+```text
+Production workflow activation is not connected in this portfolio demo.
+```
 
-- [ ] **Step 5: Verify AI Insights control integrity**
+- [ ] **Step 5: Remove Reports/Settings from navigation and tour**
 
-Every visible action must call existing recommendation generation/review APIs or navigate to a real claim. Confidence, source evidence, review state, and human review reason remain visible. Remove any decorative action discovered by the component test.
+Manager ends with Team Operations; Adjuster ends with Documents; Administrator contains only Workflow Automation. Direct source routes may remain but receive no nav/profile/tour/demo-script links.
 
-- [ ] **Step 6: Preserve Workflow Automation boundaries**
-
-Real claim loading, local Save Draft, local Validate, and simulation remain functional. Activation stays disabled with exact explanatory copy. No approve, deny, pay, close, assign, or production activation action is added.
-
-- [ ] **Step 7: Remove placeholder navigation**
-
-Manager navigation ends with Team Operations, Adjuster navigation ends with Documents, and Administrator navigation contains only Workflow Automation. Direct placeholder routes may remain in source but no navigation, profile menu, tour step, or employer script links to them.
-
-- [ ] **Step 8: Run tests and build**
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 cd frontend
 npm run test:ci
 npm run build
-```
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add frontend/src/app/workspaces/documents-page.component.* \
-  frontend/src/app/workspaces/workspace-documents.css \
-  frontend/src/app/intelligence \
-  frontend/src/app/workspaces/workflows-page.component.* \
-  frontend/src/app/core/demo-role \
-  frontend/src/app/tour/tour-step-registry.ts \
-  frontend/src/app/app.routes.ts
+git add src/app/workspaces/documents-page.component.* src/app/workspaces/workspace-documents.css \
+  src/app/intelligence src/app/workspaces/workflows-page.component.* \
+  src/app/core/demo-role src/app/tour/tour-step-registry.ts src/app/app.routes.ts
 git commit -m "feat(frontend): finish truthful deployed surfaces"
 ```
 
 ---
 
-### Task 14: Add exact-head functional visual QA, documentation, and PR evidence
+### Task 12: Add exact-head functional Visual QA and documentation
 
 **Files:**
 - Create: `frontend/scripts/capture-operational-visual-qa.mjs`
@@ -1618,53 +1035,40 @@ git commit -m "feat(frontend): finish truthful deployed surfaces"
 - Modify: `docs/demo-script.md`
 - Modify: pull request #8 description
 
-**Interfaces:**
-- Visual artifact captures initial, changed, filtered, stale, mobile, and reduced-motion states against the actual Spring API and deterministic PostgreSQL data.
-
 - [ ] **Step 1: Add deployed-route control-integrity tests**
 
 ```ts
 const forbiddenLabels = [
-  'Upload Documents',
-  'Bulk Actions',
-  'Export Report',
-  'Configure workspace',
-  'Apply recommendation'
+  'Upload Documents', 'Bulk Actions', 'Export Report',
+  'Configure workspace', 'Apply recommendation'
 ];
-
 for (const route of deployedRoutes) {
-  it(`${route} exposes no unsupported control labels`, async () => {
-    await navigate(route);
-    const visibleText = fixture.nativeElement.textContent;
-    forbiddenLabels.forEach(label => expect(visibleText).not.toContain(label));
-  });
+  forbiddenLabels.forEach(label => expect(visibleText(route)).not.toContain(label));
 }
 ```
 
-Intentionally disabled Workflow activation is tested by its exact boundary copy and disabled state, not added to the forbidden list.
+Workflow activation is tested by exact copy plus disabled state rather than included in the forbidden list.
 
-- [ ] **Step 2: Implement the browser capture flow**
+- [ ] **Step 2: Capture the functional employer journey**
 
-The script performs these exact actions:
+The script:
 
-1. POST `/api/demo/reset` and retain claim/adjuster IDs.
-2. Capture Manager Dashboard baseline.
-3. Open Adjuster Claim Workspace and change evidence.
-4. Wait for immediate invalidation and capture Manager Dashboard changed state.
-5. Capture Analytics default and `region=WEST` states.
-6. Capture Team Operations default and `team=Claims Operations` states.
-7. Follow a Dashboard intervention to filtered Claim Queue.
-8. Select the reserved claim in Evidence Operations.
-9. Intercept one background Dashboard request with HTTP 503 and capture stale state while old data remains visible.
-10. Capture desktop 1440×1180, mobile 390×844, and reduced-motion variants.
-
-Use:
+1. POSTs `/api/demo/reset` and stores claim/adjuster IDs.
+2. Captures Manager Dashboard baseline.
+3. Changes evidence in Adjuster Claim Workspace.
+4. Waits for immediate invalidation and captures changed Dashboard.
+5. Captures Analytics default and `region=WEST`.
+6. Captures Team Operations default and `team=Claims Operations`.
+7. Follows a Dashboard intervention to filtered Queue.
+8. Selects the reserved claim in Evidence Operations.
+9. Intercepts one background Dashboard request with 503 and captures stale state with old data still visible.
+10. Captures desktop 1440×1180, mobile 390×844, and reduced-motion variants.
 
 ```js
 await page.emulateMedia({ reducedMotion: 'reduce' });
 ```
 
-- [ ] **Step 3: Update Visual QA workflow**
+- [ ] **Step 3: Update workflows**
 
 ```yaml
 - name: Capture operational employer journey
@@ -1675,15 +1079,13 @@ await page.emulateMedia({ reducedMotion: 'reduce' });
     API_URL: http://127.0.0.1:8080
 ```
 
-Validate every expected PNG exists and has nonzero size before uploading the artifact.
+Validate every expected PNG exists and is nonempty before upload. Standard CI remains `mvn -q verify`, `npm run test:ci`, and `npm run build`.
 
-- [ ] **Step 4: Update README and employer demo script**
+- [ ] **Step 4: Update README and employer script**
 
-Document backend-derived surfaces, deterministic 48-claim history, reserved reset, curated filters, immediate invalidation, visible-tab polling, reduced motion, hidden placeholders, local-only Workflow Automation, and excluded integrations.
+Document real backend-derived behavior, deterministic 48-claim history, reserved reset, curated filters, immediate invalidation, 45-second visible polling, reduced motion, hidden placeholders, local-only Workflow Automation, and excluded integrations. The demo script performs one mutation and observes it across Dashboard, Queue, Analytics, Team Operations, and Evidence Operations.
 
-The employer script demonstrates one mutation flowing through Dashboard, Queue, Analytics, Team Operations, and Evidence Operations.
-
-- [ ] **Step 5: Run the exact-head verification suite**
+- [ ] **Step 5: Run final exact-head verification**
 
 ```bash
 cd backend
@@ -1691,41 +1093,22 @@ mvn -q verify
 cd ../frontend
 npm run test:ci
 npm run build
+rg -n "82%|1,389|4\.73M|621K|Upload Documents|Bulk Actions|Export Report|Configure workspace" src ../backend/src
+rg -n "Reports|Settings" src/app/core/demo-role src/app/tour
 ```
 
-Then run the local or Actions-backed visual flow against PostgreSQL, Spring Boot with `CLAIMSFLOW_DEMO_ENABLED=true`, and Angular.
+Expected: all tests/builds pass; no deployed fixture KPI/control labels; no Reports/Settings nav or tour references.
 
-- [ ] **Step 6: Run the final fixture/control scan**
+- [ ] **Step 6: Update PR #8 without merging**
 
-```bash
-rg -n "82%|1,389|4\.73M|621K|Upload Documents|Bulk Actions|Export Report|Configure workspace" frontend/src backend/src
-rg -n "Reports|Settings" frontend/src/app/core/demo-role frontend/src/app/tour
-```
+Record schema/seed design, operational APIs, reactive store, motion/reduced motion, Evidence Operations, hidden placeholders, production boundaries, exact final head SHA, CI run/conclusion, Visual QA run, artifact ID/digest, screenshot count, and manual visual inspection.
 
-Expected: no fixture KPI literals or unsupported control labels on deployed surfaces, and no Reports/Settings navigation or tour references.
-
-- [ ] **Step 7: Update PR #8 without merging**
-
-The PR body records:
-- schema and deterministic seed architecture
-- operational API contracts
-- reactive store behavior
-- state-driven and reduced motion
-- truthful Evidence Operations replacement
-- hidden placeholder navigation
-- exact-head CI run ID and conclusion
-- Visual QA run ID, artifact ID, digest, screenshot count, and head SHA
-- explicit production boundaries
-
-- [ ] **Step 8: Commit documentation and verification changes**
+- [ ] **Step 7: Commit and enforce final acceptance**
 
 ```bash
 git add frontend/scripts frontend/src/app/core/operational-data/control-integrity.spec.ts \
-  .github/workflows/visual-qa.yml .github/workflows/ci.yml \
-  README.md docs/demo-script.md
+  .github/workflows/visual-qa.yml .github/workflows/ci.yml README.md docs/demo-script.md
 git commit -m "test: verify truthful employer demo experience"
 ```
 
-- [ ] **Step 9: Final acceptance gate**
-
-Do not report completion until all thirteen design acceptance criteria pass, CI and Visual QA succeed on the exact final head, the screenshot artifact is manually inspected, and the pull request remains unmerged unless the user explicitly requests merging.
+Do not report completion until all thirteen design acceptance criteria pass, CI and Visual QA succeed on the exact final head, screenshots are manually inspected, and the PR remains unmerged unless the user explicitly requests merging.
