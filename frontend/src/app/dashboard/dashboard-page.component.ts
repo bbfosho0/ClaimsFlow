@@ -135,13 +135,14 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   }
 
   interventions(snapshot: DashboardSnapshot): readonly InterventionItem[] {
-    return [
+    const items: InterventionItem[] = [
       { tone: 'critical', label: 'Overdue claims', detail: 'Open claims have passed their service-level deadline.', count: snapshot.overdueClaims, queryParams: { sort: 'slaDeadline,asc' } },
       { tone: 'warning', label: 'SLA deadlines at risk', detail: 'Open claims are due within the next 24 hours.', count: snapshot.slaRiskClaims, queryParams: { sort: 'slaDeadline,asc' } },
       { tone: 'advisory', label: 'Evidence blockers', detail: 'Review-blocking evidence categories remain outstanding.', count: snapshot.incompleteClaims, queryParams: { sort: 'completenessPercentage,asc' } },
       { tone: 'live', label: 'Ownership unresolved', detail: 'Unassigned claims need an active reviewer.', count: snapshot.unassignedClaims, queryParams: { assignment: 'unassigned' } },
       { tone: 'advisory', label: 'High-priority review', detail: 'Critical and high-priority claims need focused review.', count: snapshot.highPriorityClaims, queryParams: { priority: 'HIGH' } },
-    ].filter(item => item.count > 0);
+    ];
+    return items.filter(item => item.count > 0);
   }
 
   slaSegments(snapshot: DashboardSnapshot): readonly MetricStripSegment[] {
