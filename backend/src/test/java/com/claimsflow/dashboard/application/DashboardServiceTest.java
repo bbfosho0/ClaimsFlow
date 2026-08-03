@@ -78,6 +78,10 @@ class DashboardServiceTest {
         assertThat(snapshot.slaRiskClaims()).isEqualTo(1);
         assertThat(snapshot.overdueClaims()).isEqualTo(1);
         assertThat(snapshot.openPortfolioTrend()).hasSize(30);
+        assertThat(snapshot.createdTrend()).hasSize(30);
+        assertThat(snapshot.createdTrend().stream().mapToLong(DashboardService.TimePoint::value).sum()).isEqualTo(3);
+        assertThat(snapshot.resolvedTrend()).hasSize(30);
+        assertThat(snapshot.resolvedTrend().stream().mapToLong(DashboardService.TimePoint::value).sum()).isEqualTo(1);
         assertThat(snapshot.exposureTrend()).hasSize(30);
         assertThat(snapshot.slaPressureTrend()).hasSize(14);
         assertThat(snapshot.evidenceReadinessBands()).extracting(DashboardService.DistributionPoint::key)
