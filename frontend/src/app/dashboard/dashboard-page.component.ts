@@ -8,6 +8,8 @@ import { MetricDeltaChange, MetricSparkPoint, MetricStripSegment } from '../shar
 import { MetricRadialComponent } from '../shared/metrics/metric-radial.component';
 import { MetricSparklineComponent } from '../shared/metrics/metric-sparkline.component';
 import { MetricStackedStripComponent } from '../shared/metrics/metric-stacked-strip.component';
+import { AutoAnimateDirective } from '../shared/motion/auto-animate.directive';
+import { GsapRevealDirective } from '../shared/motion/gsap-reveal.directive';
 import { ClaimDetail } from '../shared/models/claim.models';
 import { DashboardSnapshot } from '../shared/models/dashboard.models';
 import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
@@ -41,6 +43,8 @@ interface InterventionItem {
     LineAreaChartComponent,
     HorizontalBarChartComponent,
     StackedBarChartComponent,
+    AutoAnimateDirective,
+    GsapRevealDirective,
     AnimatedNumberComponent,
     ChangedValueDirective,
     OperationalRefreshStatusComponent,
