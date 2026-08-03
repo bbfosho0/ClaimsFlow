@@ -2,6 +2,9 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
+import { MetricCardComponent } from '../shared/metrics/metric-card.component';
+import { AutoAnimateDirective } from '../shared/motion/auto-animate.directive';
+import { GsapRevealDirective } from '../shared/motion/gsap-reveal.directive';
 import { ClaimDetail } from '../shared/models/claim.models';
 
 interface LibraryItem {
@@ -20,9 +23,9 @@ export interface WorkflowSimulationInput {
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MetricCardComponent, AutoAnimateDirective, GsapRevealDirective],
   templateUrl: './workflows-page.component.html',
-  styleUrls: ['./workspace-pages.component.css', './workflow-golden-journey.css'],
+  styleUrls: ['./workspace-pages.component.css', './workflow-golden-journey.css', './workflows-midnight-violet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WorkflowsPageComponent implements OnInit {
@@ -36,6 +39,7 @@ export class WorkflowsPageComponent implements OnInit {
   readonly demoError = signal('');
   readonly loadingDemo = signal(false);
   readonly controlStatus = signal('Local draft · not persisted');
+  readonly lastSimulationLabel = signal('Not run');
   readonly simulationSteps = Array.from({ length: 8 });
   readonly libraryGroups: readonly { label: string; items: readonly LibraryItem[] }[] = [
     { label: 'TRIGGERS', items: [
@@ -97,6 +101,11 @@ export class WorkflowsPageComponent implements OnInit {
       this.simulationInput.set({ claimType: 'PROPERTY', estimatedLoss: 18750, completenessPercentage: 50, priority: 'HIGH', status: 'UNDER_REVIEW' });
     }
     this.simulationState.set('passed');
+    this.lastSimulationLabel.set('Passed locally');
+  }
+
+  selectedNodeLabel(): string {
+    return this.nodes[this.selectedNode()]?.title ?? 'No node selected';
   }
 
   private loadDemoClaimById(claimId: string): void {
