@@ -13,6 +13,8 @@ test('reports each high-risk deployed source pattern with a precise rule', () =>
     ['frontend/src/app/dashboard/dashboard-page.component.ts', 'console.log(snapshot);', 'console-debugging'],
     ['frontend/src/app/workspaces/documents-page.component.html', '<button>Upload Documents</button>', 'unsupported-product-claim'],
     ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'Instant now = Instant.now();', 'direct-wall-clock'],
+    ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'LocalDate today = LocalDate.now();', 'direct-wall-clock'],
+    ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'long now = System.currentTimeMillis();', 'direct-wall-clock'],
     ['frontend/src/app/dashboard/dashboard-page.component.ts', '// FIXME: reconnect this later', 'unfinished-marker'],
   ];
 
@@ -34,6 +36,10 @@ test('does not report approved production patterns', () => {
     'Instant now = clock.instant();',
   ), []);
   assert.deepEqual(auditText(
+    'backend/src/main/java/com/claimsflow/operations/application/OperationalFilterFactory.java',
+    'LocalDate today = LocalDate.now(clock);',
+  ), []);
+  assert.deepEqual(auditText(
     'frontend/src/app/workspaces/documents-page.component.html',
     '<strong>Evidence categories</strong>',
   ), []);
@@ -46,6 +52,7 @@ test('scans deployed roots while ignoring tests and documentation', async () => 
     await write(root, 'frontend/src/app/app.routes.spec.ts', "{ path: 'reports' }");
     await write(root, 'docs/audit.md', 'TODO and Upload Documents are historical discussion terms.');
     await write(root, 'backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java', 'Instant now = clock.instant();');
+    await write(root, 'backend/src/main/java/com/claimsflow/operations/application/OperationalFilterFactory.java', 'LocalDate today = LocalDate.now(clock);');
 
     const findings = await scanRepository(root);
     assert.deepEqual(findings.map(finding => finding.rule), ['placeholder-route']);
