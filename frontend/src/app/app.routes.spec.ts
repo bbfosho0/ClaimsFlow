@@ -19,7 +19,7 @@ function allowed(byPath: Map<string, Route>, path: string): readonly DemoRoleId[
 }
 
 describe('ClaimsFlow route contract', () => {
-  it('exposes the showcase, tour, claimant portal, and employee workspaces', () => {
+  it('exposes the showcase, tour, claimant portal, and completed employee workspaces', () => {
     const byPath = flattenRoutes(routes);
 
     expect(byPath.get('')?.loadComponent).toBeDefined();
@@ -49,8 +49,6 @@ describe('ClaimsFlow route contract', () => {
       'app/documents',
       'app/team-ops',
       'app/workflows',
-      'app/reports',
-      'app/settings',
     ];
 
     for (const path of applicationRoutes) {
@@ -59,6 +57,13 @@ describe('ClaimsFlow route contract', () => {
       expect(byPath.get(path)?.data?.['shellTitle']).withContext(`${path} title`).toBeTruthy();
       expect(byPath.get(path)?.data?.['shellSubtitle']).withContext(`${path} subtitle`).toBeTruthy();
     }
+  });
+
+  it('does not expose source-only placeholder routes', () => {
+    const byPath = flattenRoutes(routes);
+
+    expect(byPath.has('app/reports')).toBeFalse();
+    expect(byPath.has('app/settings')).toBeFalse();
   });
 
   it('assigns each permanent workspace to the approved demo roles', () => {
@@ -77,8 +82,6 @@ describe('ClaimsFlow route contract', () => {
     expect(allowed(byPath, 'app/claims/:id')).toEqual(['manager', 'adjuster']);
 
     expect(allowed(byPath, 'app/workflows')).toEqual(['admin']);
-    expect(allowed(byPath, 'app/settings')).toEqual(['admin']);
-    expect(allowed(byPath, 'app/reports')).toEqual(['manager', 'adjuster', 'admin']);
   });
 
   it('keeps legacy application URLs as redirects', () => {
