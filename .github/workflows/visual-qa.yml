@@ -80,7 +80,7 @@ jobs:
           tail -n 200 /tmp/claimsflow-ng.log
           exit 1
 
-      - name: Capture reactive employer journey
+      - name: Capture and assert reactive employer journey
         shell: bash
         working-directory: frontend
         env:
@@ -94,46 +94,46 @@ jobs:
           fi
           CHROME_EXECUTABLE="$CHROME" node scripts/capture-operational-visual-qa.mjs
 
-      - name: Validate screenshot set
+      - name: Validate visual evidence manifest
         shell: bash
         working-directory: frontend
         run: |
           count="$(find visual-qa -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')"
           test "$count" -eq 18
-          expected=(
-            tour-1440x1180.png
-            claimant-portal-1440x1180.png
-            adjuster-claim-1440x1180.png
-            manager-dashboard-baseline-1440x1180.png
-            manager-dashboard-after-evidence-1440x1180.png
-            manager-dashboard-stale-1440x1180.png
-            manager-dashboard-reduced-motion-1440x1180.png
-            manager-queue-sla-filtered-1440x1180.png
-            analytics-default-1440x1180.png
-            analytics-west-filtered-1440x1180.png
-            team-operations-default-1440x1180.png
-            team-operations-filtered-1440x1180.png
-            evidence-operations-1440x1180.png
-            evidence-operations-after-update-1440x1180.png
-            administrator-workflows-1440x1180.png
-            claimant-portal-mobile-390x844.png
-            manager-dashboard-mobile-390x844.png
-            evidence-operations-mobile-390x844.png
-          )
-          for file in "${expected[@]}"; do
-            test -s "visual-qa/$file"
-          done
-          echo "Validated $count rendered operational screenshots"
+          test -s visual-qa/manifest.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('visual-qa/manifest.json', 'utf8'));
+          if (manifest.screenshotCount !== 18 || manifest.screenshots.length !== 18) {
+            throw new Error(`Invalid screenshot count: ${manifest.screenshotCount}`);
+          }
+          if (manifest.consoleErrors.length || manifest.browserExceptions.length || manifest.unexpectedRequestFailures.length) {
+            throw new Error('Manifest contains browser or network failures.');
+          }
+          if (!manifest.allowedRequestFailures.some(failure => failure.url.includes('/api/dashboard'))) {
+            throw new Error('Stale-data dashboard failure was not exercised.');
+          }
+          const filenames = new Set(manifest.screenshots.map(item => item.filename));
+          for (const item of manifest.screenshots) {
+            if (!item.sha256 || item.bytes < 5_000 || item.width < 390 || item.height < 844) {
+              throw new Error(`Invalid screenshot metadata for ${item.filename}`);
+            }
+          }
+          if (filenames.size !== 18) throw new Error('Visual manifest contains duplicate filenames.');
+          console.log(`Validated ${manifest.screenshotCount} screenshots in ${manifest.graphicsMode} mode.`);
+          NODE
 
-      - name: Upload screenshots
+      - name: Upload visual evidence
         uses: actions/upload-artifact@v4
         with:
           name: claimsflow-operational-visual-qa
-          path: frontend/visual-qa/*.png
+          path: |
+            frontend/visual-qa/*.png
+            frontend/visual-qa/manifest.json
           if-no-files-found: error
           retention-days: 5
 
-      - name: Preserve application logs on failure
+      - name: Preserve visual QA failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -141,5 +141,6 @@ jobs:
           path: |
             /tmp/claimsflow-api.log
             /tmp/claimsflow-ng.log
+            frontend/visual-qa/manifest.failure.json
           if-no-files-found: warn
           retention-days: 3
