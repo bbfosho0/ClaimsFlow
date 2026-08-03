@@ -1,4 +1,4 @@
-<section class="cf-page page-enter claim-page">
+<section class="cf-page page-enter claim-page midnight-claim-workspace">
   <a class="back-link" routerLink="/app/claims">← Back to Claims Queue</a>
   <div *ngIf="loading()" class="panel loading-state" role="status">Loading claim workspace…</div>
   <div *ngIf="pageError()" class="alert" role="alert">{{ pageError() }}</div>
@@ -16,8 +16,9 @@
         </div>
       </div>
       <div class="identity-instruments">
-        <article><span>SLA PRESSURE</span><strong [attr.data-tone]="sla(item.slaDeadline).tone">{{ sla(item.slaDeadline).label }}</strong><small>{{ sla(item.slaDeadline).detail }}</small></article>
+        <article><span>ESTIMATED LOSS</span><strong>{{ item.estimatedLoss | currency }}</strong><small>Backend claim estimate</small></article>
         <article><span>EVIDENCE</span><strong>{{ item.completenessPercentage }}%</strong><small>{{ item.missingEvidence.length }} missing items</small><i><b [style.width.%]="item.completenessPercentage"></b></i></article>
+        <article><span>SLA DEADLINE</span><strong [attr.data-tone]="sla(item.slaDeadline).tone">{{ sla(item.slaDeadline).label }}</strong><small>{{ sla(item.slaDeadline).detail }}</small></article>
         <article><span>OWNER</span><strong>{{ item.assignedAdjuster?.displayName || 'Unassigned' }}</strong><small>{{ item.assignedAdjuster ? 'Capacity ' + item.assignedAdjuster.workloadCapacity : 'Assignment required' }}</small></article>
       </div>
     </header>
@@ -100,7 +101,13 @@
             <div class="confidence-composition">
               <span><i><b [style.width.%]="insight.confidence"></b></i><em>Recommendation confidence</em><strong>{{ insight.confidence }}%</strong></span>
               <span><i><b [style.width.%]="item.completenessPercentage"></b></i><em>Evidence completeness</em><strong>{{ item.completenessPercentage }}%</strong></span>
-              <span><i><b style="width:88%"></b></i><em>Policy alignment</em><strong>88%</strong></span>
+            </div>
+            <div class="reasoning-flow" aria-label="Evidence to recommendation reasoning flow">
+              <article><span>01</span><strong>Evidence inputs</strong><small>{{ item.completenessPercentage }}% complete · {{ item.missingEvidence.length }} missing</small></article>
+              <i aria-hidden="true">→</i>
+              <article><span>02</span><strong>Rules and constraints</strong><small>{{ item.priorityFactors.length }} priority factors · human authority required</small></article>
+              <i aria-hidden="true">→</i>
+              <article><span>03</span><strong>Recommendation</strong><small>{{ insight.confidence }}% recommendation confidence · advisory only</small></article>
             </div>
             <ul class="missing-information" *ngIf="insight.missingInformation.length"><li *ngFor="let value of insight.missingInformation">Missing · {{ value }}</li></ul>
             <div *ngIf="insight.reviewState === 'PENDING'" class="review-actions">
