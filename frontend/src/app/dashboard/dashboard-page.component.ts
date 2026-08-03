@@ -30,7 +30,11 @@ interface InterventionItem {
     OperationalRefreshStatusComponent,
   ],
   templateUrl: './dashboard-page.component.html',
-  styleUrls: ['./dashboard-page.component.css', './dashboard-golden-journey.css'],
+  styleUrls: [
+    './dashboard-page.component.css',
+    './dashboard-golden-journey.css',
+    './dashboard-operational.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPageComponent implements OnInit, OnDestroy {
