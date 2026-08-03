@@ -37,10 +37,10 @@ class MyWorkServiceTest {
     @Test
     void buildsFullAdjusterWorkloadAndRanksTheNextHumanActions() {
         Adjuster jordan = adjuster();
-        Claim overdue = claim("CLM-OVERDUE", ClaimPriority.CRITICAL, NOW.minusSeconds(1), 50, NOW.minus(Duration.ofDays(4)), null);
-        Claim atRisk = claim("CLM-RISK", ClaimPriority.HIGH, NOW.plus(Duration.ofHours(12)), 75, NOW.minus(Duration.ofDays(2)), null);
-        Claim later = claim("CLM-LATER", ClaimPriority.MEDIUM, NOW.plus(Duration.ofDays(3)), 100, NOW.minus(Duration.ofDays(1)), null);
-        Claim resolved = claim("CLM-RESOLVED", ClaimPriority.LOW, NOW.minus(Duration.ofDays(1)), 100, NOW.minus(Duration.ofDays(6)), NOW.minus(Duration.ofDays(2)));
+        Claim overdue = claim(jordan, "CLM-OVERDUE", ClaimPriority.CRITICAL, NOW.minusSeconds(1), 50, NOW.minus(Duration.ofDays(4)), null);
+        Claim atRisk = claim(jordan, "CLM-RISK", ClaimPriority.HIGH, NOW.plus(Duration.ofHours(12)), 75, NOW.minus(Duration.ofDays(2)), null);
+        Claim later = claim(jordan, "CLM-LATER", ClaimPriority.MEDIUM, NOW.plus(Duration.ofDays(3)), 100, NOW.minus(Duration.ofDays(1)), null);
+        Claim resolved = claim(jordan, "CLM-RESOLVED", ClaimPriority.LOW, NOW.minus(Duration.ofDays(1)), 100, NOW.minus(Duration.ofDays(6)), NOW.minus(Duration.ofDays(2)));
 
         when(adjusters.findById(ADJUSTER_ID)).thenReturn(Optional.of(jordan));
         when(query.find(any())).thenReturn(List.of(overdue, atRisk, later, resolved));
@@ -72,6 +72,7 @@ class MyWorkServiceTest {
     }
 
     private Claim claim(
+            Adjuster adjuster,
             String number,
             ClaimPriority priority,
             Instant deadline,
@@ -91,7 +92,7 @@ class MyWorkServiceTest {
         when(claim.getCreatedAt()).thenReturn(createdAt);
         when(claim.getUpdatedAt()).thenReturn(createdAt.plus(Duration.ofHours(2)));
         when(claim.getResolvedAt()).thenReturn(resolvedAt);
-        when(claim.getAssignedAdjuster()).thenReturn(adjuster());
+        when(claim.getAssignedAdjuster()).thenReturn(adjuster);
         return claim;
     }
 }
