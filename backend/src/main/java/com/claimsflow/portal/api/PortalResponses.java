@@ -2,6 +2,7 @@ package com.claimsflow.portal.api;
 
 import com.claimsflow.audit.domain.AuditEvent;
 import com.claimsflow.claim.domain.Claim;
+import com.claimsflow.portal.domain.ClaimMessage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -11,8 +12,7 @@ public final class PortalResponses {
     private static final Set<String> CLAIMANT_VISIBLE_ACTIONS = Set.of(
         "CLAIM_CREATED",
         "EVIDENCE_UPDATED",
-        "STATUS_CHANGED",
-        "MESSAGE_ADDED"
+        "STATUS_CHANGED"
     );
 
     private PortalResponses() {}
@@ -41,6 +41,18 @@ public final class PortalResponses {
                 claim.isMedicalDocumentationPresent()),
             timeline,
             nextAction(claim));
+    }
+
+    public static PortalMessage message(ClaimMessage message) {
+        return new PortalMessage(
+            message.getId(),
+            message.getAuthor(),
+            message.getBody(),
+            message.getCreatedAt());
+    }
+
+    public static List<PortalMessage> messages(List<ClaimMessage> messages) {
+        return messages.stream().map(PortalResponses::message).toList();
     }
 
     private static String nextAction(Claim claim) {
@@ -78,4 +90,10 @@ public final class PortalResponses {
         PortalEvidence evidence,
         List<PortalTimelineEvent> timeline,
         String nextAction) {}
+
+    public record PortalMessage(
+        UUID id,
+        String author,
+        String body,
+        Instant createdAt) {}
 }
