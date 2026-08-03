@@ -13,7 +13,7 @@
   </article>
 
   <ng-container *ngIf="!loading() && claim() as current">
-    <div class="portal-status-layout">
+    <div class="portal-status-layout" data-tour-target="claimant-portal">
       <article class="portal-panel portal-status-card">
         <div class="portal-status-top">
           <div><p class="portal-eyebrow">{{ current.claimNumber }}</p><h2>{{ current.claimantName }}</h2></div>
