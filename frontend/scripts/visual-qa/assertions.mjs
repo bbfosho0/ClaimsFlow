@@ -93,39 +93,15 @@ export async function navigateAndAssert(cdp, scenario, timeoutMilliseconds = 24_
   if (navigation.errorText) {
     throw new Error(`${scenario.name}: navigation failed: ${navigation.errorText}`);
   }
+  return assertCurrentPage(cdp, scenario, timeoutMilliseconds);
+}
 
+export async function assertCurrentPage(cdp, scenario, timeoutMilliseconds = 24_000) {
   const deadline = Date.now() + timeoutMilliseconds;
   let lastState = null;
   while (Date.now() < deadline) {
     try {
-      const evaluation = await cdp.send('Runtime.evaluate', {
-        expression: `(() => {
-          const visible = node => {
-            const style = getComputedStyle(node);
-            const rect = node.getBoundingClientRect();
-            return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
-          };
-          const bodyText = document.body?.innerText ?? '';
-          const alerts = [...document.querySelectorAll('[role="alert"]')]
-            .filter(visible)
-            .map(node => node.textContent?.trim() ?? '')
-            .filter(Boolean);
-          const loading = [...document.querySelectorAll('[role="status"]')]
-            .filter(visible)
-            .some(node => /loading/i.test(node.textContent ?? ''));
-          return {
-            href: location.href,
-            readyState: document.readyState,
-            bodyText,
-            alerts,
-            busy: document.querySelectorAll('[aria-busy="true"]').length,
-            loading,
-            headingCount: document.querySelectorAll('h1').length,
-          };
-        })()`,
-        returnByValue: true,
-      });
-      lastState = evaluation.result?.value ?? null;
+      lastState = await readPageState(cdp);
       if (lastState && pageMatchesScenario(lastState, scenario)) {
         await delay(650);
         return lastState;
@@ -220,6 +196,37 @@ export function assertExpectedVisualDifferences(records) {
 
 export function delay(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+async function readPageState(cdp) {
+  const evaluation = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const visible = node => {
+        const style = getComputedStyle(node);
+        const rect = node.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
+      const bodyText = document.body?.innerText ?? '';
+      const alerts = [...document.querySelectorAll('[role="alert"]')]
+        .filter(visible)
+        .map(node => node.textContent?.trim() ?? '')
+        .filter(Boolean);
+      const loading = [...document.querySelectorAll('[role="status"]')]
+        .filter(visible)
+        .some(node => /loading/i.test(node.textContent ?? ''));
+      return {
+        href: location.href,
+        readyState: document.readyState,
+        bodyText,
+        alerts,
+        busy: document.querySelectorAll('[aria-busy="true"]').length,
+        loading,
+        headingCount: document.querySelectorAll('h1').length,
+      };
+    })()`,
+    returnByValue: true,
+  });
+  return evaluation.result?.value ?? null;
 }
 
 function pageMatchesScenario(state, scenario) {
