@@ -32,4 +32,8 @@ export class MetricCardComponent {
   readonly noData = input(false);
   readonly noDataLabel = input('No data available.');
   readonly valueAriaLabel = input('');
+
+  isNumeric(value: number | string): value is number {
+    return typeof value === 'number';
+  }
 }
