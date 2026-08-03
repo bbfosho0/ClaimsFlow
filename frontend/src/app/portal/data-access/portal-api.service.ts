@@ -1,12 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../../core/api/api-config';
+import { OperationalDataStore } from '../../core/operational-data/operational-data.store';
 import { EvidenceKind, PortalClaim, PortalMessage } from '../models/portal.models';
 
 @Injectable({ providedIn: 'root' })
 export class PortalApiService {
   private readonly http = inject(HttpClient);
+  private readonly operational = inject(OperationalDataStore);
 
   getClaim(claimId: string): Observable<PortalClaim> {
     return this.http.get<PortalClaim>(`${API_BASE_URL}/portal/claims/${claimId}`);
@@ -22,7 +24,12 @@ export class PortalApiService {
       kind,
       present,
       actor,
-    });
+    }).pipe(
+      tap(() => this.operational.invalidate(
+        ['dashboard', 'queue', 'analytics', 'team', 'evidence'],
+        [claimId],
+      )),
+    );
   }
 
   messages(claimId: string): Observable<readonly PortalMessage[]> {
