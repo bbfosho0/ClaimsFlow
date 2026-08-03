@@ -1,25 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { DEFAULT_FILTERS } from '../claims/data-access/claim-filter-codec';
+import { OperationalDataStore } from '../core/operational-data/operational-data.store';
 import { ClaimSummary } from '../shared/models/claim.models';
+import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
+import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
+import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
 import { formatSla, humanizeEnum, priorityTone, statusTone } from '../shared/presentation/claim-presentation';
 import { StatusBadgeComponent } from '../shared/ui/status-badge/status-badge.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, StatusBadgeComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    StatusBadgeComponent,
+    AnimatedNumberComponent,
+    ChangedValueDirective,
+    OperationalRefreshStatusComponent,
+  ],
   templateUrl: './my-work-page.component.html',
   styleUrl: './my-work-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyWorkPageComponent implements OnInit {
-  private readonly api = inject(ClaimsApiService);
+export class MyWorkPageComponent implements OnInit, OnDestroy {
+  private readonly operational = inject(OperationalDataStore);
+  private releaseQueue: (() => void) | null = null;
 
-  readonly loading = signal(true);
-  readonly error = signal('');
-  readonly assignedClaims = signal<ClaimSummary[]>([]);
+  readonly state = this.operational.queue;
+  readonly loading = computed(() => this.state().loading && !this.state().value);
+  readonly error = computed(() => !this.state().value ? this.state().error : '');
+  readonly assignedClaims = computed<ClaimSummary[]>(() => this.state().value?.content ?? []);
   readonly demoClaimId = signal(this.readSession('claimsflow.demoClaimId'));
   readonly adjusterId = signal(this.readSession('claimsflow.demoAdjusterId'));
 
@@ -29,29 +41,28 @@ export class MyWorkPageComponent implements OnInit {
   statusTone = statusTone;
 
   ngOnInit(): void {
-    if (!this.adjusterId()) {
-      this.loading.set(false);
-      return;
-    }
-
-    this.api.list({
+    if (!this.adjusterId()) return;
+    this.releaseQueue = this.operational.activateQueue({
       ...DEFAULT_FILTERS,
-      assignment: this.adjusterId(),
+      adjusterId: this.adjusterId(),
       sort: 'slaDeadline,asc',
-    }).subscribe({
-      next: page => {
-        this.assignedClaims.set(page.content);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Assigned claims are unavailable. The rest of the workspace remains in demo mode.');
-        this.loading.set(false);
-      },
     });
+  }
+
+  ngOnDestroy(): void {
+    this.releaseQueue?.();
+  }
+
+  refresh(): void {
+    this.operational.refresh('queue');
   }
 
   isGoldenJourney(claim: ClaimSummary): boolean {
     return Boolean(this.demoClaimId()) && claim.id === this.demoClaimId();
+  }
+
+  isChanged(claim: ClaimSummary): boolean {
+    return this.state().changedClaimIds.includes(claim.id);
   }
 
   urgentCount(): number {
