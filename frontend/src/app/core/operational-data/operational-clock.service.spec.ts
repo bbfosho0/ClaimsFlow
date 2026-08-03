@@ -1,23 +1,23 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { OperationalClockService } from './operational-clock.service';
 
 describe('OperationalClockService', () => {
-  let service: OperationalClockService;
+  let service: OperationalClockService | null;
   let visibility: DocumentVisibilityState;
   let now: number;
 
   beforeEach(() => {
+    service = null;
     visibility = 'visible';
     now = 1_000;
     spyOn(Date, 'now').and.callFake(() => now);
     spyOnProperty(document, 'visibilityState', 'get').and.callFake(() => visibility);
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(OperationalClockService);
   });
 
-  afterEach(() => service.ngOnDestroy());
+  afterEach(() => service?.ngOnDestroy());
 
   it('updates every 30 seconds while visible', fakeAsync(() => {
+    service = new OperationalClockService();
     expect(service.now()).toBe(1_000);
 
     now = 30_999;
@@ -30,6 +30,7 @@ describe('OperationalClockService', () => {
   }));
 
   it('pauses while hidden and refreshes immediately when visible again', fakeAsync(() => {
+    service = new OperationalClockService();
     visibility = 'hidden';
     document.dispatchEvent(new Event('visibilitychange'));
 
@@ -43,6 +44,7 @@ describe('OperationalClockService', () => {
   }));
 
   it('removes its timer when destroyed', fakeAsync(() => {
+    service = new OperationalClockService();
     service.ngOnDestroy();
     now = 61_000;
     tick(60_000);
