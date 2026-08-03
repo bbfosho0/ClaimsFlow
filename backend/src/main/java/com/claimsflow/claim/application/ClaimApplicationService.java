@@ -19,15 +19,20 @@ public class ClaimApplicationService {
     private final ClaimJpaRepository claims;
     private final AdjusterService adjusters;
     private final AuditService audit;
-    private final Clock clock = Clock.systemUTC();
+    private final Clock clock;
     private final CompletenessPolicy completeness = new CompletenessPolicy();
     private final PriorityPolicy priority = new PriorityPolicy();
     private final ClaimTransitionPolicy transitions = new ClaimTransitionPolicy();
 
-    public ClaimApplicationService(ClaimJpaRepository claims, AdjusterService adjusters, AuditService audit) {
+    public ClaimApplicationService(
+            ClaimJpaRepository claims,
+            AdjusterService adjusters,
+            AuditService audit,
+            Clock clock) {
         this.claims = claims;
         this.adjusters = adjusters;
         this.audit = audit;
+        this.clock = clock;
     }
 
     @Transactional
@@ -36,7 +41,23 @@ public class ClaimApplicationService {
         var complete = completeness.evaluate(command.claimType(), command.incidentReportPresent(), command.photosPresent(), command.proofOfOwnershipPresent(), command.medicalDocumentationPresent());
         var triage = priority.evaluate(command.claimType(), command.estimatedLoss(), command.incidentDate(), complete.percentage(), null, now);
         Instant sla = now.plus(slaDuration(triage.priority()));
-        Claim claim = Claim.create(claimNumber(now), command.claimantName(), command.claimantEmail(), command.claimType(), command.incidentDate(), command.estimatedLoss(), command.description(), command.incidentReportPresent(), command.photosPresent(), command.proofOfOwnershipPresent(), command.medicalDocumentationPresent(), complete.percentage(), triage.priority(), sla, now);
+        Claim claim = Claim.create(
+            claimNumber(now),
+            command.claimantName(),
+            command.claimantEmail(),
+            command.claimType(),
+            ClaimRegion.SOUTHEAST,
+            command.incidentDate(),
+            command.estimatedLoss(),
+            command.description(),
+            command.incidentReportPresent(),
+            command.photosPresent(),
+            command.proofOfOwnershipPresent(),
+            command.medicalDocumentationPresent(),
+            complete.percentage(),
+            triage.priority(),
+            sla,
+            now);
         claims.save(claim);
         audit.record(claim, "system", "CLAIM_CREATED", "Claim created and triaged", null, triage.priority().name(), now);
         return claim;
