@@ -26,6 +26,10 @@ public class Claim {
     @Column(nullable = false, length = 40)
     private ClaimType claimType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 40)
+    private ClaimRegion region;
+
     @Column(nullable = false)
     private LocalDate incidentDate;
 
@@ -71,6 +75,11 @@ public class Claim {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    private Instant resolvedAt;
+
+    @Column(length = 64)
+    private String demoDatasetKey;
+
     @Version
     private long version;
 
@@ -92,12 +101,49 @@ public class Claim {
             ClaimPriority priority,
             Instant slaDeadline,
             Instant now) {
+        return create(
+            claimNumber,
+            claimantName,
+            claimantEmail,
+            claimType,
+            ClaimRegion.SOUTHEAST,
+            incidentDate,
+            estimatedLoss,
+            description,
+            incidentReportPresent,
+            photosPresent,
+            proofOfOwnershipPresent,
+            medicalDocumentationPresent,
+            completenessPercentage,
+            priority,
+            slaDeadline,
+            now);
+    }
+
+    public static Claim create(
+            String claimNumber,
+            String claimantName,
+            String claimantEmail,
+            ClaimType claimType,
+            ClaimRegion region,
+            LocalDate incidentDate,
+            BigDecimal estimatedLoss,
+            String description,
+            boolean incidentReportPresent,
+            boolean photosPresent,
+            boolean proofOfOwnershipPresent,
+            boolean medicalDocumentationPresent,
+            int completenessPercentage,
+            ClaimPriority priority,
+            Instant slaDeadline,
+            Instant now) {
         Claim claim = new Claim();
         claim.id = UUID.randomUUID();
         claim.claimNumber = claimNumber;
         claim.claimantName = claimantName;
         claim.claimantEmail = claimantEmail;
         claim.claimType = claimType;
+        claim.region = region == null ? ClaimRegion.SOUTHEAST : region;
         claim.incidentDate = incidentDate;
         claim.estimatedLoss = estimatedLoss;
         claim.description = description;
@@ -114,6 +160,55 @@ public class Claim {
         return claim;
     }
 
+    public static Claim createSeeded(
+            UUID id,
+            String claimNumber,
+            String claimantName,
+            String claimantEmail,
+            ClaimType claimType,
+            ClaimRegion region,
+            LocalDate incidentDate,
+            BigDecimal estimatedLoss,
+            String description,
+            boolean incidentReportPresent,
+            boolean photosPresent,
+            boolean proofOfOwnershipPresent,
+            boolean medicalDocumentationPresent,
+            int completenessPercentage,
+            ClaimPriority priority,
+            ClaimStatus status,
+            Adjuster assignedAdjuster,
+            Instant slaDeadline,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant resolvedAt,
+            String demoDatasetKey) {
+        Claim claim = new Claim();
+        claim.id = id;
+        claim.claimNumber = claimNumber;
+        claim.claimantName = claimantName;
+        claim.claimantEmail = claimantEmail;
+        claim.claimType = claimType;
+        claim.region = region;
+        claim.incidentDate = incidentDate;
+        claim.estimatedLoss = estimatedLoss;
+        claim.description = description;
+        claim.incidentReportPresent = incidentReportPresent;
+        claim.photosPresent = photosPresent;
+        claim.proofOfOwnershipPresent = proofOfOwnershipPresent;
+        claim.medicalDocumentationPresent = medicalDocumentationPresent;
+        claim.completenessPercentage = completenessPercentage;
+        claim.priority = priority;
+        claim.status = status;
+        claim.assignedAdjuster = assignedAdjuster;
+        claim.slaDeadline = slaDeadline;
+        claim.createdAt = createdAt;
+        claim.updatedAt = updatedAt;
+        claim.resolvedAt = resolvedAt;
+        claim.demoDatasetKey = demoDatasetKey;
+        return claim;
+    }
+
     public void assignTo(Adjuster adjuster, Instant now) {
         this.assignedAdjuster = adjuster;
         this.updatedAt = now;
@@ -121,6 +216,10 @@ public class Claim {
 
     public void changeStatus(ClaimStatus next, Instant now) {
         this.status = next;
+        this.resolvedAt = switch (next) {
+            case RESOLVED, CLOSED -> now;
+            default -> null;
+        };
         this.updatedAt = now;
     }
 
@@ -148,6 +247,7 @@ public class Claim {
     public String getClaimantName() { return claimantName; }
     public String getClaimantEmail() { return claimantEmail; }
     public ClaimType getClaimType() { return claimType; }
+    public ClaimRegion getRegion() { return region; }
     public LocalDate getIncidentDate() { return incidentDate; }
     public BigDecimal getEstimatedLoss() { return estimatedLoss; }
     public String getDescription() { return description; }
@@ -162,5 +262,7 @@ public class Claim {
     public Instant getSlaDeadline() { return slaDeadline; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public Instant getResolvedAt() { return resolvedAt; }
+    public String getDemoDatasetKey() { return demoDatasetKey; }
     public long getVersion() { return version; }
 }
