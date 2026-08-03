@@ -1,4 +1,5 @@
 import { Route, Routes } from '@angular/router';
+import { DemoRoleId } from './core/demo-role/demo-role.model';
 import { routes } from './app.routes';
 
 function flattenRoutes(items: Routes, prefix = ''): Map<string, Route> {
@@ -13,8 +14,12 @@ function flattenRoutes(items: Routes, prefix = ''): Map<string, Route> {
   return flattened;
 }
 
+function allowed(byPath: Map<string, Route>, path: string): readonly DemoRoleId[] {
+  return byPath.get(path)?.data?.['allowedDemoRoles'] as readonly DemoRoleId[];
+}
+
 describe('ClaimsFlow route contract', () => {
-  it('exposes the showcase, tour, nine production workspaces, and three secondary destinations', () => {
+  it('exposes the showcase, tour, and role-aware employee workspaces', () => {
     const byPath = flattenRoutes(routes);
 
     expect(byPath.get('')?.loadComponent).toBeDefined();
@@ -38,9 +43,30 @@ describe('ClaimsFlow route contract', () => {
 
     for (const path of applicationRoutes) {
       expect(byPath.get(path)?.loadComponent).withContext(path).toBeDefined();
+      expect(byPath.get(path)?.canActivate?.length).withContext(`${path} guard`).toBe(1);
       expect(byPath.get(path)?.data?.['shellTitle']).withContext(`${path} title`).toBeTruthy();
       expect(byPath.get(path)?.data?.['shellSubtitle']).withContext(`${path} subtitle`).toBeTruthy();
     }
+  });
+
+  it('assigns each permanent workspace to the approved demo roles', () => {
+    const byPath = flattenRoutes(routes);
+
+    expect(allowed(byPath, 'app/dashboard')).toEqual(['manager']);
+    expect(allowed(byPath, 'app/analytics')).toEqual(['manager']);
+    expect(allowed(byPath, 'app/intelligence')).toEqual(['manager']);
+    expect(allowed(byPath, 'app/team-ops')).toEqual(['manager']);
+
+    expect(allowed(byPath, 'app/my-work')).toEqual(['adjuster']);
+    expect(allowed(byPath, 'app/documents')).toEqual(['adjuster']);
+
+    expect(allowed(byPath, 'app/claims')).toEqual(['manager', 'adjuster']);
+    expect(allowed(byPath, 'app/claims/new')).toEqual(['manager', 'adjuster']);
+    expect(allowed(byPath, 'app/claims/:id')).toEqual(['manager', 'adjuster']);
+
+    expect(allowed(byPath, 'app/workflows')).toEqual(['admin']);
+    expect(allowed(byPath, 'app/settings')).toEqual(['admin']);
+    expect(allowed(byPath, 'app/reports')).toEqual(['manager', 'adjuster', 'admin']);
   });
 
   it('keeps legacy application URLs as redirects', () => {
