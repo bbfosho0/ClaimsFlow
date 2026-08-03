@@ -21,6 +21,9 @@ public class Adjuster {
     @Column(nullable = false, length = 40)
     private String role;
 
+    @Column(nullable = false, length = 80)
+    private String team;
+
     @Column(nullable = false)
     private boolean active;
 
@@ -33,6 +36,7 @@ public class Adjuster {
     public String getDisplayName() { return displayName; }
     public String getEmail() { return email; }
     public String getRole() { return role; }
+    public String getTeam() { return team; }
     public boolean isActive() { return active; }
     public int getWorkloadCapacity() { return workloadCapacity; }
 }
