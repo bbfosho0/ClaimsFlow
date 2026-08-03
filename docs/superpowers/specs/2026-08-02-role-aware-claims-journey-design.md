@@ -1,20 +1,28 @@
 # ClaimsFlow Role-Aware Product Architecture and Golden Journey
 
-**Status:** Approved design
+**Status:** Approved for implementation planning
 
 **Date:** 2026-08-02
 
 **Branch:** `design/role-aware-claims-journey`
 
+## Source references
+
+- ClaimsFlow repository: `https://github.com/bbfosho0/ClaimsFlow`
+- Figma Make visual exploration: `https://www.figma.com/make/jVAH4s9JoKdwbJQMxC1Ooj/Recreate-Premium-Design`
+- Existing merged visual system: Midnight Command v2 on `main`
+
+The Figma Make exploration is art direction. The Angular application and Spring domain rules remain the implementation source of truth.
+
 ## Summary
 
-ClaimsFlow will become a role-aware internal claims-operations platform with a separate claimant portal. The visual ambition of the current Figma Make exploration remains, but the product will no longer expose every capability to every user through one universal eleven-item sidebar.
+ClaimsFlow will become a role-aware internal claims-operations platform with a separate claimant portal. The visual ambition of the Figma Make exploration remains, but the product will no longer expose every capability to every user through one universal eleven-item sidebar.
 
 The redesign has one organizing sentence:
 
 > A claimant submits evidence, an adjuster resolves the claim, a manager monitors operations, and an administrator controls the workflow.
 
-Claims Manager is the default employer-facing persona. A profile-menu demo-role switcher lets a reviewer move instantly between Claims Manager, Adjuster, and Administrator modes without authentication. The claimant experience lives in a separate, calmer portal shell. One deterministic end-to-end claim journey is fully functional; the remaining screens stay coherent, interactive, and honest about any local-only or unsupported behavior.
+Claims Manager is the default employer-facing persona. A profile-menu demo-role switcher lets a reviewer move instantly between Claims Manager, Adjuster, and Administrator modes without authentication. The claimant experience lives in a separate, calmer portal shell. One deterministic end-to-end claim journey is fully functional; the remaining screens stay coherent, interactive, and honest about local-only or unsupported behavior.
 
 ## Problem
 
@@ -32,7 +40,7 @@ The current Angular application places all major capabilities under one shell:
 - Reports
 - Settings
 
-This is visually impressive but conceptually ambiguous. A reviewer cannot quickly tell which screens belong to a claimant, adjuster, manager, or administrator. The navigation implies that one fictional user owns personal work, claim intake, fraud investigation, document review, workforce management, reporting, workflow configuration, and system settings.
+This is visually impressive but conceptually ambiguous. A reviewer cannot quickly tell which screens belong to a claimant, adjuster, manager, or administrator. The navigation implies that one fictional user owns personal work, intake, fraud investigation, evidence review, workforce management, reporting, workflow configuration, and system settings.
 
 That ambiguity weakens the portfolio story even though the individual screens are strong.
 
@@ -43,7 +51,7 @@ That ambiguity weakens the portfolio story even though the individual screens ar
 3. Clarify who uses each capability and why.
 4. Keep the employer demo fast, deterministic, and easy to navigate.
 5. Demonstrate a complete customer-to-operations workflow.
-6. Preserve the existing backend authority and human decision boundaries.
+6. Preserve backend authority and human decision boundaries.
 7. Add premium motion and atmospheric effects in the real Angular application.
 8. Keep unsupported capabilities visibly bounded instead of pretending they are production integrations.
 
@@ -53,7 +61,7 @@ That ambiguity weakens the portfolio story even though the individual screens ar
 - Real backend authorization enforcement
 - Multi-tenant data isolation
 - A complete consumer insurance account portal
-- Production payment, carrier, policy-administration, or messaging integrations
+- Production payment, carrier, policy-administration, object-storage, or messaging integrations
 - Making every decorative or secondary control perform a server mutation
 - Replacing real UI with screenshots from Figma Make
 - Adding shaders to every panel or sacrificing readability for visual effects
@@ -64,15 +72,17 @@ ClaimsFlow contains two clearly separated experiences.
 
 ### Internal employee platform
 
-The internal platform serves Claims Managers, Adjusters, and Administrators. It uses the premium Midnight Command visual system, the dense operational shell, and role-aware navigation.
+The internal platform serves Claims Managers, Adjusters, and Administrators. It uses the premium Midnight Command visual system, a dense operational shell, and role-aware navigation.
 
 ### Claimant portal
 
 The claimant portal serves customers submitting or tracking a claim. It uses a separate shell with simpler language, fewer destinations, lower information density, and a calmer visual hierarchy.
 
-The portal and employee platform share brand tokens and core domain data, but they do not share the same navigation model.
+The portal and employee platform share brand tokens and core claim data, but they do not share the same navigation model.
 
 ## Demo personas
+
+All personas and records are fictional.
 
 ### Claims Manager — default
 
@@ -94,7 +104,7 @@ The portal and employee platform share brand tokens and core domain data, but th
 **Contextual destinations:**
 
 - Claim Workspace opens from Overview or Claim Queue.
-- Documents may open within a claim context but does not need to be a permanent manager navigation item.
+- Documents open within claim context and are not a permanent manager destination.
 
 ### Adjuster
 
@@ -116,6 +126,7 @@ The portal and employee platform share brand tokens and core domain data, but th
 - Claim Workspace opens from My Work or Claim Queue.
 - New Claim is a contextual queue action rather than a permanent sidebar destination.
 - AI assistance is embedded in My Work, Claim Workspace, and Documents.
+- Reports is a read-only personal workload and performance view, not the manager's portfolio reporting workspace.
 
 ### Administrator
 
@@ -176,17 +187,17 @@ Resolution order:
 2. Previously stored demo role
 3. Default role: `manager`
 
-Switching roles updates the query parameter, stores the selection, closes the menu, and navigates to the selected role's default landing route when the current route is unavailable to the new role.
+Switching roles updates the query parameter, stores the selection, closes the menu, and navigates to the new role's default landing route when the current route is unavailable to that role.
 
 ### Route access behavior
 
 This is presentation-level demo routing, not security.
 
-When a user attempts to open a route that is not part of the active role:
+When a user opens a route that is not part of the active role:
 
 1. The application redirects to that role's default landing route.
 2. A concise notice explains that the destination belongs to another demo role.
-3. The notice offers a direct role switch where appropriate.
+3. The notice offers a direct role switch when appropriate.
 
 Deep links to contextual claim pages remain accessible to Manager and Adjuster roles.
 
@@ -204,12 +215,12 @@ Deep links to contextual claim pages remain accessible to Manager and Adjuster r
 | Documents | Contextual | Primary | — | Primary |
 | Team Operations | Primary | — | — | — |
 | Workflow Automation | — | — | Primary | — |
-| Reports | Primary | Limited | Primary | — |
+| Reports | Portfolio | Personal read-only | Governance | — |
 | Settings | — | — | Primary | — |
 | Claim status and timeline | — | In claim context | — | Primary |
 | Messages and requests | In claim context | In claim context | — | Primary |
 
-Each employee role therefore sees three to six permanent destinations instead of eleven.
+Each employee role sees three to six permanent destinations instead of eleven.
 
 ## Claimant portal
 
@@ -226,7 +237,7 @@ The shell includes:
 - Messages
 - Help
 - Customer profile menu
-- Clear route back to the public showcase when appropriate
+- A clear route back to the public showcase when appropriate
 
 The portal uses the same dark brand family but with:
 
@@ -250,7 +261,7 @@ The portal uses the same dark brand family but with:
 ### Core claimant capabilities
 
 1. Start or resume a claim.
-2. Complete the guided claim intake.
+2. Complete guided claim intake.
 3. Upload or stage evidence.
 4. See status and progress.
 5. Review a human-readable claim timeline.
@@ -259,9 +270,9 @@ The portal uses the same dark brand family but with:
 
 ### Explicit limits
 
-- Evidence may remain staged if object storage is unavailable.
-- Messages may be represented as internal demo records when no messaging provider is configured.
-- No payment, policy change, or production communication claim is made.
+- Evidence remains staged metadata when object storage is unavailable.
+- Messages are fictional demo records when no messaging provider is configured.
+- No payment, policy change, production communication, or real file-storage claim is made.
 
 ## Employer-facing golden journey
 
@@ -290,7 +301,7 @@ The demo switches to Adjuster mode. The claim appears in My Work with:
 - Advisory AI summary
 - Clear next action
 
-The adjuster opens the Claim Workspace, reviews evidence, adds a note or requested action, and performs one allowed workflow transition.
+The adjuster opens Claim Workspace, reviews evidence, completes one requested evidence action or adds a note, and performs one allowed workflow transition.
 
 ### Step 3 — Manager impact
 
@@ -316,11 +327,11 @@ The reviewer can:
 - Run the existing local simulation
 - See how the demo claim would travel through the workflow
 
-The simulation remains explicitly local unless backend workflow persistence is later implemented.
+The simulation remains explicitly local. Workflow persistence and production execution are outside this iteration.
 
 ### Step 5 — Audit proof
 
-The guided journey ends by showing the immutable audit history and explaining:
+The guided journey ends by showing immutable audit history and explaining:
 
 - What the system calculated
 - What AI recommended
@@ -334,21 +345,48 @@ The golden journey must be deterministic and safe to repeat.
 
 ### Reserved demo data
 
-Use a reserved fictional claim identity and reserved example domains. Demo records must be easy to distinguish from ordinary seed data.
+A new Flyway migration seeds a reserved fictional property-damage claim, one evidence request, portal message summaries, and associated audit baseline. Reserved records use an unmistakable `DEMO-` claim-number prefix and reserved example domains.
 
-### Reset behavior
+### Reset endpoint
 
-`Reset Demo Journey` restores only the reserved demo records to their known baseline. It must not wipe arbitrary claims or database tables.
+`POST /api/demo/reset` restores only reserved `DEMO-` records to their known baseline through a dedicated transactional application service.
+
+The endpoint is available only when `claimsflow.demo.enabled=true`.
 
 The reset operation is:
 
-- Explicitly confirmed
+- Explicitly confirmed in the UI
 - Idempotent
 - Transactional
-- Available only when the application runs with the demo capability enabled
+- Restricted to reserved demo records
 - Covered by backend tests
 
-A reset failure leaves the existing data intact and reports a recoverable error.
+A reset failure leaves existing data intact and returns Problem Details with a stable application code.
+
+## Portal API contract
+
+The portal may reuse `POST /api/claims` for intake because claim creation already delegates to backend domain rules.
+
+Add these narrowly scoped endpoints:
+
+```text
+GET  /api/portal/claims/{claimId}
+POST /api/portal/claims/{claimId}/requests/{requestId}/complete
+POST /api/demo/reset
+```
+
+`GET /api/portal/claims/{claimId}` returns a claimant-safe projection containing:
+
+- Claim identifier and claim number
+- Human-readable status and progress
+- Timeline entries safe for the claimant
+- Evidence summary and outstanding requests
+- Fictional demo message summaries
+- Next required action
+
+It must not expose internal fraud features, private adjuster notes, recommendation internals, or unrestricted audit payloads.
+
+Completing an evidence request updates the reserved demo claim's evidence metadata and writes an immutable audit event. It does not upload a real file unless object storage is added later.
 
 ## Visual direction
 
@@ -375,7 +413,7 @@ The Figma Make exploration is treated as art direction, not as application archi
 
 - One global navigation containing every role's features
 - React view-state architecture from Figma Make
-- Invented company labels or dates
+- Invented company labels or current dates
 - Screenshots used as page backgrounds
 - Generic card duplication
 - Excessive neon or blurred decoration
@@ -393,9 +431,9 @@ The employee shell remains consistent across Manager, Adjuster, and Administrato
 - Global search
 - Notifications
 - Help
-- Active persona and demo-role indicator
+- Active persona and Demo Role indicator
 - Role-filtered navigation
-- AI Copilot surface where relevant
+- AI Copilot surface on routes where assistance is relevant
 
 ### Tablet
 
@@ -413,7 +451,7 @@ The employee shell remains consistent across Manager, Adjuster, and Administrato
 
 Motion is implemented in the Angular application with CSS, SVG, Angular state, and browser-native APIs.
 
-### Motion principles
+### Principles
 
 - Clarify hierarchy and state changes.
 - Keep most transitions between 140 and 300 ms.
@@ -421,7 +459,7 @@ Motion is implemented in the Angular application with CSS, SVG, Angular state, a
 - Preserve keyboard and pointer responsiveness.
 - Respect `prefers-reduced-motion`.
 
-### Motion behaviors
+### Behaviors
 
 - Role switch: shell accent and navigation transition
 - Route transition: subtle fade and short vertical settle
@@ -511,9 +549,9 @@ Navigation is derived from role definitions rather than hard-coded as one univer
 
 The guard controls demo presentation only. Code comments, naming, and UI copy must not describe it as a security boundary.
 
-## Backend changes
+## Backend authority
 
-The current Spring backend remains authoritative for:
+The Spring backend remains authoritative for:
 
 - Claim creation
 - Deterministic completeness
@@ -523,15 +561,15 @@ The current Spring backend remains authoritative for:
 - Recommendation review
 - Audit history
 
-Likely backend additions:
+The backend additions in this iteration are limited to:
 
-- Reserved golden-journey seed data
-- Narrow demo-reset application service
-- Demo-reset endpoint enabled only under explicit configuration
-- Any query needed for claimant-friendly status or messages
-- Tests proving reset scope and transaction behavior
+- New Flyway demo seed migration
+- Claimant-safe portal read projection
+- Evidence-request completion for the reserved demo journey
+- Dedicated demo-reset application service and endpoint
+- Tests for these contracts
 
-The backend does not need production users, sessions, roles, or permissions for this portfolio iteration.
+The backend does not add production users, sessions, roles, or permissions.
 
 ## Data flow
 
@@ -539,7 +577,7 @@ The backend does not need production users, sessions, roles, or permissions for 
 Claimant portal intake
         |
         v
-Existing typed claim API
+Existing claim creation API and portal-safe projection
         |
         v
 Spring application services and deterministic policies
@@ -566,7 +604,7 @@ Role switching changes presentation and navigation. It does not alter claim data
 Claimant submits claim
 → backend creates or updates reserved demo claim
 → adjuster receives and reviews it
-→ evidence or requested action changes
+→ evidence request changes
 → allowed status transition occurs
 → audit event is created
 → manager views reflect the change
@@ -623,7 +661,7 @@ A control that does not persist must not claim that it persists.
 - Claimant copy avoids unexplained operational jargon.
 - All motion honors reduced-motion preferences.
 - Shader and atmospheric layers are decorative and ignored by assistive technology.
-- Contrast remains sufficient above all atmospheric effects.
+- Contrast remains sufficient above atmospheric effects.
 
 ## Performance
 
@@ -652,7 +690,9 @@ A control that does not persist must not claim that it persists.
 
 ### Backend tests
 
-- Golden claim creation or restoration
+- Golden claim seed and restoration
+- Portal projection excludes internal-only information
+- Evidence-request completion writes an audit event
 - Reset affects only reserved demo records
 - Reset is idempotent
 - Reset is transactional
@@ -665,7 +705,7 @@ A control that does not persist must not claim that it persists.
 - Manager-to-Adjuster-to-Administrator switching
 - Claimant portal submission
 - Manager metrics or queue reflect the demo claim
-- Unauthorized-for-role demo route redirect
+- Unavailable-for-role route redirect
 - Reset and repeat the journey
 - Browser console remains free of relevant errors
 
@@ -720,12 +760,12 @@ After a one-minute demonstration, a reviewer should be able to answer:
 
 ## Implementation order
 
-The subsequent implementation plan should follow this order:
+The implementation plan must follow this order:
 
 1. Demo role model and role-filtered navigation
 2. Profile role switcher and route behavior
 3. Separate claimant portal shell and routes
-4. Golden journey data contract and reset design
+4. Golden journey data contracts and reset service
 5. Functional claimant-to-adjuster-to-manager flow
 6. Administrator workflow explanation
 7. Figma Make visual-system integration
