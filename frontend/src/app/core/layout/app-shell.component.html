@@ -1,5 +1,5 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
-<div class="app-shell">
+<div class="app-shell" [attr.data-demo-role]="operator().id">
   <aside class="app-sidebar" aria-label="Primary navigation">
     <div class="sidebar-top">
       <a class="brand-block" routerLink="/" aria-label="ClaimsFlow showcase">
@@ -7,12 +7,13 @@
         <span class="brand-copy"><strong>ClaimsFlow</strong><small>Intelligent claims</small></span>
       </a>
 
-      <nav class="primary-nav" aria-label="ClaimsFlow destinations">
+      <nav class="primary-nav" [attr.aria-label]="operator().label + ' destinations'">
         <a
-          *ngFor="let item of navigation"
+          *ngFor="let item of navigation()"
           [routerLink]="item.path"
+          [queryParams]="{ role: operator().id }"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          [routerLinkActiveOptions]="{ exact: item.path === '/app/claims' }"
           ariaCurrentWhenActive="page"
           (click)="closeMobileDrawer()">
           <span class="active-signal" aria-hidden="true"></span>
@@ -31,10 +32,13 @@
         <button type="button">Ask a question <span aria-hidden="true">→</span></button>
       </section>
 
-      <div class="operator-block" aria-label="Current operator">
-        <span class="operator-avatar" aria-hidden="true">AM</span>
-        <span class="operator-copy"><strong>Alex Morgan</strong><small>Claims Manager</small></span>
-        <span class="operator-menu" aria-hidden="true">⌄</span>
+      <div class="operator-block" [attr.aria-label]="operator().personaName + ', ' + operator().personaTitle + ', demo role'">
+        <span class="operator-avatar" aria-hidden="true">{{ operator().initials }}</span>
+        <span class="operator-copy">
+          <strong>{{ operator().personaName }}</strong>
+          <small>{{ operator().personaTitle }}</small>
+          <em class="operator-role-badge">Demo role</em>
+        </span>
       </div>
     </div>
   </aside>
@@ -56,16 +60,32 @@
       <div class="topbar-spacer"></div>
       <button class="topbar-icon notification-button" type="button" aria-label="Notifications"><span aria-hidden="true">♢</span><b>3</b></button>
       <button class="topbar-icon" type="button" aria-label="Help"><span aria-hidden="true">?</span></button>
-      <div class="topbar-profile" aria-label="Alex Morgan, Claims Manager">
-        <span class="operator-avatar" aria-hidden="true">AM</span>
-        <span><strong>Alex Morgan</strong><small>Claims Manager</small></span>
-        <i aria-hidden="true">⌄</i>
-      </div>
-      <button class="mobile-more" type="button" (click)="toggleMobileDrawer()" [attr.aria-expanded]="mobileDrawerOpen()" aria-controls="mobile-destination-drawer">More</button>
+      <app-role-switcher
+        (openClaimantPortal)="openClaimantPortal()"
+        (resetDemoJourney)="requestDemoReset()" />
+      <button
+        *ngIf="navigation().length > 4"
+        class="mobile-more"
+        type="button"
+        (click)="toggleMobileDrawer()"
+        [attr.aria-expanded]="mobileDrawerOpen()"
+        aria-controls="mobile-destination-drawer">More</button>
     </header>
 
-    <div *ngIf="mobileDrawerOpen()" id="mobile-destination-drawer" class="mobile-drawer">
-      <a *ngFor="let item of navigation.slice(5)" [routerLink]="item.path" (click)="closeMobileDrawer()">
+    <div *ngIf="roleNotice() as notice" class="role-notice" role="status" aria-live="polite">
+      <span>{{ notice }}</span>
+      <button type="button" aria-label="Dismiss role notice" (click)="dismissRoleNotice()">×</button>
+    </div>
+
+    <div
+      *ngIf="mobileDrawerOpen() && mobileSecondaryNavigation().length > 0"
+      id="mobile-destination-drawer"
+      class="mobile-drawer">
+      <a
+        *ngFor="let item of mobileSecondaryNavigation()"
+        [routerLink]="item.path"
+        [queryParams]="{ role: operator().id }"
+        (click)="closeMobileDrawer()">
         <span aria-hidden="true">{{ item.icon }}</span>{{ item.label }}
       </a>
     </div>

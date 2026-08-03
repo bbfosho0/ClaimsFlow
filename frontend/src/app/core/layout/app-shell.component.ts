@@ -1,22 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, startWith } from 'rxjs';
-
-interface NavigationItem {
-  readonly label: string;
-  readonly path: string;
-  readonly icon: string;
-  readonly exact?: boolean;
-}
+import { DemoRoleService } from '../demo-role/demo-role.service';
+import { RoleSwitcherComponent } from './role-switcher/role-switcher.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RoleSwitcherComponent],
   templateUrl: './app-shell.component.html',
-  styleUrl: './app-shell.component.css',
+  styleUrls: ['./app-shell.component.css', './app-shell-role-aware.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
@@ -24,24 +19,15 @@ export class AppShellComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly demoRole = inject(DemoRoleService);
 
   readonly shellTitle = signal('Executive Overview');
   readonly shellSubtitle = signal('Operations performance at a glance.');
   readonly mobileDrawerOpen = signal(false);
-
-  readonly navigation: readonly NavigationItem[] = [
-    { label: 'Overview', path: '/app/dashboard', icon: '◉' },
-    { label: 'Claim Queue', path: '/app/claims', icon: '☷', exact: true },
-    { label: 'New Claim', path: '/app/claims/new', icon: '+' },
-    { label: 'My Work', path: '/app/my-work', icon: '✓' },
-    { label: 'Analytics', path: '/app/analytics', icon: '⌁' },
-    { label: 'AI Insights', path: '/app/intelligence', icon: '✦' },
-    { label: 'Documents', path: '/app/documents', icon: '▤' },
-    { label: 'Team Ops', path: '/app/team-ops', icon: '◎' },
-    { label: 'Workflows', path: '/app/workflows', icon: '◇' },
-    { label: 'Reports', path: '/app/reports', icon: '▥' },
-    { label: 'Settings', path: '/app/settings', icon: '⚙' },
-  ];
+  readonly roleNotice = signal<string | null>(null);
+  readonly navigation = this.demoRole.navigation;
+  readonly operator = this.demoRole.definition;
+  readonly mobileSecondaryNavigation = computed(() => this.navigation().slice(4));
 
   constructor() {
     this.router.events.pipe(
@@ -59,11 +45,26 @@ export class AppShellComponent {
     this.mobileDrawerOpen.set(false);
   }
 
+  dismissRoleNotice(): void {
+    this.roleNotice.set(null);
+  }
+
+  openClaimantPortal(): void {
+    void this.router.navigate(['/portal']);
+  }
+
+  requestDemoReset(): void {
+    this.roleNotice.set('Demo reset is not connected yet. The completed journey will reset only the reserved demo claim.');
+  }
+
   private syncRouteContext(): void {
     let current = this.route;
     while (current.firstChild) current = current.firstChild;
     const data = current.snapshot.data;
     this.shellTitle.set(data['shellTitle'] ?? 'Executive Overview');
     this.shellSubtitle.set(data['shellSubtitle'] ?? 'Operations performance at a glance.');
+    const notice = this.demoRole.consumeNotice();
+    if (notice) this.roleNotice.set(notice);
+    this.closeMobileDrawer();
   }
 }
