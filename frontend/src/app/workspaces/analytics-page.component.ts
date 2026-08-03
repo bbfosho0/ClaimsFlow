@@ -11,6 +11,7 @@ import {
   DEFAULT_OPERATIONAL_FILTERS,
   DistributionPoint,
   EMPTY_OPERATIONAL_FILTER_OPTIONS,
+  MetricChange,
   OperationalFilters,
   TimePoint,
 } from '../core/operational-data/operational-data.models';
@@ -103,14 +104,24 @@ export class AnalyticsPageComponent implements OnInit, OnDestroy {
     return Math.max(2, Math.round(point.count * 100 / this.maxDistribution(points)));
   }
 
-  signed(value: number): string {
-    const prefix = value > 0 ? '+' : '';
-    return `${prefix}${value.toFixed(1)}% vs prior period`;
+  comparisonLabel(change: MetricChange): string {
+    switch (change.kind) {
+      case 'NEW': return 'New vs prior period';
+      case 'CLEARED': return 'Cleared vs prior period';
+      case 'UNCHANGED': return 'No change';
+      case 'PERCENTAGE': {
+        const value = change.percentage ?? 0;
+        const prefix = value > 0 ? '+' : '';
+        return `${prefix}${value.toFixed(1)}% vs prior period`;
+      }
+    }
   }
 
-  comparisonTone(value: number, inverse = false): 'true' | 'false' | null {
-    if (value === 0) return null;
-    return inverse ? (value < 0 ? 'true' : 'false') : (value > 0 ? 'true' : 'false');
+  comparisonTone(change: MetricChange, inverse = false): 'true' | 'false' | null {
+    if (change.kind !== 'PERCENTAGE' || change.percentage === null || change.percentage === 0) return null;
+    return inverse
+      ? (change.percentage < 0 ? 'true' : 'false')
+      : (change.percentage > 0 ? 'true' : 'false');
   }
 
   trackDistribution(_: number, item: DistributionPoint): string {
