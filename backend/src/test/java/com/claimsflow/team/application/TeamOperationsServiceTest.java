@@ -99,13 +99,37 @@ class TeamOperationsServiceTest {
         assertThat(snapshot.kpis().evidenceReadinessPercentage()).isEqualTo(85);
 
         assertThat(snapshot.adjusters()).extracting(item -> item.activeClaims()).containsExactly(1L, 1L);
+        assertThat(snapshot.adjusters()).filteredOn(item -> item.adjusterId().equals(ALEX_ID)).singleElement()
+            .satisfies(item -> {
+                assertThat(item.atRiskClaims()).isZero();
+                assertThat(item.overdueClaims()).isEqualTo(1);
+                assertThat(item.highPriorityClaims()).isEqualTo(1);
+                assertThat(item.evidenceReadinessPercentage()).isEqualTo(75);
+                assertThat(item.nextSlaDeadline()).isEqualTo(NOW.minusSeconds(1));
+            });
         assertThat(snapshot.teams()).singleElement().satisfies(team -> {
             assertThat(team.name()).isEqualTo("Claims Operations");
             assertThat(team.activeClaims()).isEqualTo(2);
             assertThat(team.capacity()).isEqualTo(10);
             assertThat(team.utilizationPercentage()).isEqualTo(20);
             assertThat(team.slaCompliancePercentage()).isEqualTo(50);
+            assertThat(team.atRiskClaims()).isZero();
+            assertThat(team.overdueClaims()).isEqualTo(1);
+            assertThat(team.highPriorityClaims()).isEqualTo(2);
         });
+
+        assertThat(snapshot.teamPriorityMix()).singleElement().satisfies(mix -> {
+            assertThat(mix.team()).isEqualTo("Claims Operations");
+            assertThat(mix.segments()).filteredOn(point -> point.count() > 0)
+                .extracting(point -> point.key())
+                .containsExactlyInAnyOrder("LOW", "HIGH", "CRITICAL");
+        });
+        assertThat(snapshot.teamSlaPerformance()).singleElement().satisfies(performance -> {
+            assertThat(performance.team()).isEqualTo("Claims Operations");
+            assertThat(performance.resolvedClaims()).isEqualTo(2);
+            assertThat(performance.compliancePercentage()).isEqualTo(50);
+        });
+        assertThat(snapshot.capacityTrend()).hasSize(30);
 
         assertThat(snapshot.escalations()).extracting(item -> item.claimNumber())
             .containsExactly("CLM-OVERDUE", "CLM-RISK", "CLM-CURRENT");
@@ -156,6 +180,11 @@ class TeamOperationsServiceTest {
             assertThat(advisory.title()).isEqualTo("Portfolio stable");
             assertThat(advisory.queryParams()).isEmpty();
         });
+        assertThat(snapshot.teamSlaPerformance()).singleElement()
+            .satisfies(performance -> {
+                assertThat(performance.resolvedClaims()).isZero();
+                assertThat(performance.compliancePercentage()).isNull();
+            });
     }
 
     private OperationalFilters filters() {
@@ -196,6 +225,7 @@ class TeamOperationsServiceTest {
         when(claim.getStatus()).thenReturn(status);
         when(claim.getPriority()).thenReturn(priority);
         when(claim.getSlaDeadline()).thenReturn(deadline);
+        when(claim.getCreatedAt()).thenReturn(NOW.minus(Duration.ofDays(5)));
         when(claim.getResolvedAt()).thenReturn(resolvedAt);
         when(claim.getAssignedAdjuster()).thenReturn(adjuster);
         when(claim.getCompletenessPercentage()).thenReturn(completeness);
