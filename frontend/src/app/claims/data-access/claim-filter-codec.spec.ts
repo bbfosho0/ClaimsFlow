@@ -1,4 +1,10 @@
-import { ClaimFilters, DEFAULT_FILTERS, parseClaimFilters, serializeClaimFilters } from './claim-filter-codec';
+import {
+  ClaimFilters,
+  DEFAULT_FILTERS,
+  claimFilterKey,
+  parseClaimFilters,
+  serializeClaimFilters,
+} from './claim-filter-codec';
 
 describe('claim filter codec', () => {
   it('round trips every curated non-default filter', () => {
@@ -42,5 +48,25 @@ describe('claim filter codec', () => {
     expect(parsed.priority).toBe('');
     expect(parsed.status).toBe('');
     expect(parsed.region).toBe('');
+  });
+
+  it('creates the same key regardless of object construction order', () => {
+    const first = { ...DEFAULT_FILTERS, q: 'hail', region: 'WEST' as const };
+    const second: ClaimFilters = {
+      q: 'hail',
+      from: '',
+      to: '',
+      claimType: '',
+      status: '',
+      priority: '',
+      assignment: '',
+      adjusterId: '',
+      team: '',
+      region: 'WEST',
+      page: 0,
+      size: 20,
+      sort: 'createdAt,desc',
+    };
+    expect(claimFilterKey(first)).toBe(claimFilterKey(second));
   });
 });
