@@ -124,6 +124,25 @@ public class Claim {
         this.updatedAt = now;
     }
 
+    public void updateEvidence(
+            boolean incidentReportPresent,
+            boolean photosPresent,
+            boolean proofOfOwnershipPresent,
+            boolean medicalDocumentationPresent,
+            int completenessPercentage,
+            ClaimPriority priority,
+            Instant slaDeadline,
+            Instant now) {
+        this.incidentReportPresent = incidentReportPresent;
+        this.photosPresent = photosPresent;
+        this.proofOfOwnershipPresent = proofOfOwnershipPresent;
+        this.medicalDocumentationPresent = medicalDocumentationPresent;
+        this.completenessPercentage = completenessPercentage;
+        this.priority = priority;
+        this.slaDeadline = slaDeadline;
+        this.updatedAt = now;
+    }
+
     public UUID getId() { return id; }
     public String getClaimNumber() { return claimNumber; }
     public String getClaimantName() { return claimantName; }

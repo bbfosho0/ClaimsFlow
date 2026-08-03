@@ -5,6 +5,7 @@ import com.claimsflow.adjuster.domain.Adjuster;
 import com.claimsflow.audit.application.AuditService;
 import com.claimsflow.claim.domain.*;
 import com.claimsflow.claim.persistence.*;
+import com.claimsflow.portal.domain.EvidenceKind;
 import com.claimsflow.shared.error.*;
 import java.math.BigDecimal;
 import java.time.*;
@@ -71,6 +72,61 @@ public class ClaimApplicationService {
         return claim;
     }
 
+    @Transactional
+    public Claim updateEvidence(UUID claimId, EvidenceKind kind, boolean present, String actor) {
+        Claim claim = get(claimId);
+        boolean incidentReport = claim.isIncidentReportPresent();
+        boolean photos = claim.isPhotosPresent();
+        boolean proofOfOwnership = claim.isProofOfOwnershipPresent();
+        boolean medicalDocumentation = claim.isMedicalDocumentationPresent();
+        boolean previous;
+
+        switch (kind) {
+            case INCIDENT_REPORT -> {
+                previous = incidentReport;
+                incidentReport = present;
+            }
+            case PHOTOS -> {
+                previous = photos;
+                photos = present;
+            }
+            case PROOF_OF_OWNERSHIP -> {
+                previous = proofOfOwnership;
+                proofOfOwnership = present;
+            }
+            case MEDICAL_DOCUMENTATION -> {
+                previous = medicalDocumentation;
+                medicalDocumentation = present;
+            }
+            default -> throw new IllegalArgumentException("Unsupported evidence kind: " + kind);
+        }
+
+        Instant now = clock.instant();
+        var complete = completeness.evaluate(claim.getClaimType(), incidentReport, photos, proofOfOwnership, medicalDocumentation);
+        var triage = priority.evaluate(claim.getClaimType(), claim.getEstimatedLoss(), claim.getIncidentDate(), complete.percentage(), null, now);
+        Instant sla = now.plus(slaDuration(triage.priority()));
+
+        claim.updateEvidence(
+            incidentReport,
+            photos,
+            proofOfOwnership,
+            medicalDocumentation,
+            complete.percentage(),
+            triage.priority(),
+            sla,
+            now);
+
+        audit.record(
+            claim,
+            actor,
+            "EVIDENCE_UPDATED",
+            evidenceLabel(kind) + " updated",
+            kind.name() + "=" + previous,
+            kind.name() + "=" + present,
+            now);
+        return claim;
+    }
+
     public ClaimTransitionPolicy transitions() { return transitions; }
     public CompletenessPolicy completeness() { return completeness; }
     public PriorityPolicy priority() { return priority; }
@@ -82,6 +138,15 @@ public class ClaimApplicationService {
             case HIGH -> Duration.ofHours(24);
             case MEDIUM -> Duration.ofHours(72);
             case LOW -> Duration.ofHours(120);
+        };
+    }
+
+    private String evidenceLabel(EvidenceKind kind) {
+        return switch (kind) {
+            case INCIDENT_REPORT -> "Incident report";
+            case PHOTOS -> "Photos";
+            case PROOF_OF_OWNERSHIP -> "Proof of ownership";
+            case MEDICAL_DOCUMENTATION -> "Medical documentation";
         };
     }
 
