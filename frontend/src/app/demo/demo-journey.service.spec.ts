@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { OperationalDataStore } from '../core/operational-data/operational-data.store';
 import { DemoJourneySnapshot } from './demo-journey.models';
 import { DemoJourneyService } from './demo-journey.service';
 
@@ -17,11 +18,17 @@ const snapshot: DemoJourneySnapshot = {
 describe('DemoJourneyService', () => {
   let service: DemoJourneyService;
   let http: HttpTestingController;
+  let operational: jasmine.SpyObj<OperationalDataStore>;
 
   beforeEach(() => {
     sessionStorage.clear();
+    operational = jasmine.createSpyObj<OperationalDataStore>('OperationalDataStore', ['invalidate']);
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: OperationalDataStore, useValue: operational },
+      ],
     });
     service = TestBed.inject(DemoJourneyService);
     http = TestBed.inject(HttpTestingController);
@@ -32,7 +39,7 @@ describe('DemoJourneyService', () => {
     sessionStorage.clear();
   });
 
-  it('stores no identifiers before the backend confirms reset', () => {
+  it('stores identifiers and invalidates all resources only after reset succeeds', () => {
     service.reset().subscribe();
 
     const request = http.expectOne('/api/demo/reset');
@@ -40,10 +47,24 @@ describe('DemoJourneyService', () => {
     expect(request.request.body).toEqual({});
     expect(sessionStorage.getItem('claimsflow.demoClaimId')).toBeNull();
     expect(sessionStorage.getItem('claimsflow.demoAdjusterId')).toBeNull();
+    expect(operational.invalidate).not.toHaveBeenCalled();
 
     request.flush(snapshot);
 
     expect(sessionStorage.getItem('claimsflow.demoClaimId')).toBe('claim-1');
     expect(sessionStorage.getItem('claimsflow.demoAdjusterId')).toBe('adjuster-1');
+    expect(operational.invalidate).toHaveBeenCalledWith(
+      ['dashboard', 'queue', 'analytics', 'team', 'evidence'],
+      ['claim-1'],
+    );
+  });
+
+  it('does not persist or invalidate after a failed reset', () => {
+    service.reset().subscribe({ error: () => undefined });
+    const request = http.expectOne('/api/demo/reset');
+    request.flush({ message: 'disabled' }, { status: 404, statusText: 'Not Found' });
+
+    expect(sessionStorage.getItem('claimsflow.demoClaimId')).toBeNull();
+    expect(operational.invalidate).not.toHaveBeenCalled();
   });
 });
