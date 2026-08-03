@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, startWith } from 'rxjs';
 import { DemoJourneySnapshot } from '../../demo/demo-journey.models';
 import { DemoResetDialogComponent } from '../../demo/demo-reset-dialog.component';
@@ -20,7 +20,6 @@ import { RoleSwitcherComponent } from './role-switcher/role-switcher.component';
 })
 export class AppShellComponent {
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly demoRole = inject(DemoRoleService);
 
@@ -71,9 +70,9 @@ export class AppShellComponent {
   }
 
   private syncRouteContext(): void {
-    let current = this.route;
+    let current = this.router.routerState.snapshot.root;
     while (current.firstChild) current = current.firstChild;
-    const data = current.snapshot.data;
+    const data = current.data ?? {};
     this.shellTitle.set(data['shellTitle'] ?? 'Executive Overview');
     this.shellSubtitle.set(data['shellSubtitle'] ?? 'Operations performance at a glance.');
     const notice = this.demoRole.consumeNotice();
