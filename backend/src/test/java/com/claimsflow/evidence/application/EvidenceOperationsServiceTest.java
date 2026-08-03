@@ -13,6 +13,7 @@ import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.claim.domain.ClaimType;
 import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceOperationsSnapshot;
 import com.claimsflow.operations.api.OperationalResponses;
+import com.claimsflow.operations.api.OperationalResponses.OperationalFilterOptions;
 import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalQueryService;
@@ -47,9 +48,10 @@ class EvidenceOperationsServiceTest {
         Claim overdue = claim("CLM-OVERDUE", ClaimPriority.CRITICAL, NOW.minusSeconds(1), jordan, 25);
         Claim selected = claim("CLM-SELECTED", ClaimPriority.HIGH, NOW.plus(Duration.ofDays(2)), jordan, 75);
         ClaimMessage claimantMessage = message("Jordan Lee", MessageAudience.CLAIMANT, "Please add photos.");
+        OperationalFilterOptions options = OperationalResponses.options(List.of(jordan));
 
         when(query.find(filters())).thenReturn(List.of(selected, overdue));
-        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of(jordan)));
+        when(filterOptions.options()).thenReturn(options);
         when(messages.findByClaim_IdAndAudienceOrderByCreatedAtAsc(
             selected.getId(), MessageAudience.CLAIMANT)).thenReturn(List.of(claimantMessage));
 
@@ -77,9 +79,10 @@ class EvidenceOperationsServiceTest {
         Claim current = claim("CLM-CURRENT", ClaimPriority.LOW, NOW.plus(Duration.ofDays(3)), null, 100);
         Claim atRisk = claim("CLM-RISK", ClaimPriority.MEDIUM, NOW.plus(Duration.ofHours(24)), null, 50);
         UUID missingSelection = UUID.fromString("00000000-0000-0000-0000-000000000099");
+        OperationalFilterOptions options = OperationalResponses.options(List.of());
 
         when(query.find(filters())).thenReturn(List.of(current, atRisk));
-        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of()));
+        when(filterOptions.options()).thenReturn(options);
         when(messages.findByClaim_IdAndAudienceOrderByCreatedAtAsc(
             atRisk.getId(), MessageAudience.CLAIMANT)).thenReturn(List.of());
 
@@ -90,8 +93,9 @@ class EvidenceOperationsServiceTest {
 
     @Test
     void returnsAnEmptyProjectionWithoutQueryingMessages() {
+        OperationalFilterOptions options = OperationalResponses.options(List.of());
         when(query.find(filters())).thenReturn(List.of());
-        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of()));
+        when(filterOptions.options()).thenReturn(options);
 
         EvidenceOperationsSnapshot snapshot = service.snapshot(filters(), null);
 
