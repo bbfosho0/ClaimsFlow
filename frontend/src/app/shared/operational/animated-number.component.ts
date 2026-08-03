@@ -51,11 +51,11 @@ export class AnimatedNumberComponent implements OnDestroy {
     this.cancelFrame();
     const start = this.displayed();
     if (start === target) return;
-    const startedAt = performance.now();
+    const startedAt = Date.now();
     const durationMs = 220;
 
-    const step = (timestamp: number) => {
-      const progress = Math.min(1, (timestamp - startedAt) / durationMs);
+    const step = () => {
+      const progress = Math.min(1, Math.max(0, (Date.now() - startedAt) / durationMs));
       const eased = 1 - Math.pow(1 - progress, 3);
       this.displayed.set(start + (target - start) * eased);
       if (progress < 1) this.frame = requestAnimationFrame(step);
