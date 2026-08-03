@@ -15,9 +15,21 @@ public class AdjusterController {
     @GetMapping
     public List<AdjusterResponse> list() { return service.active().stream().map(AdjusterResponse::from).toList(); }
 
-    public record AdjusterResponse(UUID id, String displayName, String email, String role, int workloadCapacity) {
+    public record AdjusterResponse(
+        UUID id,
+        String displayName,
+        String email,
+        String role,
+        String team,
+        int workloadCapacity) {
         public static AdjusterResponse from(Adjuster adjuster) {
-            return new AdjusterResponse(adjuster.getId(), adjuster.getDisplayName(), adjuster.getEmail(), adjuster.getRole(), adjuster.getWorkloadCapacity());
+            return new AdjusterResponse(
+                adjuster.getId(),
+                adjuster.getDisplayName(),
+                adjuster.getEmail(),
+                adjuster.getRole(),
+                adjuster.getTeam(),
+                adjuster.getWorkloadCapacity());
         }
     }
 }
