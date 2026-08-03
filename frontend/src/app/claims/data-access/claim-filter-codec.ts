@@ -42,6 +42,21 @@ const CLAIM_TYPES: readonly ClaimType[] = ['AUTO', 'PROPERTY', 'PERSONAL_INJURY'
 const STATUSES: readonly ClaimStatus[] = ['NEW', 'UNDER_REVIEW', 'WAITING_FOR_INFORMATION', 'READY_FOR_DECISION', 'RESOLVED', 'CLOSED'];
 const PRIORITIES: readonly ClaimPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const REGIONS: readonly ClaimRegion[] = ['NORTHEAST', 'SOUTHEAST', 'MIDWEST', 'SOUTHWEST', 'WEST'];
+const FILTER_FIELDS = [
+  'q',
+  'from',
+  'to',
+  'claimType',
+  'status',
+  'priority',
+  'assignment',
+  'adjusterId',
+  'team',
+  'region',
+  'page',
+  'size',
+  'sort',
+] as const satisfies readonly (keyof ClaimFilters)[];
 
 function enumValue<T extends string>(value: unknown, allowed: readonly T[]): T | '' {
   return typeof value === 'string' && allowed.includes(value as T) ? value as T : '';
@@ -83,4 +98,10 @@ export function serializeClaimFilters(filters: ClaimFilters): Params {
   if (filters.size !== 20) params['size'] = filters.size;
   if (filters.sort !== 'createdAt,desc') params['sort'] = filters.sort;
   return params;
+}
+
+export function claimFilterKey(filters: ClaimFilters): string {
+  return FILTER_FIELDS
+    .map(field => `${field}=${encodeURIComponent(String(filters[field]))}`)
+    .join('&');
 }
