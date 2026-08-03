@@ -67,12 +67,12 @@ describe('ClaimsApiService', () => {
     request.flush({ id: 'claim-123' });
 
     expect(operational.invalidate).toHaveBeenCalledWith(
-      ['dashboard', 'queue', 'analytics', 'team', 'evidence'],
+      ['dashboard', 'queue', 'myWork', 'analytics', 'team', 'evidence'],
       ['claim-123'],
     );
   });
 
-  it('posts a bounded claimant-visible message and invalidates Evidence Operations', () => {
+  it('posts a bounded claimant-visible message and invalidates Evidence Operations and My Work', () => {
     const body = {
       author: 'Jordan Lee',
       audience: 'CLAIMANT' as const,
@@ -94,6 +94,6 @@ describe('ClaimsApiService', () => {
       createdAt: '2026-08-03T06:00:00Z',
     });
 
-    expect(operational.invalidate).toHaveBeenCalledWith(['evidence'], ['claim-123']);
+    expect(operational.invalidate).toHaveBeenCalledWith(['evidence', 'myWork'], ['claim-123']);
   });
 });
