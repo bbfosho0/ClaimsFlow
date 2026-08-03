@@ -8,6 +8,7 @@ import { DashboardSnapshot } from '../../shared/models/dashboard.models';
 import {
   AnalyticsSnapshot,
   EvidenceOperationsSnapshot,
+  MyWorkSnapshot,
   OperationalFilters,
   TeamOperationsSnapshot,
 } from './operational-data.models';
@@ -28,6 +29,10 @@ export class OperationalApiService {
     if (filters.q) params = params.set('q', filters.q);
     if (filters.assignment) params = params.set('assignment', filters.assignment);
     return this.http.get<ClaimPage>(`${API_BASE_URL}/claims`, { params });
+  }
+
+  loadMyWork(adjusterId: string): Observable<MyWorkSnapshot> {
+    return this.http.get<MyWorkSnapshot>(`${API_BASE_URL}/my-work/${adjusterId}`);
   }
 
   loadAnalytics(filters: OperationalFilters): Observable<AnalyticsSnapshot> {
