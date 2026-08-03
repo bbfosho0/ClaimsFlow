@@ -1,12 +1,24 @@
 package com.claimsflow.evidence.application;
 
-import com.claimsflow.claim.domain.*;
-import com.claimsflow.evidence.api.EvidenceOperationsResponses.*;
-import com.claimsflow.operations.application.*;
+import com.claimsflow.claim.domain.Claim;
+import com.claimsflow.claim.domain.ClaimPriority;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.ClaimantMessage;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceCategory;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceClaimDetail;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceClaimSummary;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceOperationsSnapshot;
+import com.claimsflow.operations.application.OperationalFilterOptionsService;
+import com.claimsflow.operations.application.OperationalFilters;
+import com.claimsflow.operations.application.OperationalMetrics;
+import com.claimsflow.operations.application.OperationalMetrics.SlaState;
+import com.claimsflow.operations.application.OperationalQueryService;
 import com.claimsflow.portal.domain.MessageAudience;
 import com.claimsflow.portal.persistence.ClaimMessageJpaRepository;
-import java.time.*;
-import java.util.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +26,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class EvidenceOperationsService {
     private final OperationalQueryService query;
     private final ClaimMessageJpaRepository messages;
+    private final OperationalFilterOptionsService filterOptions;
     private final Clock clock;
 
     public EvidenceOperationsService(
             OperationalQueryService query,
             ClaimMessageJpaRepository messages,
+            OperationalFilterOptionsService filterOptions,
             Clock clock) {
         this.query = query;
         this.messages = messages;
+        this.filterOptions = filterOptions;
         this.clock = clock;
     }
 
@@ -44,7 +59,7 @@ public class EvidenceOperationsService {
 
         return new EvidenceOperationsSnapshot(
             now,
-            query.options(),
+            filterOptions.options(),
             filtered.stream().map(this::summary).toList(),
             selected == null ? null : detail(selected));
     }
@@ -104,8 +119,10 @@ public class EvidenceOperationsService {
     }
 
     private int rank(Claim claim, Instant now) {
-        if (claim.getSlaDeadline().isBefore(now)) return 0;
-        if (!claim.getSlaDeadline().isAfter(now.plus(Duration.ofHours(24)))) return 1;
+        SlaState state = OperationalMetrics.slaState(claim, now);
+        if (state == SlaState.OVERDUE) return 0;
+        if (state == SlaState.AT_RISK) return 1;
+        if (state == SlaState.CLOSED) return 6;
         if (claim.getPriority() == ClaimPriority.CRITICAL) return 2;
         if (claim.getPriority() == ClaimPriority.HIGH) return 3;
         if (claim.getCompletenessPercentage() < 100) return 4;
