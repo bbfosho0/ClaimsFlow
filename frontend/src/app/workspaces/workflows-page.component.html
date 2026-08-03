@@ -1,0 +1,62 @@
+<section class="workspace-page workflow-workspace page-enter">
+  <div class="workflow-topbar">
+    <nav aria-label="Workflow sections"><button class="active">Builder</button><button>Settings</button><button>Versions</button><button>Test & Simulate</button><button>Audit Trail</button></nav>
+    <span>{{ controlStatus() }}</span>
+    <button type="button" (click)="saveDraft()">Save draft</button>
+    <button type="button" (click)="validate()">Validate</button>
+    <button class="primary" type="button" disabled title="Production workflow activation is not connected in this portfolio demo.">Activate</button>
+  </div>
+
+  <div class="figma-workflow-layout">
+    <aside class="workspace-panel component-library">
+      <header><strong>Components</strong></header>
+      <label><span class="sr-only">Search workflow components</span><input placeholder="Search components…" /></label>
+      <section *ngFor="let group of libraryGroups">
+        <h3>{{ group.label }}</h3>
+        <button *ngFor="let item of group.items"><i [attr.data-tone]="item.tone"></i><span><strong>{{ item.title }}</strong><small>{{ item.detail }}</small></span></button>
+      </section>
+    </aside>
+
+    <section class="workspace-panel figma-workflow-canvas">
+      <div class="canvas-toolbar"><span>Zoom 100% · − · +</span><button>Auto Arrange</button></div>
+      <div class="builder-canvas" aria-label="Property claim workflow routing preview">
+        <svg class="workflow-connectors" viewBox="0 0 608 720" aria-hidden="true">
+          <path d="M304 88V118"/><path d="M304 198V238H175V270"/><path d="M304 238H438V270"/>
+          <path d="M175 352V392"/><path d="M438 352V392"/><path d="M175 474V518H304V548"/><path d="M438 474V518H304"/>
+          <path d="M304 630V670"/><path d="M304 670H165V694"/><path d="M304 670H444V694"/>
+        </svg>
+        <span class="branch-pill branch-yes">YES</span><span class="branch-pill branch-no">NO</span>
+        <article *ngFor="let node of nodes; let index = index" class="workflow-node-figma" [attr.data-index]="index" [attr.data-tone]="node.tone" [class.selected]="selectedNode() === index" (click)="selectedNode.set(index)">
+          <i aria-hidden="true"></i><div><span>{{ node.kind }}</span><strong>{{ node.title }}</strong><small>{{ node.detail }}</small></div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="workspace-panel condition-inspector">
+      <header><div><span>ROUTING PREVIEW</span><strong>Evidence ready?</strong><small>Inspect claim context without changing the claim.</small></div></header>
+      <label>Logic Type<select><option>All Conditions (AND)</option></select></label>
+      <h3>CONDITIONS</h3>
+      <div class="condition-row"><span>Claim type</span><small>equals</small><strong>{{ simulationInput()?.claimType || 'PROPERTY' }}</strong></div>
+      <div class="condition-row"><span>Evidence</span><small>completeness</small><strong>{{ simulationInput()?.completenessPercentage ?? 50 }}%</strong></div>
+      <button class="add-condition">+ Add Condition</button>
+      <label>Else Path<select><option>Route to human evidence review</option></select></label>
+      <h3>TEST CONDITION</h3>
+      <div class="test-controls"><select><option>{{ simulationInput()?.status || 'UNDER_REVIEW' }}</option></select><button type="button" (click)="runSimulation()">Run Test</button></div>
+      <div class="matched-result"><strong>MATCHED</strong><span>Local validation · no mutation</span></div>
+    </aside>
+  </div>
+
+  <section class="workspace-panel simulation-mode">
+    <button class="simulation-play" type="button" (click)="runSimulation()" aria-label="Run workflow simulation">▶</button>
+    <div>
+      <span>{{ demoClaim() ? 'GOLDEN JOURNEY CLAIM' : 'STANDARD PROPERTY CLAIM' }}</span>
+      <strong *ngIf="demoClaim() as claim">{{ claim.claimNumber }} · {{ claim.estimatedLoss | currency }}</strong>
+      <strong *ngIf="!demoClaim()">$18,750 · Policy Active</strong>
+      <button type="button" class="load-demo-claim" (click)="loadDemoClaim()" [disabled]="loadingDemo()">{{ loadingDemo() ? 'Loading…' : 'Load demo claim' }}</button>
+      <small *ngIf="demoError()" role="alert">{{ demoError() }}</small>
+    </div>
+    <div class="simulation-progress"><strong>{{ simulationState() === 'passed' ? 'LOCAL SIMULATION PASSED' : 'READY TO SIMULATE' }}</strong><span>{{ simulationState() === 'passed' ? '8 / 8 local steps · no server mutation' : 'Load or run an input' }}</span><i><b *ngFor="let step of simulationSteps"></b></i><span class="sr-only">{{ simulationState() === 'passed' ? 'Local simulation passed' : 'Ready to simulate' }}</span></div>
+    <div class="simulation-insights"><span>INPUT</span><p>Type: {{ simulationInput()?.claimType || 'PROPERTY' }}</p><p>Evidence: {{ simulationInput()?.completenessPercentage ?? 50 }}%</p><p>Priority: {{ simulationInput()?.priority || 'HIGH' }}</p></div>
+    <div class="simulation-metrics"><span>TRUTHFUL BOUNDARY</span><strong>LOCAL <em>ONLY</em></strong><p>Save draft and validation remain local. Production workflow activation is not connected in this portfolio demo.</p></div>
+  </section>
+</section>

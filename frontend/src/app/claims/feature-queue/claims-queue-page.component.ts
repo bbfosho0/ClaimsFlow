@@ -44,6 +44,7 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
   readonly error = signal('');
   readonly density = signal<QueueDensity>('comfortable');
   readonly selectedClaimId = signal('');
+  readonly demoClaimId = signal(this.readSession('claimsflow.demoClaimId'));
   readonly selectedClaim = computed(() => this.data()?.content.find(claim => claim.id === this.selectedClaimId()) ?? this.data()?.content[0] ?? null);
   private filters: ClaimFilters = DEFAULT_FILTERS;
 
@@ -113,6 +114,10 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
     this.selectedClaimId.set(claim.id);
   }
 
+  isGoldenJourney(claim: ClaimSummary): boolean {
+    return Boolean(this.demoClaimId()) && claim.id === this.demoClaimId();
+  }
+
   label = humanizeEnum;
   sla = formatSla;
   priorityTone = priorityTone;
@@ -145,7 +150,8 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
       next: value => {
         this.data.set(value);
         if (!value.content.some(claim => claim.id === this.selectedClaimId())) {
-          this.selectedClaimId.set(value.content[0]?.id ?? '');
+          const demoClaim = value.content.find(claim => this.isGoldenJourney(claim));
+          this.selectedClaimId.set(demoClaim?.id ?? value.content[0]?.id ?? '');
         }
         this.loading.set(false);
       },
@@ -154,5 +160,13 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       },
     });
+  }
+
+  private readSession(key: string): string {
+    try {
+      return globalThis.sessionStorage?.getItem(key) ?? '';
+    } catch {
+      return '';
+    }
   }
 }

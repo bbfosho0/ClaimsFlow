@@ -14,6 +14,21 @@
   <div *ngIf="loading()" class="panel loading-state" role="status">Loading operational signals…</div>
   <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
 
+  <section *ngIf="goldenClaim() as claim" class="panel golden-journey-summary" data-tour-target="manager-golden-journey">
+    <div>
+      <p class="eyebrow">GOLDEN JOURNEY / LIVE BACKEND CLAIM</p>
+      <h2>{{ claim.claimNumber }} · {{ claim.claimantName }}</h2>
+      <p>The same reserved claim submitted in the claimant portal and handled by Jordan Lee is now visible in Manager operations.</p>
+    </div>
+    <dl>
+      <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
+      <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
+      <div><dt>Evidence</dt><dd>{{ claim.completenessPercentage }}%</dd></div>
+      <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+    </dl>
+    <a class="button secondary" [routerLink]="['/app/claims', claim.id]">Inspect claim →</a>
+  </section>
+
   <ng-container *ngIf="data() as dashboard">
     <div class="command-layout">
       <section class="priority-command" data-tour-target="priority-command" aria-labelledby="priority-command-title">
