@@ -10,6 +10,7 @@ import com.claimsflow.claim.domain.Claim;
 import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.operations.api.OperationalResponses;
+import com.claimsflow.operations.api.OperationalResponses.OperationalFilterOptions;
 import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalQueryService;
@@ -81,10 +82,11 @@ class TeamOperationsServiceTest {
             NOW.minus(Duration.ofHours(1)),
             jordan,
             100);
+        OperationalFilterOptions options = OperationalResponses.options(List.of(alex, jordan));
 
         when(query.find(filters())).thenReturn(List.of(overdue, atRisk, current, resolvedWithin, resolvedLate));
         when(adjusters.findByActiveTrueOrderByDisplayNameAsc()).thenReturn(List.of(alex, jordan));
-        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of(alex, jordan)));
+        when(filterOptions.options()).thenReturn(options);
 
         TeamOperationsSnapshot snapshot = service.snapshot(filters());
 
@@ -140,10 +142,11 @@ class TeamOperationsServiceTest {
             null,
             alex,
             100);
+        OperationalFilterOptions options = OperationalResponses.options(List.of(alex, jordan));
 
         when(query.find(selected)).thenReturn(List.of(current));
         when(adjusters.findByActiveTrueOrderByDisplayNameAsc()).thenReturn(List.of(alex, jordan));
-        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of(alex, jordan)));
+        when(filterOptions.options()).thenReturn(options);
 
         TeamOperationsSnapshot snapshot = service.snapshot(selected);
 
