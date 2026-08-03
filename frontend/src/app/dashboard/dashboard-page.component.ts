@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
-import { ApiError } from '../core/api/api-error';
+import { OperationalDataStore } from '../core/operational-data/operational-data.store';
 import { ClaimDetail } from '../shared/models/claim.models';
 import { DashboardSnapshot } from '../shared/models/dashboard.models';
+import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
+import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
+import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
 import { formatSla, humanizeEnum } from '../shared/presentation/claim-presentation';
 import { CommandFieldComponent } from '../shared/visualizations/command-field.component';
-import { DashboardService } from './dashboard.service';
 
 interface InterventionItem {
   tone: 'critical' | 'warning' | 'live' | 'advisory';
@@ -19,19 +21,29 @@ interface InterventionItem {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, CommandFieldComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    CommandFieldComponent,
+    AnimatedNumberComponent,
+    ChangedValueDirective,
+    OperationalRefreshStatusComponent,
+  ],
   templateUrl: './dashboard-page.component.html',
   styleUrls: ['./dashboard-page.component.css', './dashboard-golden-journey.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardPageComponent implements OnInit {
-  private readonly service = inject(DashboardService);
+export class DashboardPageComponent implements OnInit, OnDestroy {
+  private readonly operational = inject(OperationalDataStore);
   private readonly claims = inject(ClaimsApiService);
   private readonly route = inject(ActivatedRoute);
-  readonly data = signal<DashboardSnapshot | null>(null);
+  private releaseDashboard: (() => void) | null = null;
+
+  readonly state = this.operational.dashboard;
+  readonly data = computed(() => this.state().value);
+  readonly loading = computed(() => this.state().loading && !this.state().value);
+  readonly error = computed(() => !this.state().value ? this.state().error : '');
   readonly goldenClaim = signal<ClaimDetail | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal('');
   readonly todayLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     month: 'long',
@@ -42,21 +54,32 @@ export class DashboardPageComponent implements OnInit {
   sla = formatSla;
 
   ngOnInit(): void {
-    this.service.load().subscribe({
-      next: value => {
-        this.data.set(value);
-        this.loading.set(false);
-      },
-      error: (error: unknown) => {
-        this.error.set(error instanceof ApiError ? error.message : 'Dashboard data is unavailable.');
-        this.loading.set(false);
-      },
-    });
+    this.releaseDashboard = this.operational.activateDashboard();
     this.loadGoldenClaim();
   }
 
+  ngOnDestroy(): void {
+    this.releaseDashboard?.();
+  }
+
+  refresh(): void {
+    this.operational.refresh('dashboard');
+  }
+
   activeSignals(snapshot: DashboardSnapshot): number {
-    return Math.min(17, snapshot.highPriorityClaims + snapshot.slaRiskClaims + snapshot.unassignedClaims + snapshot.incompleteClaims);
+    return Math.min(17, snapshot.signalCounts.reduce((sum, item) => sum + item.count, 0));
+  }
+
+  systemTone(snapshot: DashboardSnapshot): 'critical' | 'warning' | 'healthy' {
+    if (snapshot.overdueClaims > 0) return 'critical';
+    if (snapshot.slaRiskClaims > 0) return 'warning';
+    return 'healthy';
+  }
+
+  systemLabel(snapshot: DashboardSnapshot): string {
+    if (snapshot.overdueClaims > 0) return `${snapshot.overdueClaims} overdue SLA${snapshot.overdueClaims === 1 ? '' : 's'}`;
+    if (snapshot.slaRiskClaims > 0) return `${snapshot.slaRiskClaims} SLA${snapshot.slaRiskClaims === 1 ? '' : 's'} at risk`;
+    return 'Portfolio stable';
   }
 
   interventions(snapshot: DashboardSnapshot): readonly InterventionItem[] {
@@ -64,14 +87,14 @@ export class DashboardPageComponent implements OnInit {
       {
         tone: 'critical',
         label: 'SLA intervention required',
-        detail: 'Claims with less than 24 hours before deadline.',
-        count: snapshot.slaRiskClaims,
+        detail: `${snapshot.overdueClaims} overdue and ${snapshot.slaRiskClaims} due within 24 hours.`,
+        count: snapshot.slaRiskClaims + snapshot.overdueClaims,
         queryParams: { sort: 'slaDeadline,asc' },
       },
       {
         tone: 'warning',
         label: 'Evidence incomplete',
-        detail: 'Review-blocking documentation is outstanding.',
+        detail: 'Review-blocking evidence categories remain outstanding.',
         count: snapshot.incompleteClaims,
         queryParams: { sort: 'completenessPercentage,asc' },
       },
@@ -85,7 +108,7 @@ export class DashboardPageComponent implements OnInit {
       {
         tone: 'advisory',
         label: 'High-priority review',
-        detail: 'Decision support is available for urgent work.',
+        detail: 'Critical and high-priority claims need focused review.',
         count: snapshot.highPriorityClaims,
         queryParams: { priority: 'HIGH' },
       },
@@ -97,9 +120,9 @@ export class DashboardPageComponent implements OnInit {
     return Math.min(100, Math.round((active / capacity) * 100));
   }
 
-  portfolioCompleteness(snapshot: DashboardSnapshot): number {
-    if (!snapshot.openClaims) return 100;
-    return Math.max(0, Math.round(((snapshot.openClaims - snapshot.incompleteClaims) / snapshot.openClaims) * 100));
+  percent(value: number, total: number): number {
+    if (!total) return 0;
+    return Math.min(100, Math.round((value / total) * 100));
   }
 
   private loadGoldenClaim(): void {
