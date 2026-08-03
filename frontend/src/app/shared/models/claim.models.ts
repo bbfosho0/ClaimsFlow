@@ -10,7 +10,7 @@ export interface Adjuster {
   displayName: string;
   email: string;
   role: string;
-  team: string;
+  team?: string;
   workloadCapacity: number;
 }
 
@@ -26,15 +26,15 @@ export interface ClaimSummary {
   claimNumber: string;
   claimantName: string;
   claimType: ClaimType;
-  region: ClaimRegion;
+  region?: ClaimRegion;
   priority: ClaimPriority;
   status: ClaimStatus;
   assignedAdjusterName?: string;
   assignedTeam?: string;
   slaDeadline: string;
   completenessPercentage: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ClaimPage {
@@ -51,7 +51,7 @@ export interface ClaimDetail {
   claimantName: string;
   claimantEmail: string;
   claimType: ClaimType;
-  region: ClaimRegion;
+  region?: ClaimRegion;
   incidentDate: string;
   estimatedLoss: number;
   description: string;
