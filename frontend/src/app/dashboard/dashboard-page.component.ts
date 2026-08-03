@@ -4,12 +4,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { OperationalDataStore } from '../core/operational-data/operational-data.store';
 import { MetricCardComponent } from '../shared/metrics/metric-card.component';
-import { MetricDeltaChange, MetricStripSegment } from '../shared/metrics/metric-card.models';
+import { MetricDeltaChange, MetricSparkPoint, MetricStripSegment } from '../shared/metrics/metric-card.models';
 import { MetricRadialComponent } from '../shared/metrics/metric-radial.component';
 import { MetricSparklineComponent } from '../shared/metrics/metric-sparkline.component';
 import { MetricStackedStripComponent } from '../shared/metrics/metric-stacked-strip.component';
 import { ClaimDetail } from '../shared/models/claim.models';
-import { DashboardDistributionPoint, DashboardSnapshot } from '../shared/models/dashboard.models';
+import { DashboardSnapshot } from '../shared/models/dashboard.models';
 import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
 import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
 import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
@@ -76,32 +76,16 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
     if (!snapshot) return [];
     return [
       {
-        key: 'active',
-        label: 'Active inventory',
-        tone: 'brand',
-        area: true,
-        points: (snapshot.openPortfolioTrend ?? []).map(point => ({
-          label: this.dateLabel(point.date),
-          value: point.value,
-        })),
+        key: 'active', label: 'Active inventory', tone: 'brand', area: true,
+        points: (snapshot.openPortfolioTrend ?? []).map(point => ({ label: this.dateLabel(point.date), value: point.value })),
       },
       {
-        key: 'created',
-        label: 'Created',
-        tone: 'live',
-        points: (snapshot.createdTrend ?? []).map(point => ({
-          label: this.dateLabel(point.date),
-          value: point.value,
-        })),
+        key: 'created', label: 'Created', tone: 'live',
+        points: (snapshot.createdTrend ?? []).map(point => ({ label: this.dateLabel(point.date), value: point.value })),
       },
       {
-        key: 'resolved',
-        label: 'Resolved',
-        tone: 'healthy',
-        points: (snapshot.resolvedTrend ?? []).map(point => ({
-          label: this.dateLabel(point.date),
-          value: point.value,
-        })),
+        key: 'resolved', label: 'Resolved', tone: 'healthy',
+        points: (snapshot.resolvedTrend ?? []).map(point => ({ label: this.dateLabel(point.date), value: point.value })),
       },
     ];
   });
@@ -129,12 +113,8 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   }
 
   systemLabel(snapshot: DashboardSnapshot): string {
-    if (snapshot.overdueClaims > 0) {
-      return `${snapshot.overdueClaims} overdue ${snapshot.overdueClaims === 1 ? 'claim' : 'claims'}`;
-    }
-    if (snapshot.slaRiskClaims > 0) {
-      return `${snapshot.slaRiskClaims} ${snapshot.slaRiskClaims === 1 ? 'deadline' : 'deadlines'} due <24h`;
-    }
+    if (snapshot.overdueClaims > 0) return `${snapshot.overdueClaims} overdue ${snapshot.overdueClaims === 1 ? 'claim' : 'claims'}`;
+    if (snapshot.slaRiskClaims > 0) return `${snapshot.slaRiskClaims} ${snapshot.slaRiskClaims === 1 ? 'deadline' : 'deadlines'} due <24h`;
     return 'Portfolio stable';
   }
 
@@ -142,43 +122,21 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
     return snapshot.comparison?.[key] ?? null;
   }
 
+  openSpark(snapshot: DashboardSnapshot): readonly MetricSparkPoint[] {
+    return (snapshot.openPortfolioTrend ?? []).map(point => ({ label: point.date, value: point.value }));
+  }
+
+  exposureSpark(snapshot: DashboardSnapshot): readonly MetricSparkPoint[] {
+    return (snapshot.exposureTrend ?? []).map(point => ({ label: point.date, value: point.amount }));
+  }
+
   interventions(snapshot: DashboardSnapshot): readonly InterventionItem[] {
     return [
-      {
-        tone: 'critical',
-        label: 'Overdue claims',
-        detail: 'Open claims have passed their service-level deadline.',
-        count: snapshot.overdueClaims,
-        queryParams: { sort: 'slaDeadline,asc' },
-      },
-      {
-        tone: 'warning',
-        label: 'SLA deadlines at risk',
-        detail: 'Open claims are due within the next 24 hours.',
-        count: snapshot.slaRiskClaims,
-        queryParams: { sort: 'slaDeadline,asc' },
-      },
-      {
-        tone: 'advisory',
-        label: 'Evidence blockers',
-        detail: 'Review-blocking evidence categories remain outstanding.',
-        count: snapshot.incompleteClaims,
-        queryParams: { sort: 'completenessPercentage,asc' },
-      },
-      {
-        tone: 'live',
-        label: 'Ownership unresolved',
-        detail: 'Unassigned claims need an active reviewer.',
-        count: snapshot.unassignedClaims,
-        queryParams: { assignment: 'unassigned' },
-      },
-      {
-        tone: 'advisory',
-        label: 'High-priority review',
-        detail: 'Critical and high-priority claims need focused review.',
-        count: snapshot.highPriorityClaims,
-        queryParams: { priority: 'HIGH' },
-      },
+      { tone: 'critical', label: 'Overdue claims', detail: 'Open claims have passed their service-level deadline.', count: snapshot.overdueClaims, queryParams: { sort: 'slaDeadline,asc' } },
+      { tone: 'warning', label: 'SLA deadlines at risk', detail: 'Open claims are due within the next 24 hours.', count: snapshot.slaRiskClaims, queryParams: { sort: 'slaDeadline,asc' } },
+      { tone: 'advisory', label: 'Evidence blockers', detail: 'Review-blocking evidence categories remain outstanding.', count: snapshot.incompleteClaims, queryParams: { sort: 'completenessPercentage,asc' } },
+      { tone: 'live', label: 'Ownership unresolved', detail: 'Unassigned claims need an active reviewer.', count: snapshot.unassignedClaims, queryParams: { assignment: 'unassigned' } },
+      { tone: 'advisory', label: 'High-priority review', detail: 'Critical and high-priority claims need focused review.', count: snapshot.highPriorityClaims, queryParams: { priority: 'HIGH' } },
     ].filter(item => item.count > 0);
   }
 
@@ -190,30 +148,15 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   }
 
   slaProfile(snapshot: DashboardSnapshot): readonly StackedChartSegment[] {
-    return (snapshot.slaDeadlineBands ?? []).map(point => ({
-      key: point.key,
-      label: point.label,
-      value: point.count,
-      tone: this.slaBandTone(point.key),
-    }));
+    return (snapshot.slaDeadlineBands ?? []).map(point => ({ key: point.key, label: point.label, value: point.count, tone: this.slaBandTone(point.key) }));
   }
 
   prioritySegments(snapshot: DashboardSnapshot): readonly StackedChartSegment[] {
-    return (snapshot.priorityDistribution ?? []).map(point => ({
-      key: point.key,
-      label: point.label,
-      value: point.count,
-      tone: this.priorityTone(point.key),
-    }));
+    return (snapshot.priorityDistribution ?? []).map(point => ({ key: point.key, label: point.label, value: point.count, tone: this.priorityTone(point.key) }));
   }
 
   evidenceBars(snapshot: DashboardSnapshot): readonly BarChartDatum[] {
-    return (snapshot.evidenceReadinessBands ?? []).map(point => ({
-      label: point.label,
-      value: point.count,
-      detail: `${point.percentage}% of open claims`,
-      tone: this.evidenceTone(point.key),
-    }));
+    return (snapshot.evidenceReadinessBands ?? []).map(point => ({ label: point.label, value: point.count, detail: `${point.percentage}% of open claims`, tone: this.evidenceTone(point.key) }));
   }
 
   capacityBars(snapshot: DashboardSnapshot): readonly BarChartDatum[] {
@@ -227,8 +170,7 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   }
 
   utilization(active: number, capacity: number): number {
-    if (!capacity) return 0;
-    return Math.min(100, Math.round((active / capacity) * 100));
+    return capacity ? Math.min(100, Math.round((active / capacity) * 100)) : 0;
   }
 
   resolvedThisPeriod(snapshot: DashboardSnapshot): number {
@@ -243,10 +185,6 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
     return snapshot.comparison?.previousAsOf
       ? `As of ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${snapshot.comparison.previousAsOf}T00:00:00Z`))}`
       : 'Prior period';
-  }
-
-  trackDistribution(_: number, point: DashboardDistributionPoint): string {
-    return point.key;
   }
 
   private slaBandTone(key: string): StackedChartSegment['tone'] {
@@ -271,24 +209,16 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
   }
 
   private dateLabel(value: string): string {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-      .format(new Date(`${value}T00:00:00Z`));
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00Z`));
   }
 
   private loadGoldenClaim(): void {
     const claimId = this.route.snapshot.queryParamMap.get('claimId') || this.readSession('claimsflow.demoClaimId');
     if (!claimId) return;
-    this.claims.get(claimId).subscribe({
-      next: claim => this.goldenClaim.set(claim),
-      error: () => this.goldenClaim.set(null),
-    });
+    this.claims.get(claimId).subscribe({ next: claim => this.goldenClaim.set(claim), error: () => this.goldenClaim.set(null) });
   }
 
   private readSession(key: string): string {
-    try {
-      return globalThis.sessionStorage?.getItem(key) ?? '';
-    } catch {
-      return '';
-    }
+    try { return globalThis.sessionStorage?.getItem(key) ?? ''; } catch { return ''; }
   }
 }
