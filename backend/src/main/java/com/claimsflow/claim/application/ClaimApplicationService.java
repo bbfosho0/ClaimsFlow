@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class ClaimApplicationService {
     private final PriorityPolicy priority = new PriorityPolicy();
     private final ClaimTransitionPolicy transitions = new ClaimTransitionPolicy();
 
+    @Autowired
     public ClaimApplicationService(
             ClaimJpaRepository claims,
             AdjusterService adjusters,
@@ -35,6 +37,13 @@ public class ClaimApplicationService {
         this.adjusters = adjusters;
         this.audit = audit;
         this.clock = clock;
+    }
+
+    public ClaimApplicationService(
+            ClaimJpaRepository claims,
+            AdjusterService adjusters,
+            AuditService audit) {
+        this(claims, adjusters, audit, Clock.systemUTC());
     }
 
     @Transactional
