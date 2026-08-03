@@ -18,7 +18,7 @@
     <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
   </div>
 
-  <div *ngIf="loading()" class="overview-loading" role="status" aria-label="Loading operational portfolio">
+  <div *ngIf="loading()" class="overview-loading grid gap-4 md:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading operational portfolio">
     <app-metric-card *ngFor="let item of [1,2,3,4]" label="Portfolio metric" [loading]="true" variant="hero" />
   </div>
 
@@ -43,7 +43,11 @@
   </section>
 
   <ng-container *ngIf="data() as dashboard">
-    <section class="mv-kpi-grid overview-kpi-grid" aria-label="Portfolio key performance indicators">
+    <section
+      class="mv-kpi-grid overview-kpi-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+      aria-label="Portfolio key performance indicators"
+      cfGsapReveal
+      [gsapRevealStagger]="0.07">
       <app-metric-card
         label="Open claims"
         [value]="dashboard.openClaims"
@@ -59,7 +63,7 @@
           metric-visual
           label="Open claim inventory trend"
           tone="brand"
-          [points]="(dashboard.openPortfolioTrend || []).map(point => ({ label: point.date, value: point.value }))" />
+          [points]="openSpark(dashboard)" />
       </app-metric-card>
 
       <app-metric-card
@@ -77,7 +81,7 @@
           metric-visual
           label="Estimated exposure trend"
           tone="advisory"
-          [points]="(dashboard.exposureTrend || []).map(point => ({ label: point.date, value: point.amount }))" />
+          [points]="exposureSpark(dashboard)" />
       </app-metric-card>
 
       <app-metric-card
@@ -116,7 +120,7 @@
       </app-metric-card>
     </section>
 
-    <section class="mv-dashboard-grid overview-primary-grid">
+    <section class="mv-dashboard-grid overview-primary-grid" cfGsapReveal [gsapRevealDelay]="0.08">
       <app-chart-frame
         class="mv-span-8"
         title="Portfolio pulse"
@@ -138,7 +142,7 @@
           <div><p class="eyebrow">REVIEW NOW</p><h2 id="intervention-title">Intervention queue</h2></div>
           <a routerLink="/app/claims">Open queue →</a>
         </div>
-        <div class="intervention-list">
+        <div class="intervention-list" cfAutoAnimate>
           <a
             *ngFor="let item of interventions(dashboard); let index = index"
             routerLink="/app/claims"
@@ -202,7 +206,7 @@
           <span class="cf-chip" [attr.data-tone]="state().stale ? 'warning' : 'live'">{{ state().stale ? 'Last valid snapshot' : 'Current snapshot' }}</span>
         </div>
         <div *ngIf="!dashboard.recentActivity.length" class="empty">No activity recorded.</div>
-        <ol class="event-list">
+        <ol class="event-list" cfAutoAnimate>
           <li *ngFor="let item of dashboard.recentActivity">
             <span class="event-marker" aria-hidden="true"></span>
             <div><strong>{{ item.summary }}</strong><small>{{ item.actor }} · {{ item.occurredAt | date:'medium' }}</small></div>
