@@ -26,7 +26,13 @@
     <div class="sidebar-bottom">
       <section class="copilot-card" aria-label="AI Copilot">
         <div class="copilot-heading"><strong>AI Copilot</strong><span>BETA</span></div>
-        <div class="copilot-orb" aria-hidden="true"><i></i><b></b></div>
+        <div class="copilot-orb" aria-hidden="true">
+          @defer (on idle) {
+            <app-copilot-orb />
+          } @placeholder {
+            <i></i><b></b>
+          }
+        </div>
         <strong>Ask Copilot</strong>
         <p>Get insights, summaries, and recommendations.</p>
         <button type="button">Ask a question <span aria-hidden="true">→</span></button>

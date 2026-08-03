@@ -6,12 +6,13 @@ import { filter, startWith } from 'rxjs';
 import { DemoJourneySnapshot } from '../../demo/demo-journey.models';
 import { DemoResetDialogComponent } from '../../demo/demo-reset-dialog.component';
 import { DemoRoleService } from '../demo-role/demo-role.service';
+import { CopilotOrbComponent } from '../effects/copilot-orb.component';
 import { RoleSwitcherComponent } from './role-switcher/role-switcher.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RoleSwitcherComponent, DemoResetDialogComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RoleSwitcherComponent, DemoResetDialogComponent, CopilotOrbComponent],
   templateUrl: './app-shell.component.html',
   styleUrls: ['./app-shell.component.css', './app-shell-role-aware.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
