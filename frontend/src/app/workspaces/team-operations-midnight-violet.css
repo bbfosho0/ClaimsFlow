@@ -1,0 +1,101 @@
+:host { display: block; }
+
+.team-workspace {
+  width: min(100%, 1540px);
+  margin: 0 auto;
+  padding: 28px 32px 56px;
+}
+
+.team-operations-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.team-operations-header h1 {
+  margin: 4px 0 6px;
+  font-size: clamp(30px, 3vw, 40px);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.team-operations-header p:not(.eyebrow) {
+  max-width: 760px;
+  margin: 0;
+  color: var(--cf-color-text-secondary);
+  font-size: 13px;
+}
+
+.team-kpi-grid { margin-top: 18px; }
+
+.team-context-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+.team-context-strip span {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid var(--cf-color-border-hairline);
+  border-radius: 11px;
+  color: var(--cf-color-text-secondary);
+  background: rgb(255 255 255 / .016);
+  font-size: 11px;
+}
+
+.team-context-strip strong {
+  color: var(--cf-color-text-primary);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-operations-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.team-span-4 { grid-column: span 4; }
+.team-span-5 { grid-column: span 5; }
+.team-span-7 { grid-column: span 7; }
+.team-span-8 { grid-column: span 8; }
+.team-span-12 { grid-column: span 12; }
+
+.team-escalations,
+.team-advisories { overflow: hidden; }
+
+.integrity-summary {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.integrity-summary app-metric-radial { width: min(100%, 156px); }
+.integrity-summary strong { color: var(--cf-color-text-primary); font-size: 13px; }
+
+@media (max-width: 1120px) {
+  .team-span-4,
+  .team-span-5,
+  .team-span-7,
+  .team-span-8 { grid-column: span 6; }
+  .team-context-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .team-workspace { padding: 20px 16px 44px; }
+  .team-operations-header { display: grid; }
+  .team-span-4,
+  .team-span-5,
+  .team-span-7,
+  .team-span-8,
+  .team-span-12 { grid-column: 1 / -1; }
+  .team-context-strip { grid-template-columns: 1fr; }
+}
