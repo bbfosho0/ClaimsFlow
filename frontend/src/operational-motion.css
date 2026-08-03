@@ -1,3 +1,5 @@
+@import url('./app/claims/feature-queue/claims-queue-operational.css');
+
 :root {
   --cf-duration-state: 220ms;
   --cf-duration-highlight: 1200ms;
