@@ -17,6 +17,7 @@ import {
 
 const POLL_INTERVAL_MS = 45_000;
 const CACHE_FRESH_MS = 15_000;
+const CHANGE_HIGHLIGHT_MS = 1_200;
 
 function emptyResource<T>(): OperationalResource<T> {
   return {
@@ -48,6 +49,7 @@ export class OperationalDataStore implements OnDestroy {
   private readonly active = new Map<OperationalFamily, number>();
   private readonly dirty = new Set<OperationalFamily>();
   private readonly requests = new Map<OperationalFamily, Subscription>();
+  private readonly highlightTimers = new Map<OperationalFamily, ReturnType<typeof setTimeout>>();
   private queueFilters: ClaimFilters | null = null;
   private analyticsFilters: OperationalFilters = DEFAULT_OPERATIONAL_FILTERS;
   private teamFilters: OperationalFilters = DEFAULT_OPERATIONAL_FILTERS;
@@ -115,6 +117,8 @@ export class OperationalDataStore implements OnDestroy {
     this.stopPolling();
     globalThis.document?.removeEventListener('visibilitychange', this.visibilityHandler);
     for (const request of this.requests.values()) request.unsubscribe();
+    for (const timer of this.highlightTimers.values()) clearTimeout(timer);
+    this.highlightTimers.clear();
   }
 
   private activate(family: OperationalFamily): () => void {
@@ -193,10 +197,21 @@ export class OperationalDataStore implements OnDestroy {
 
   private patchChangedIds(family: OperationalFamily, ids: readonly string[]): void {
     if (!ids.length) return;
+    const unique = Array.from(new Set(ids));
     this.updateState(family, state => ({
       ...state,
-      changedClaimIds: Array.from(new Set([...state.changedClaimIds, ...ids])),
+      changedClaimIds: Array.from(new Set([...state.changedClaimIds, ...unique])),
     }));
+
+    const previousTimer = this.highlightTimers.get(family);
+    if (previousTimer) clearTimeout(previousTimer);
+    this.highlightTimers.set(family, setTimeout(() => {
+      this.updateState(family, state => ({
+        ...state,
+        changedClaimIds: state.changedClaimIds.filter(id => !unique.includes(id)),
+      }));
+      this.highlightTimers.delete(family);
+    }, CHANGE_HIGHLIGHT_MS));
   }
 
   private readState(family: OperationalFamily): OperationalResource<unknown> {
