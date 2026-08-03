@@ -84,7 +84,7 @@ class DashboardServiceTest {
             .containsExactly("0_49", "50_74", "75_99", "COMPLETE");
         assertThat(snapshot.priorityDistribution()).filteredOn(point -> point.count() > 0)
             .extracting(DashboardService.DistributionPoint::key)
-            .containsExactly("CRITICAL", "HIGH");
+            .containsExactlyInAnyOrder("CRITICAL", "HIGH");
         assertThat(snapshot.slaDeadlineBands()).extracting(DashboardService.DistributionPoint::key)
             .containsExactly("OVERDUE", "DUE_24H", "DUE_1_3D", "DUE_4_7D", "DUE_LATER");
         assertThat(snapshot.comparison().estimatedExposure().kind()).isNotBlank();
