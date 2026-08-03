@@ -10,7 +10,7 @@ permissions:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16-alpine
@@ -80,91 +80,56 @@ jobs:
           tail -n 200 /tmp/claimsflow-ng.log
           exit 1
 
-      - name: Reset deterministic golden journey
+      - name: Capture reactive employer journey
         shell: bash
+        working-directory: frontend
+        env:
+          BASE_URL: http://127.0.0.1:4200
+          OUTPUT_DIRECTORY: visual-qa
         run: |
-          RESET_JSON="$(curl --fail --silent --show-error -X POST http://127.0.0.1:4200/api/demo/reset)"
-          CLAIM_ID="$(node -e "const value=JSON.parse(process.argv[1]); if(!value.claimId) process.exit(1); process.stdout.write(value.claimId)" "$RESET_JSON")"
-          ADJUSTER_ID="$(node -e "const value=JSON.parse(process.argv[1]); if(!value.adjusterId) process.exit(1); process.stdout.write(value.adjusterId)" "$RESET_JSON")"
-          echo "CLAIM_ID=$CLAIM_ID" >> "$GITHUB_ENV"
-          echo "ADJUSTER_ID=$ADJUSTER_ID" >> "$GITHUB_ENV"
-          echo "Created visual-QA claim $CLAIM_ID assigned to $ADJUSTER_ID"
-
-      - name: Capture desktop golden journey and premium routes
-        shell: bash
-        run: |
-          mkdir -p visual-qa
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           if [ -z "$CHROME" ]; then
             echo "Chrome executable not found"
             exit 1
           fi
-
-          capture() {
-            local name="$1"
-            local url="$2"
-            "$CHROME" \
-              --headless=new \
-              --no-sandbox \
-              --disable-gpu \
-              --hide-scrollbars \
-              --force-device-scale-factor=1 \
-              --window-size=1440,1180 \
-              --virtual-time-budget=6000 \
-              --screenshot="visual-qa/${name}-1440x1180.png" \
-              "$url"
-          }
-
-          capture tour "http://127.0.0.1:4200/tour"
-          capture claimant-portal "http://127.0.0.1:4200/portal/claims/${CLAIM_ID}"
-          capture adjuster-claim "http://127.0.0.1:4200/app/claims/${CLAIM_ID}?role=adjuster"
-          capture manager-dashboard "http://127.0.0.1:4200/app/dashboard?role=manager&claimId=${CLAIM_ID}"
-          capture manager-queue "http://127.0.0.1:4200/app/claims?role=manager&claimId=${CLAIM_ID}"
-          capture administrator-workflows "http://127.0.0.1:4200/app/workflows?role=admin&claimId=${CLAIM_ID}"
-          capture analytics "http://127.0.0.1:4200/app/analytics?role=manager"
-          capture documents "http://127.0.0.1:4200/app/documents?role=adjuster"
-          capture team-ops "http://127.0.0.1:4200/app/team-ops?role=manager"
-
-      - name: Capture mobile claimant and employee surfaces
-        shell: bash
-        run: |
-          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-
-          capture_mobile() {
-            local name="$1"
-            local url="$2"
-            "$CHROME" \
-              --headless=new \
-              --no-sandbox \
-              --disable-gpu \
-              --hide-scrollbars \
-              --force-device-scale-factor=1 \
-              --window-size=390,844 \
-              --virtual-time-budget=6000 \
-              --screenshot="visual-qa/${name}-mobile-390x844.png" \
-              "$url"
-          }
-
-          capture_mobile tour "http://127.0.0.1:4200/tour"
-          capture_mobile claimant-portal "http://127.0.0.1:4200/portal/claims/${CLAIM_ID}"
-          capture_mobile adjuster-claim "http://127.0.0.1:4200/app/claims/${CLAIM_ID}?role=adjuster"
-          capture_mobile manager-dashboard "http://127.0.0.1:4200/app/dashboard?role=manager&claimId=${CLAIM_ID}"
+          CHROME_EXECUTABLE="$CHROME" node scripts/capture-operational-visual-qa.mjs
 
       - name: Validate screenshot set
         shell: bash
+        working-directory: frontend
         run: |
           count="$(find visual-qa -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')"
-          test "$count" -eq 13
-          test -s visual-qa/claimant-portal-1440x1180.png
-          test -s visual-qa/administrator-workflows-1440x1180.png
-          test -s visual-qa/manager-dashboard-mobile-390x844.png
-          echo "Validated $count rendered screenshots"
+          test "$count" -eq 18
+          expected=(
+            tour-1440x1180.png
+            claimant-portal-1440x1180.png
+            adjuster-claim-1440x1180.png
+            manager-dashboard-baseline-1440x1180.png
+            manager-dashboard-after-evidence-1440x1180.png
+            manager-dashboard-stale-1440x1180.png
+            manager-dashboard-reduced-motion-1440x1180.png
+            manager-queue-sla-filtered-1440x1180.png
+            analytics-default-1440x1180.png
+            analytics-west-filtered-1440x1180.png
+            team-operations-default-1440x1180.png
+            team-operations-filtered-1440x1180.png
+            evidence-operations-1440x1180.png
+            evidence-operations-after-update-1440x1180.png
+            administrator-workflows-1440x1180.png
+            claimant-portal-mobile-390x844.png
+            manager-dashboard-mobile-390x844.png
+            evidence-operations-mobile-390x844.png
+          )
+          for file in "${expected[@]}"; do
+            test -s "visual-qa/$file"
+          done
+          echo "Validated $count rendered operational screenshots"
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: claimsflow-role-aware-visual-qa
-          path: visual-qa/*.png
+          name: claimsflow-operational-visual-qa
+          path: frontend/visual-qa/*.png
           if-no-files-found: error
           retention-days: 5
 
