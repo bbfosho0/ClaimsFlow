@@ -18,6 +18,9 @@ export class TourControllerComponent implements OnInit, OnDestroy {
   readonly orchestrator = inject(TourOrchestratorService);
   private readonly subscription = new Subscription();
   private highlighted?: HTMLElement;
+  private highlightTimer?: number;
+  private highlightAttempt = 0;
+  private readonly maxHighlightAttempts = 50;
 
   readonly current = signal<TourStep | null>(null);
   readonly claimId = signal('');
@@ -31,12 +34,16 @@ export class TourControllerComponent implements OnInit, OnDestroy {
       this.claimId.set(params.get('claimId') ?? this.orchestrator.restore()?.claimId ?? '');
       this.expanded.set(false);
       this.collapsed.set(false);
-      setTimeout(() => this.highlight(step));
+      this.cancelHighlightSearch();
+      this.clearHighlight();
+      this.highlightAttempt = 0;
+      this.scheduleHighlight(step);
     }));
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this.cancelHighlightSearch();
     this.clearHighlight();
   }
 
@@ -67,11 +74,20 @@ export class TourControllerComponent implements OnInit, OnDestroy {
     if (event.key === 'ArrowLeft') this.previous();
   }
 
-  private highlight(step: TourStep | null): void {
-    this.clearHighlight();
+  private scheduleHighlight(step: TourStep | null): void {
     if (!step || step.route(this.claimId()) === '/tour') return;
+    const delay = this.highlightAttempt === 0 ? 0 : 100;
+    this.highlightTimer = globalThis.setTimeout(() => {
+      this.highlightTimer = undefined;
+      if (this.tryHighlight(step)) return;
+      this.highlightAttempt += 1;
+      if (this.highlightAttempt < this.maxHighlightAttempts) this.scheduleHighlight(step);
+    }, delay);
+  }
+
+  private tryHighlight(step: TourStep): boolean {
     const target = document.querySelector<HTMLElement>(`[data-tour-target="${step.target}"]`);
-    if (!target) return;
+    if (!target) return false;
 
     target.dataset['tourHighlighted'] = 'true';
     target.style.position = target.style.position || 'relative';
@@ -85,6 +101,13 @@ export class TourControllerComponent implements OnInit, OnDestroy {
       ? globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
       : false;
     target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+    return true;
+  }
+
+  private cancelHighlightSearch(): void {
+    if (this.highlightTimer === undefined) return;
+    clearTimeout(this.highlightTimer);
+    this.highlightTimer = undefined;
   }
 
   private clearHighlight(): void {
