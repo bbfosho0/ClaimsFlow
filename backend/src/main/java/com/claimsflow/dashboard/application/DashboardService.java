@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +134,8 @@ public class DashboardService {
             resolvedThisPeriod,
             comparison,
             openPortfolioTrend(all, now),
+            eventTrend(all, now, Claim::getCreatedAt),
+            eventTrend(all, now, Claim::getResolvedAt),
             exposureTrend(all, now),
             slaPressureTrend(all, now),
             evidenceReadinessBands(open),
@@ -149,6 +154,23 @@ public class DashboardService {
                 Instant asOf = asOf(date, end, now);
                 return new TimePoint(date, claims.stream().filter(claim -> isActiveAt(claim, asOf)).count());
             })
+            .toList();
+    }
+
+    private List<TimePoint> eventTrend(
+            List<Claim> claims,
+            Instant now,
+            Function<Claim, Instant> timestamp) {
+        LocalDate end = LocalDate.ofInstant(now, ZoneOffset.UTC);
+        LocalDate start = end.minusDays(29);
+        Map<LocalDate, Long> counts = claims.stream()
+            .map(timestamp)
+            .filter(value -> value != null && !value.isAfter(now))
+            .map(value -> LocalDate.ofInstant(value, ZoneOffset.UTC))
+            .filter(date -> !date.isBefore(start) && !date.isAfter(end))
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        return start.datesUntil(end.plusDays(1))
+            .map(date -> new TimePoint(date, counts.getOrDefault(date, 0L)))
             .toList();
     }
 
@@ -199,7 +221,7 @@ public class DashboardService {
     private List<DistributionPoint> priorityDistribution(List<Claim> claims) {
         Map<ClaimPriority, Long> counts = new EnumMap<>(ClaimPriority.class);
         for (Claim claim : claims) counts.merge(claim.getPriority(), 1L, Long::sum);
-        return List.of(ClaimPriority.values()).stream()
+        return Arrays.stream(ClaimPriority.values())
             .map(priority -> new DistributionPoint(
                 priority.name(),
                 humanize(priority.name()),
@@ -309,6 +331,8 @@ public class DashboardService {
         long resolvedThisPeriod,
         DashboardComparison comparison,
         List<TimePoint> openPortfolioTrend,
+        List<TimePoint> createdTrend,
+        List<TimePoint> resolvedTrend,
         List<MonetaryTimePoint> exposureTrend,
         List<SlaPressurePoint> slaPressureTrend,
         List<DistributionPoint> evidenceReadinessBands,
