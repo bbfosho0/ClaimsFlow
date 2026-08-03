@@ -9,8 +9,8 @@ import com.claimsflow.demo.api.DemoResponses;
 import com.claimsflow.portal.application.PortalApplicationService;
 import com.claimsflow.portal.domain.MessageAudience;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,24 +23,31 @@ public class DemoJourneyService {
     private final ClaimApplicationService claims;
     private final AdjusterService adjusters;
     private final PortalApplicationService portal;
+    private final OperationalDemoDatasetService dataset;
+    private final Clock clock;
 
     public DemoJourneyService(
             ClaimJpaRepository repository,
             ClaimApplicationService claims,
             AdjusterService adjusters,
-            PortalApplicationService portal) {
+            PortalApplicationService portal,
+            OperationalDemoDatasetService dataset,
+            Clock clock) {
         this.repository = repository;
         this.claims = claims;
         this.adjusters = adjusters;
         this.portal = portal;
+        this.dataset = dataset;
+        this.clock = clock;
     }
 
     @Transactional
     public DemoResponses.DemoJourneySnapshot reset() {
+        dataset.ensureSeeded();
         repository.deleteByClaimantEmail(CLAIMANT_EMAIL);
         repository.flush();
 
-        LocalDate incidentDate = LocalDate.now(ZoneOffset.UTC).minusDays(4);
+        LocalDate incidentDate = LocalDate.now(clock).minusDays(4);
         var claim = claims.create(new CreateClaimCommand(
             "Taylor Reed",
             CLAIMANT_EMAIL,
