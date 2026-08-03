@@ -69,8 +69,9 @@ export function auditText(file, content) {
       report('unsupported-product-claim', number, 'Remove unsupported document-management or messaging capability copy.');
     }
 
-    if (file.startsWith('backend/src/main/java/com/claimsflow/')
-        && /\b(?:Instant\.now|LocalDate\.now|System\.currentTimeMillis)\s*\(/.test(line)) {
+    const usesUninjectedJavaClock = /\b(?:Instant\.now|LocalDate\.now)\s*\(\s*\)/.test(line)
+      || /\bSystem\.currentTimeMillis\s*\(/.test(line);
+    if (file.startsWith('backend/src/main/java/com/claimsflow/') && usesUninjectedJavaClock) {
       report('direct-wall-clock', number, 'Operational backend code must use the injected Clock.');
     }
   }
