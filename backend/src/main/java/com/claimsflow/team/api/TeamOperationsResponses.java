@@ -1,9 +1,13 @@
 package com.claimsflow.team.api;
 
-import com.claimsflow.claim.domain.*;
+import com.claimsflow.claim.domain.ClaimPriority;
+import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.operations.api.OperationalResponses.OperationalFilterOptions;
 import java.time.Instant;
-import java.util.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public final class TeamOperationsResponses {
     private TeamOperationsResponses() {}
@@ -16,7 +20,10 @@ public final class TeamOperationsResponses {
         List<AdjusterWorkload> adjusters,
         List<Escalation> escalations,
         List<Advisory> advisories,
-        IntegrityScore integrity) {}
+        IntegrityScore integrity,
+        List<TeamPriorityMix> teamPriorityMix,
+        List<TeamSlaPerformance> teamSlaPerformance,
+        List<CapacityTrendPoint> capacityTrend) {}
 
     public record TeamKpis(
         long activeClaims,
@@ -33,7 +40,11 @@ public final class TeamOperationsResponses {
         int capacity,
         int utilizationPercentage,
         int evidenceReadinessPercentage,
-        int slaCompliancePercentage) {}
+        int slaCompliancePercentage,
+        long atRiskClaims,
+        long overdueClaims,
+        long highPriorityClaims,
+        Instant nextSlaDeadline) {}
 
     public record AdjusterWorkload(
         UUID adjusterId,
@@ -41,7 +52,17 @@ public final class TeamOperationsResponses {
         String team,
         long activeClaims,
         int capacity,
-        int utilizationPercentage) {}
+        int utilizationPercentage,
+        long atRiskClaims,
+        long overdueClaims,
+        long highPriorityClaims,
+        int evidenceReadinessPercentage,
+        Instant nextSlaDeadline) {}
+
+    public record DistributionPoint(String key, String label, long count, int percentage) {}
+    public record TeamPriorityMix(String team, List<DistributionPoint> segments) {}
+    public record TeamSlaPerformance(String team, Integer compliancePercentage, long resolvedClaims) {}
+    public record CapacityTrendPoint(LocalDate date, int utilizationPercentage) {}
 
     public record Escalation(
         UUID claimId,
