@@ -1,9 +1,15 @@
-import { Signal, computed, signal } from '@angular/core';
+import { Component, Signal, computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { DEMO_ROLES, DemoRoleDefinition, DemoRoleId } from '../demo-role/demo-role.model';
 import { DemoRoleService } from '../demo-role/demo-role.service';
 import { AppShellComponent } from './app-shell.component';
+
+@Component({
+  standalone: true,
+  template: '<p>Route content</p>',
+})
+class RouteStubComponent {}
 
 describe('AppShellComponent', () => {
   const roleState = signal<DemoRoleId>('manager');
@@ -26,7 +32,28 @@ describe('AppShellComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AppShellComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{
+          path: 'app',
+          component: AppShellComponent,
+          children: [
+            {
+              path: 'analytics',
+              component: RouteStubComponent,
+              data: {
+                shellTitle: 'Operational Analytics',
+                shellSubtitle: 'Backend-derived performance, trends, and distributions.',
+              },
+            },
+            {
+              path: 'team-ops',
+              component: RouteStubComponent,
+              data: {
+                shellTitle: 'Team Operations',
+                shellSubtitle: 'Capacity, SLA pressure, and operational integrity.',
+              },
+            },
+          ],
+        }]),
         { provide: DemoRoleService, useValue: fakeRoleService },
       ],
     }).compileComponents();
@@ -106,5 +133,20 @@ describe('AppShellComponent', () => {
     const fixture = render();
 
     expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('Claims Manager');
+  });
+
+  it('updates route context across nested navigations without dereferencing a transient route', async () => {
+    const fixture = render();
+    const router = TestBed.inject(Router);
+
+    await router.navigateByUrl('/app/analytics');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.shellTitle()).toBe('Operational Analytics');
+    expect(fixture.componentInstance.shellSubtitle()).toContain('Backend-derived performance');
+
+    await router.navigateByUrl('/app/team-ops');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.shellTitle()).toBe('Team Operations');
+    expect(fixture.componentInstance.shellSubtitle()).toContain('operational integrity');
   });
 });
