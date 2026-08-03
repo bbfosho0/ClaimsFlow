@@ -1,0 +1,29 @@
+.golden-journey-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-color: rgb(43 227 183 / .3);
+  background:
+    linear-gradient(90deg, rgb(43 227 183 / .08), rgb(66 205 236 / .025)),
+    var(--cf-color-surface-default);
+  box-shadow: inset 3px 0 var(--cf-color-action-primary), var(--cf-shadow-surface);
+}
+.golden-journey-banner > div { display: grid; gap: 4px; }
+.golden-journey-banner strong { font-size: 11px; }
+.golden-journey-banner a { color: var(--cf-color-action-primary); font-size: 9px; font-weight: 850; text-decoration: none; white-space: nowrap; }
+
+tbody tr.golden-journey { background: linear-gradient(90deg, rgb(43 227 183 / .08), transparent 50%); box-shadow: inset 3px 0 var(--cf-color-action-primary); }
+tbody tr.golden-journey:hover { background: linear-gradient(90deg, rgb(43 227 183 / .12), rgb(66 205 236 / .03)); }
+tbody tr.golden-journey td:first-child { position: relative; }
+tbody tr.golden-journey .cf-chip { margin-top: 6px; width: max-content; }
+.claim-card.golden-journey { border-color: rgb(43 227 183 / .34); background: radial-gradient(circle at 100% 0%, rgb(43 227 183 / .1), transparent 40%), var(--cf-color-surface-default); box-shadow: inset 3px 0 var(--cf-color-action-primary); }
+.golden-inspector-note { display: grid; gap: 4px; padding: 11px; border: 1px solid rgb(43 227 183 / .24); border-radius: 10px; color: var(--cf-color-action-primary); background: rgb(43 227 183 / .055); }
+.golden-inspector-note strong { font-size: 9px; }
+.golden-inspector-note span { color: var(--cf-color-text-secondary); font-size: 8px; line-height: 1.45; }
+
+@media (max-width: 680px) {
+  .golden-journey-banner { align-items: flex-start; flex-direction: column; }
+}

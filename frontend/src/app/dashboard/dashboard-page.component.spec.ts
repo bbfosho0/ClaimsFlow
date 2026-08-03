@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { ClaimDetail } from '../shared/models/claim.models';
@@ -33,50 +34,45 @@ const goldenClaim: ClaimDetail = {
   version: 1,
 };
 
+const snapshot = {
+  openClaims: 7,
+  highPriorityClaims: 3,
+  slaRiskClaims: 2,
+  unassignedClaims: 1,
+  incompleteClaims: 4,
+  workload: [{ adjusterId: 'a1', displayName: 'Maya Chen', activeClaims: 5, capacity: 12 }],
+  recentActivity: [{ actor: 'Interview User', actionType: 'CLAIM_CREATED', summary: 'Claim CF-2026-0142 created', occurredAt: '2026-08-02T12:00:00Z' }],
+};
+
 describe('DashboardPageComponent', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
 
-  it('renders portfolio operations and the real golden-journey claim after reset', async () => {
-    sessionStorage.setItem('claimsflow.demoClaimId', 'claim-demo');
+  it('renders portfolio operations and resolves the golden claim from a shareable query parameter', async () => {
     const claims = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['get']);
     claims.get.and.returnValue(of(goldenClaim));
 
     await TestBed.configureTestingModule({
-      imports: [DashboardPageComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'dashboard', component: DashboardPageComponent }]),
         { provide: ClaimsApiService, useValue: claims },
-        {
-          provide: DashboardService,
-          useValue: {
-            load: () => of({
-              openClaims: 7,
-              highPriorityClaims: 3,
-              slaRiskClaims: 2,
-              unassignedClaims: 1,
-              incompleteClaims: 4,
-              workload: [{ adjusterId: 'a1', displayName: 'Maya Chen', activeClaims: 5, capacity: 12 }],
-              recentActivity: [{ actor: 'Interview User', actionType: 'CLAIM_CREATED', summary: 'Claim CF-2026-0142 created', occurredAt: '2026-08-02T12:00:00Z' }],
-            }),
-          },
-        },
+        { provide: DashboardService, useValue: { load: () => of(snapshot) } },
       ],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(DashboardPageComponent);
-    fixture.detectChanges();
-    fixture.detectChanges();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/dashboard?claimId=claim-demo', DashboardPageComponent);
+    harness.detectChanges();
 
     expect(claims.get).toHaveBeenCalledWith('claim-demo');
-    expect(fixture.nativeElement.querySelector('[data-tour-target="manager-golden-journey"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('CLM-2026-DEMO');
-    expect(fixture.nativeElement.textContent).toContain('Taylor Reed');
-    expect(fixture.nativeElement.querySelector('[data-tour-target="priority-command"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.instrument-cell').length).toBe(4);
-    expect(fixture.nativeElement.textContent).toContain('Intervention queue');
-    expect(fixture.nativeElement.textContent).toContain('Flow intelligence');
-    expect(fixture.nativeElement.textContent).toContain('Team capacity');
-    expect(fixture.nativeElement.textContent).toContain('Operational event feed');
+    expect(harness.routeNativeElement?.querySelector('[data-tour-target="manager-golden-journey"]')).not.toBeNull();
+    expect(harness.routeNativeElement?.textContent).toContain('CLM-2026-DEMO');
+    expect(harness.routeNativeElement?.textContent).toContain('Taylor Reed');
+    expect(harness.routeNativeElement?.querySelector('[data-tour-target="priority-command"]')).not.toBeNull();
+    expect(harness.routeNativeElement?.querySelectorAll('.instrument-cell').length).toBe(4);
+    expect(harness.routeNativeElement?.textContent).toContain('Intervention queue');
+    expect(harness.routeNativeElement?.textContent).toContain('Flow intelligence');
+    expect(harness.routeNativeElement?.textContent).toContain('Team capacity');
+    expect(harness.routeNativeElement?.textContent).toContain('Operational event feed');
   });
 });

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { ApiError } from '../core/api/api-error';
 import { ClaimDetail } from '../shared/models/claim.models';
@@ -21,12 +21,13 @@ interface InterventionItem {
   standalone: true,
   imports: [CommonModule, RouterLink, CommandFieldComponent],
   templateUrl: './dashboard-page.component.html',
-  styleUrl: './dashboard-page.component.css',
+  styleUrls: ['./dashboard-page.component.css', './dashboard-golden-journey.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPageComponent implements OnInit {
   private readonly service = inject(DashboardService);
   private readonly claims = inject(ClaimsApiService);
+  private readonly route = inject(ActivatedRoute);
   readonly data = signal<DashboardSnapshot | null>(null);
   readonly goldenClaim = signal<ClaimDetail | null>(null);
   readonly loading = signal(true);
@@ -102,7 +103,7 @@ export class DashboardPageComponent implements OnInit {
   }
 
   private loadGoldenClaim(): void {
-    const claimId = this.readSession('claimsflow.demoClaimId');
+    const claimId = this.route.snapshot.queryParamMap.get('claimId') || this.readSession('claimsflow.demoClaimId');
     if (!claimId) return;
     this.claims.get(claimId).subscribe({
       next: claim => this.goldenClaim.set(claim),

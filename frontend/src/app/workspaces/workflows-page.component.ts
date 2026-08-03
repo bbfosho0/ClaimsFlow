@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { ClaimDetail } from '../shared/models/claim.models';
 
@@ -21,11 +22,12 @@ export interface WorkflowSimulationInput {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './workflows-page.component.html',
-  styleUrl: './workspace-pages.component.css',
+  styleUrls: ['./workspace-pages.component.css', './workflow-golden-journey.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WorkflowsPageComponent {
+export class WorkflowsPageComponent implements OnInit {
   private readonly claims = inject(ClaimsApiService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly selectedNode = signal(1);
   readonly simulationState = signal<'idle' | 'passed'>('idle');
@@ -67,6 +69,11 @@ export class WorkflowsPageComponent {
     { kind: 'ACTION', title: 'Audit Preview', detail: 'Local output only', tone: 'cyan' },
   ];
 
+  ngOnInit(): void {
+    const claimId = this.route.snapshot.queryParamMap.get('claimId');
+    if (claimId) this.loadDemoClaimById(claimId);
+  }
+
   saveDraft(): void {
     this.controlStatus.set('Draft saved locally · no server persistence');
   }
@@ -82,7 +89,18 @@ export class WorkflowsPageComponent {
       this.demoError.set('Reset the demo journey before loading a claim.');
       return;
     }
+    this.loadDemoClaimById(claimId);
+  }
 
+  runSimulation(): void {
+    if (!this.simulationInput()) {
+      this.simulationInput.set({ claimType: 'PROPERTY', estimatedLoss: 18750, completenessPercentage: 50, priority: 'HIGH', status: 'UNDER_REVIEW' });
+    }
+    this.simulationState.set('passed');
+  }
+
+  private loadDemoClaimById(claimId: string): void {
+    this.demoError.set('');
     this.loadingDemo.set(true);
     this.claims.get(claimId).subscribe({
       next: claim => {
@@ -96,13 +114,6 @@ export class WorkflowsPageComponent {
         this.loadingDemo.set(false);
       },
     });
-  }
-
-  runSimulation(): void {
-    if (!this.simulationInput()) {
-      this.simulationInput.set({ claimType: 'PROPERTY', estimatedLoss: 18750, completenessPercentage: 50, priority: 'HIGH', status: 'UNDER_REVIEW' });
-    }
-    this.simulationState.set('passed');
   }
 
   private toSimulationInput(claim: ClaimDetail): WorkflowSimulationInput {

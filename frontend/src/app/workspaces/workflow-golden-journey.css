@@ -1,0 +1,29 @@
+.workflow-topbar button.primary:disabled {
+  color: var(--cf-color-text-muted);
+  border-color: var(--cf-color-border-subtle);
+  background: var(--cf-color-surface-default);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.load-demo-claim {
+  width: max-content;
+  min-height: 30px;
+  margin-top: 7px;
+  padding: 5px 9px;
+  border: 1px solid rgb(43 227 183 / .3);
+  border-radius: 8px;
+  color: var(--cf-color-action-primary);
+  background: rgb(43 227 183 / .06);
+  font-size: 8px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.load-demo-claim:hover:not(:disabled) { border-color: var(--cf-color-action-primary); background: rgb(43 227 183 / .1); }
+.load-demo-claim:disabled { opacity: .55; cursor: wait; }
+.simulation-mode[data-tour-target='admin-routing-preview'] { border-color: rgb(116 107 255 / .25); box-shadow: 0 20px 50px rgb(0 0 0 / .3), 0 0 30px rgb(116 107 255 / .06); }
+.simulation-mode > div:first-of-type small[role='alert'] { display: block; margin-top: 6px; color: var(--cf-color-risk-critical); font-size: 8px; }
+
+@media (max-width: 760px) {
+  .load-demo-claim { width: 100%; justify-content: center; }
+}

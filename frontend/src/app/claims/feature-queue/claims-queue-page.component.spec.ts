@@ -35,11 +35,10 @@ describe('ClaimsQueuePageComponent', () => {
     const statusChip = chips.find(button => button.textContent?.includes('New'));
     statusChip?.click();
 
-    expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { priority: 'HIGH' } }));
+    expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { priority: 'HIGH', claimId: null } }));
   });
 
-  it('selects and labels the reserved claim when it is present in the real queue response', async () => {
-    sessionStorage.setItem('claimsflow.demoClaimId', 'claim-demo');
+  it('selects and labels the reserved claim from a shareable claimId query parameter', async () => {
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list']);
     api.list.and.returnValue(of({
       content: [
@@ -64,7 +63,7 @@ describe('ClaimsQueuePageComponent', () => {
     }).compileComponents();
 
     const harness = await RouterTestingHarness.create();
-    const component = await harness.navigateByUrl('/claims', ClaimsQueuePageComponent);
+    const component = await harness.navigateByUrl('/claims?claimId=claim-demo', ClaimsQueuePageComponent);
     harness.detectChanges();
 
     expect(component.selectedClaim()?.id).toBe('claim-demo');

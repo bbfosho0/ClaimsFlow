@@ -24,7 +24,7 @@ type QueueDensity = 'comfortable' | 'compact';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, StatusBadgeComponent, ProgressIndicatorComponent],
   templateUrl: './claims-queue-page.component.html',
-  styleUrl: './claims-queue-page.component.css',
+  styleUrls: ['./claims-queue-page.component.css', './claims-queue-golden-journey.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
@@ -44,12 +44,15 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
   readonly error = signal('');
   readonly density = signal<QueueDensity>('comfortable');
   readonly selectedClaimId = signal('');
-  readonly demoClaimId = signal(this.readSession('claimsflow.demoClaimId'));
+  readonly demoClaimId = signal(this.route.snapshot.queryParamMap.get('claimId') || this.readSession('claimsflow.demoClaimId'));
   readonly selectedClaim = computed(() => this.data()?.content.find(claim => claim.id === this.selectedClaimId()) ?? this.data()?.content[0] ?? null);
   private filters: ClaimFilters = DEFAULT_FILTERS;
 
   ngOnInit(): void {
     this.subscription.add(this.route.queryParams.subscribe(params => {
+      this.demoClaimId.set(typeof params['claimId'] === 'string' && params['claimId']
+        ? params['claimId']
+        : this.readSession('claimsflow.demoClaimId'));
       this.filters = parseClaimFilters(params);
       this.q.setValue(this.filters.q, { emitEvent: false });
       this.status.setValue(this.filters.status, { emitEvent: false });
@@ -66,19 +69,25 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
   apply(): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: serializeClaimFilters({
-        ...this.filters,
-        q: this.q.value,
-        status: this.status.value,
-        priority: this.priority.value,
-        assignment: this.assignment.value,
-        page: 0,
-      }),
+      queryParams: {
+        ...serializeClaimFilters({
+          ...this.filters,
+          q: this.q.value,
+          status: this.status.value,
+          priority: this.priority.value,
+          assignment: this.assignment.value,
+          page: 0,
+        }),
+        claimId: this.demoClaimId() || null,
+      },
     });
   }
 
   reset(): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { claimId: this.demoClaimId() || null },
+    });
   }
 
   removeFilter(key: FilterKey): void {
@@ -87,7 +96,10 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
     if (key === 'status') next.status = '';
     if (key === 'priority') next.priority = '';
     if (key === 'assignment') next.assignment = '';
-    void this.router.navigate([], { relativeTo: this.route, queryParams: serializeClaimFilters(next) });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...serializeClaimFilters(next), claimId: this.demoClaimId() || null },
+    });
   }
 
   activeFilters(): ReadonlyArray<{ key: FilterKey; label: string }> {
@@ -102,7 +114,7 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
   goTo(page: number): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: serializeClaimFilters({ ...this.filters, page }),
+      queryParams: { ...serializeClaimFilters({ ...this.filters, page }), claimId: this.demoClaimId() || null },
     });
   }
 

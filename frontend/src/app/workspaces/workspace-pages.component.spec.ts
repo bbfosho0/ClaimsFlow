@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ClaimsApiService } from '../claims/data-access/claims-api.service';
 import { ClaimDetail } from '../shared/models/claim.models';
@@ -76,7 +78,7 @@ describe('Midnight Command workspaces', () => {
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['get']);
     await TestBed.configureTestingModule({
       imports: [WorkflowsPageComponent],
-      providers: [{ provide: ClaimsApiService, useValue: api }],
+      providers: [provideRouter([]), { provide: ClaimsApiService, useValue: api }],
     }).compileComponents();
     const fixture = TestBed.createComponent(WorkflowsPageComponent);
     fixture.detectChanges();
@@ -90,13 +92,13 @@ describe('Midnight Command workspaces', () => {
     expect((fixture.nativeElement.querySelector('button.primary') as HTMLButtonElement).disabled).toBeTrue();
   });
 
-  it('loads the real reserved claim into a local routing preview', async () => {
+  it('loads the real reserved claim through the manual session-storage control', async () => {
     sessionStorage.setItem('claimsflow.demoClaimId', 'claim-demo');
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['get']);
     api.get.and.returnValue(of(demoClaim));
     await TestBed.configureTestingModule({
       imports: [WorkflowsPageComponent],
-      providers: [{ provide: ClaimsApiService, useValue: api }],
+      providers: [provideRouter([]), { provide: ClaimsApiService, useValue: api }],
     }).compileComponents();
     const fixture = TestBed.createComponent(WorkflowsPageComponent);
     fixture.detectChanges();
@@ -114,5 +116,24 @@ describe('Midnight Command workspaces', () => {
     });
     expect(fixture.nativeElement.textContent).toContain('CLM-2026-DEMO');
     expect(fixture.nativeElement.textContent).toContain('no server mutation');
+  });
+
+  it('automatically loads the claimId supplied by a shareable administrator tour URL', async () => {
+    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['get']);
+    api.get.and.returnValue(of(demoClaim));
+    await TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: 'workflows', component: WorkflowsPageComponent }]),
+        { provide: ClaimsApiService, useValue: api },
+      ],
+    }).compileComponents();
+
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/workflows?claimId=claim-demo', WorkflowsPageComponent);
+    harness.detectChanges();
+
+    expect(api.get).toHaveBeenCalledWith('claim-demo');
+    expect(component.simulationState()).toBe('passed');
+    expect(harness.routeNativeElement?.textContent).toContain('CLM-2026-DEMO');
   });
 });
