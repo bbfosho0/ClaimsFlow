@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 export type ReasoningNodeKind = 'evidence' | 'rule' | 'recommendation' | 'uncertainty';
@@ -19,6 +20,7 @@ export interface ReasoningFlowEdge {
 @Component({
   selector: 'app-reasoning-flow',
   standalone: true,
+  imports: [CommonModule],
   template: `
     @if (!nodes().length) {
       <div class="reasoning-empty">No reasoning evidence is available.</div>
@@ -71,7 +73,6 @@ export interface ReasoningFlowEdge {
     @media (max-width: 820px) { .reasoning-flow { grid-template-columns: 1fr; } .reasoning-flow > i { transform: rotate(90deg); } }
     @media (prefers-reduced-motion: reduce) { .reasoning-node { transition: none; } .reasoning-node:hover { transform: none; } }
   `],
-  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReasoningFlowComponent {
