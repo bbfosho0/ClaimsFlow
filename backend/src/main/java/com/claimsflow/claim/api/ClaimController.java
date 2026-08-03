@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.data.domain.*;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,11 +23,19 @@ public class ClaimController {
     @GetMapping
     public ClaimResponses.ClaimPage list(
         @RequestParam(required = false) String q,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+        @RequestParam(required = false) ClaimType claimType,
         @RequestParam(required = false) ClaimStatus status,
         @RequestParam(required = false) ClaimPriority priority,
         @RequestParam(required = false) String assignment,
+        @RequestParam(required = false) UUID adjusterId,
+        @RequestParam(required = false) String team,
+        @RequestParam(required = false) ClaimRegion region,
         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ClaimResponses.page(service.list(q, status, priority, assignment, pageable));
+        return ClaimResponses.page(service.list(
+            q, from, to, claimType, status, priority, assignment,
+            adjusterId, team, region, pageable));
     }
 
     @PostMapping
