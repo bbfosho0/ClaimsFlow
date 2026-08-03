@@ -4,9 +4,12 @@ import { OperationalClockService } from './operational-clock.service';
 describe('OperationalClockService', () => {
   let service: OperationalClockService;
   let visibility: DocumentVisibilityState;
+  let now: number;
 
   beforeEach(() => {
     visibility = 'visible';
+    now = 1_000;
+    spyOn(Date, 'now').and.callFake(() => now);
     spyOnProperty(document, 'visibilityState', 'get').and.callFake(() => visibility);
     TestBed.configureTestingModule({});
     service = TestBed.inject(OperationalClockService);
@@ -15,31 +18,34 @@ describe('OperationalClockService', () => {
   afterEach(() => service.ngOnDestroy());
 
   it('updates every 30 seconds while visible', fakeAsync(() => {
-    const initial = service.now();
-    tick(29_999);
-    expect(service.now()).toBe(initial);
+    expect(service.now()).toBe(1_000);
 
+    now = 30_999;
+    tick(29_999);
+    expect(service.now()).toBe(1_000);
+
+    now = 31_000;
     tick(1);
-    expect(service.now()).toBeGreaterThanOrEqual(initial + 30_000);
+    expect(service.now()).toBe(31_000);
   }));
 
   it('pauses while hidden and refreshes immediately when visible again', fakeAsync(() => {
-    const initial = service.now();
     visibility = 'hidden';
     document.dispatchEvent(new Event('visibilitychange'));
 
+    now = 61_000;
     tick(60_000);
-    expect(service.now()).toBe(initial);
+    expect(service.now()).toBe(1_000);
 
     visibility = 'visible';
     document.dispatchEvent(new Event('visibilitychange'));
-    expect(service.now()).toBeGreaterThanOrEqual(initial + 60_000);
+    expect(service.now()).toBe(61_000);
   }));
 
   it('removes its timer when destroyed', fakeAsync(() => {
-    const initial = service.now();
     service.ngOnDestroy();
+    now = 61_000;
     tick(60_000);
-    expect(service.now()).toBe(initial);
+    expect(service.now()).toBe(1_000);
   }));
 });
