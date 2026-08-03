@@ -14,7 +14,29 @@ public final class ClaimResponses {
     public static ClaimDetail detail(Claim claim, ClaimApplicationService service) {
         var complete = service.completeness().evaluate(claim.getClaimType(), claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent());
         var triage = service.priority().evaluate(claim.getClaimType(), claim.getEstimatedLoss(), claim.getIncidentDate(), complete.percentage(), claim.getSlaDeadline(), service.now());
-        return new ClaimDetail(claim.getId(), claim.getClaimNumber(), claim.getClaimantName(), claim.getClaimantEmail(), claim.getClaimType(), claim.getIncidentDate(), claim.getEstimatedLoss(), claim.getDescription(), new Evidence(claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent()), claim.getCompletenessPercentage(), complete.missingEvidence(), claim.getPriority(), triage.factors(), claim.getStatus(), service.transitions().allowedNext(claim.getStatus()), claim.getAssignedAdjuster() == null ? null : AdjusterResponse.from(claim.getAssignedAdjuster()), claim.getSlaDeadline(), claim.getCreatedAt(), claim.getUpdatedAt(), claim.getVersion());
+        return new ClaimDetail(
+            claim.getId(),
+            claim.getClaimNumber(),
+            claim.getClaimantName(),
+            claim.getClaimantEmail(),
+            claim.getClaimType(),
+            claim.getRegion(),
+            claim.getIncidentDate(),
+            claim.getEstimatedLoss(),
+            claim.getDescription(),
+            new Evidence(claim.isIncidentReportPresent(), claim.isPhotosPresent(), claim.isProofOfOwnershipPresent(), claim.isMedicalDocumentationPresent()),
+            claim.getCompletenessPercentage(),
+            complete.missingEvidence(),
+            claim.getPriority(),
+            triage.factors(),
+            claim.getStatus(),
+            service.transitions().allowedNext(claim.getStatus()),
+            claim.getAssignedAdjuster() == null ? null : AdjusterResponse.from(claim.getAssignedAdjuster()),
+            claim.getSlaDeadline(),
+            claim.getCreatedAt(),
+            claim.getUpdatedAt(),
+            claim.getResolvedAt(),
+            claim.getVersion());
     }
 
     public static ClaimPage page(Page<Claim> page) {
@@ -22,11 +44,59 @@ public final class ClaimResponses {
     }
 
     private static ClaimSummary summary(Claim claim) {
-        return new ClaimSummary(claim.getId(), claim.getClaimNumber(), claim.getClaimantName(), claim.getClaimType(), claim.getPriority(), claim.getStatus(), claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getDisplayName(), claim.getSlaDeadline(), claim.getCompletenessPercentage());
+        return new ClaimSummary(
+            claim.getId(),
+            claim.getClaimNumber(),
+            claim.getClaimantName(),
+            claim.getClaimType(),
+            claim.getRegion(),
+            claim.getPriority(),
+            claim.getStatus(),
+            claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getDisplayName(),
+            claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getTeam(),
+            claim.getSlaDeadline(),
+            claim.getCompletenessPercentage(),
+            claim.getCreatedAt(),
+            claim.getUpdatedAt());
     }
 
     public record Evidence(boolean incidentReportPresent, boolean photosPresent, boolean proofOfOwnershipPresent, boolean medicalDocumentationPresent) {}
-    public record ClaimSummary(UUID id, String claimNumber, String claimantName, ClaimType claimType, ClaimPriority priority, ClaimStatus status, String assignedAdjusterName, Instant slaDeadline, int completenessPercentage) {}
+    public record ClaimSummary(
+        UUID id,
+        String claimNumber,
+        String claimantName,
+        ClaimType claimType,
+        ClaimRegion region,
+        ClaimPriority priority,
+        ClaimStatus status,
+        String assignedAdjusterName,
+        String assignedTeam,
+        Instant slaDeadline,
+        int completenessPercentage,
+        Instant createdAt,
+        Instant updatedAt) {}
     public record ClaimPage(List<ClaimSummary> content, int page, int size, long totalElements, int totalPages) {}
-    public record ClaimDetail(UUID id, String claimNumber, String claimantName, String claimantEmail, ClaimType claimType, LocalDate incidentDate, BigDecimal estimatedLoss, String description, Evidence evidence, int completenessPercentage, List<String> missingEvidence, ClaimPriority priority, List<String> priorityFactors, ClaimStatus status, Set<ClaimStatus> allowedNextStatuses, AdjusterResponse assignedAdjuster, Instant slaDeadline, Instant createdAt, Instant updatedAt, long version) {}
+    public record ClaimDetail(
+        UUID id,
+        String claimNumber,
+        String claimantName,
+        String claimantEmail,
+        ClaimType claimType,
+        ClaimRegion region,
+        LocalDate incidentDate,
+        BigDecimal estimatedLoss,
+        String description,
+        Evidence evidence,
+        int completenessPercentage,
+        List<String> missingEvidence,
+        ClaimPriority priority,
+        List<String> priorityFactors,
+        ClaimStatus status,
+        Set<ClaimStatus> allowedNextStatuses,
+        AdjusterResponse assignedAdjuster,
+        Instant slaDeadline,
+        Instant createdAt,
+        Instant updatedAt,
+        Instant resolvedAt,
+        long version) {}
 }
