@@ -1,0 +1,88 @@
+.portal-intake {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.portal-intake .cf-page-header h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -.035em;
+}
+
+.portal-intake .cf-page-header > div > p:last-child {
+  max-width: 720px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.portal-intake .intake-progress,
+.portal-intake .form-section,
+.portal-intake .review-panel {
+  border-color: rgb(27 51 66 / .82);
+  background-color: rgb(9 20 31 / .9);
+  box-shadow: inset 0 1px rgb(255 255 255 / .025), 0 22px 52px -44px rgb(36 214 243 / .62);
+}
+
+.portal-intake .intake-progress button {
+  min-height: 72px;
+  background: rgb(7 16 26 / .92);
+}
+
+.portal-intake .intake-progress button.active {
+  background: linear-gradient(90deg, rgb(11 42 51 / .92), rgb(12 25 37 / .86));
+}
+
+.portal-intake .form-section,
+.portal-intake .review-panel {
+  border-radius: 16px;
+}
+
+.portal-intake .form-section label,
+.portal-intake .claim-type-fieldset legend {
+  font-size: 11px;
+}
+
+.portal-intake .form-section input,
+.portal-intake .form-section textarea {
+  font-size: 12px;
+}
+
+.portal-intake .claim-type-card strong,
+.portal-intake .evidence-card strong {
+  font-size: 12px;
+}
+
+.portal-intake .claim-type-card small,
+.portal-intake .evidence-card small,
+.portal-intake .form-section label > small,
+.portal-intake .section-intro,
+.portal-intake .authority-note p,
+.portal-intake .review-panel > p:not(.eyebrow),
+.portal-intake .review-panel dt,
+.portal-intake .review-panel dd,
+.portal-intake .gate-summary button {
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.portal-intake .section-heading h2 {
+  font-size: 19px;
+}
+
+.portal-intake .review-grid strong {
+  font-size: 12px;
+}
+
+.portal-intake .review-grid small,
+.portal-intake .review-grid span {
+  font-size: 9px;
+}
+
+.portal-intake .button.primary {
+  color: #021016;
+  background: linear-gradient(135deg, #17d6b0, #24d6f3);
+  box-shadow: 0 14px 30px -20px rgb(36 214 243 / .9);
+}
+
+@media (max-width: 760px) {
+  .portal-intake .cf-page-header h1 { font-size: 32px; }
+}

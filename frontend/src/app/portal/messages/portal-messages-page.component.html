@@ -1,0 +1,25 @@
+<section class="portal-page page-enter">
+  <header class="portal-page-header">
+    <div><p class="portal-eyebrow">MY CLAIM / MESSAGES</p><h1>Messages</h1><p>Claimant-visible updates and evidence requests from your assigned claims team.</p></div>
+    <a class="portal-button secondary" [routerLink]="['/portal/claims', claimId]">← Back to claim</a>
+  </header>
+
+  <article *ngIf="loading()" class="portal-panel portal-state" aria-live="polite">
+    <div><span aria-hidden="true">◌</span><h2>Loading messages</h2><p>Checking for updates from your claims team.</p></div>
+  </article>
+
+  <article *ngIf="!loading() && error()" class="portal-panel portal-state portal-error" role="alert">
+    <div><span aria-hidden="true">!</span><h2>Messages could not be loaded</h2><p>{{ error() }}</p><button class="portal-button secondary" type="button" (click)="load()">Try again</button></div>
+  </article>
+
+  <div *ngIf="!loading() && !error() && messages().length" class="portal-message-list">
+    <article *ngFor="let message of messages()" class="portal-panel portal-message">
+      <header><h3>{{ message.author }}</h3><time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'medium' }}</time></header>
+      <p>{{ message.body }}</p>
+    </article>
+  </div>
+
+  <article *ngIf="!loading() && !error() && !messages().length" class="portal-panel portal-state">
+    <div><span aria-hidden="true">◇</span><h2>No messages yet</h2><p>No messages yet. Updates from your claims team will appear here.</p><a class="portal-button secondary" [routerLink]="['/portal/claims', claimId]">Return to claim</a></div>
+  </article>
+</section>

@@ -19,12 +19,24 @@ function allowed(byPath: Map<string, Route>, path: string): readonly DemoRoleId[
 }
 
 describe('ClaimsFlow route contract', () => {
-  it('exposes the showcase, tour, and role-aware employee workspaces', () => {
+  it('exposes the showcase, tour, claimant portal, and employee workspaces', () => {
     const byPath = flattenRoutes(routes);
 
     expect(byPath.get('')?.loadComponent).toBeDefined();
     expect(byPath.get('showcase')?.redirectTo).toBe('');
     expect(byPath.get('tour')?.loadComponent).toBeDefined();
+
+    const portalRoutes = [
+      'portal',
+      'portal/claims/new',
+      'portal/claims/:id',
+      'portal/claims/:id/documents',
+      'portal/claims/:id/messages',
+    ];
+    for (const path of portalRoutes) {
+      expect(byPath.get(path)?.loadComponent).withContext(path).toBeDefined();
+      expect(byPath.get(path)?.canActivate).withContext(`${path} no role guard`).toBeUndefined();
+    }
 
     const applicationRoutes = [
       'app/dashboard',

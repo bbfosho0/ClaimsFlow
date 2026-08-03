@@ -22,6 +22,39 @@ export const routes: Routes = [
     title: 'ClaimsFlow guided tour',
   },
   {
+    path: 'portal',
+    loadComponent: () => import('./portal/layout/claimant-shell.component').then(m => m.ClaimantShellComponent),
+    title: 'Claimant Portal | ClaimsFlow',
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./portal/home/portal-home-page.component').then(m => m.PortalHomePageComponent),
+        title: 'My Claim | ClaimsFlow',
+      },
+      {
+        path: 'claims/new',
+        loadComponent: () => import('./claims/feature-create/new-claim-page.component').then(m => m.NewClaimPageComponent),
+        title: 'Start a Claim | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id',
+        loadComponent: () => import('./portal/claim/portal-claim-page.component').then(m => m.PortalClaimPageComponent),
+        title: 'Claim Status | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id/documents',
+        loadComponent: () => import('./portal/documents/portal-documents-page.component').then(m => m.PortalDocumentsPageComponent),
+        title: 'Claim Documents | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id/messages',
+        loadComponent: () => import('./portal/messages/portal-messages-page.component').then(m => m.PortalMessagesPageComponent),
+        title: 'Claim Messages | ClaimsFlow',
+      },
+    ],
+  },
+  {
     path: 'app',
     component: AppShellComponent,
     children: [

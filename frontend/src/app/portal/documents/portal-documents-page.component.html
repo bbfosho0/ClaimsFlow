@@ -1,0 +1,31 @@
+<section class="portal-page page-enter">
+  <header class="portal-page-header">
+    <div><p class="portal-eyebrow">MY CLAIM / DOCUMENTS</p><h1>Evidence</h1><p>Record the evidence available for this claim. This demo tracks evidence presence; it does not claim permanent binary file storage.</p></div>
+    <a class="portal-button secondary" [routerLink]="['/portal/claims', claimId]">← Back to claim</a>
+  </header>
+
+  <article *ngIf="loading()" class="portal-panel portal-state" aria-live="polite">
+    <div><span aria-hidden="true">◌</span><h2>Loading evidence status</h2><p>Checking the evidence already recorded for this claim.</p></div>
+  </article>
+
+  <article *ngIf="!loading() && error() && !claim()" class="portal-panel portal-state portal-error" role="alert">
+    <div><span aria-hidden="true">!</span><h2>Evidence could not be loaded</h2><p>{{ error() }}</p><button class="portal-button secondary" type="button" (click)="load()">Try again</button></div>
+  </article>
+
+  <ng-container *ngIf="!loading() && claim() as current">
+    <div class="portal-next-action"><span>INFORMATION RECORDED</span><strong>{{ current.completenessPercentage }}% of the expected evidence information is available.</strong></div>
+    <div class="portal-announcement" role="status" aria-live="polite">{{ announcement() }}</div>
+    <div *ngIf="error()" class="portal-panel portal-state portal-error" role="alert" style="min-height:auto"><div><span aria-hidden="true">!</span><p>{{ error() }}</p></div></div>
+
+    <div class="portal-evidence-grid">
+      <article *ngFor="let item of evidence()" class="portal-panel portal-evidence-card" [class.recorded]="item.present">
+        <span class="portal-evidence-icon" aria-hidden="true">{{ item.icon }}</span>
+        <div><h3>{{ item.label }}</h3><p>{{ item.description }}</p></div>
+        <span *ngIf="item.present" class="portal-evidence-status">Recorded for this demo</span>
+        <button *ngIf="!item.present" class="portal-button secondary" type="button" [disabled]="updating() !== null" (click)="addEvidence(item)">
+          {{ updating() === item.kind ? 'Recording…' : 'Add evidence' }}
+        </button>
+      </article>
+    </div>
+  </ng-container>
+</section>

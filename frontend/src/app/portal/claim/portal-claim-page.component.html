@@ -1,0 +1,49 @@
+<section class="portal-page page-enter">
+  <header class="portal-page-header">
+    <div><p class="portal-eyebrow">MY CLAIM</p><h1>Claim status</h1><p>See what the claims team has recorded, what happens next, and which evidence is still needed.</p></div>
+    <a class="portal-button secondary" [routerLink]="['/portal/claims', claimId, 'documents']">Review documents →</a>
+  </header>
+
+  <article *ngIf="loading()" class="portal-panel portal-state" aria-live="polite">
+    <div><span aria-hidden="true">◌</span><h2>Loading your claim</h2><p>Retrieving the latest claimant-safe status and timeline.</p></div>
+  </article>
+
+  <article *ngIf="!loading() && error()" class="portal-panel portal-state portal-error" role="alert">
+    <div><span aria-hidden="true">!</span><h2>We could not load this claim</h2><p>{{ error() }}</p><button class="portal-button secondary" type="button" (click)="load()">Try again</button></div>
+  </article>
+
+  <ng-container *ngIf="!loading() && claim() as current">
+    <div class="portal-status-layout">
+      <article class="portal-panel portal-status-card">
+        <div class="portal-status-top">
+          <div><p class="portal-eyebrow">{{ current.claimNumber }}</p><h2>{{ current.claimantName }}</h2></div>
+          <span class="portal-status-pill">{{ statusLabel(current.status) }}</span>
+        </div>
+        <div class="portal-next-action"><span>NEXT ACTION</span><strong>{{ current.nextAction }}</strong></div>
+        <div class="portal-hero-actions" style="margin-top:18px">
+          <a class="portal-button" [routerLink]="['/portal/claims', claimId, 'documents']">Add evidence →</a>
+          <a class="portal-button secondary" [routerLink]="['/portal/claims', claimId, 'messages']">Read messages</a>
+        </div>
+      </article>
+
+      <article class="portal-panel portal-progress-card">
+        <div class="portal-progress-ring" [style.--progress]="current.completenessPercentage + '%'">
+          <span><strong>{{ current.completenessPercentage }}%</strong><small>information recorded</small></span>
+        </div>
+        <p>Service expectation: an update is targeted before {{ current.slaDeadline | date:'medium' }}.</p>
+      </article>
+    </div>
+
+    <article class="portal-panel portal-timeline">
+      <div class="portal-section-heading"><h2>Claim timeline</h2><span>{{ current.timeline.length }} recorded updates</span></div>
+      <ol *ngIf="current.timeline.length; else noTimeline">
+        <li *ngFor="let event of current.timeline">
+          <i aria-hidden="true"></i>
+          <div><strong>{{ timelineLabel(event.actionType) }}</strong><p>{{ event.summary }}</p></div>
+          <time [attr.datetime]="event.occurredAt">{{ event.occurredAt | date:'medium' }}</time>
+        </li>
+      </ol>
+      <ng-template #noTimeline><div class="portal-state"><div><span aria-hidden="true">◇</span><h2>No timeline updates yet</h2><p>The first claim update will appear here after submission.</p></div></div></ng-template>
+    </article>
+  </ng-container>
+</section>

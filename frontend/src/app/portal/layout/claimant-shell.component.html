@@ -1,0 +1,44 @@
+<a class="skip-link" href="#portal-main">Skip to claim content</a>
+<div class="portal-shell">
+  <header class="portal-topbar">
+    <a class="portal-brand" routerLink="/portal" aria-label="ClaimsFlow claimant portal home">
+      <span class="portal-brand-mark" aria-hidden="true">C</span>
+      <span><strong>ClaimsFlow</strong><small>Claimant portal</small></span>
+    </a>
+
+    <nav class="portal-nav" aria-label="Claimant portal navigation">
+      <a [routerLink]="claimRoute()" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span aria-hidden="true">◉</span>My Claim
+      </a>
+      <a [routerLink]="documentsRoute()" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span aria-hidden="true">▤</span>Documents
+      </a>
+      <a [routerLink]="messagesRoute()" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span aria-hidden="true">◇</span>Messages
+      </a>
+      <a href="#portal-help"><span aria-hidden="true">?</span>Help</a>
+    </nav>
+
+    <div class="portal-profile" aria-label="Taylor Reed, policyholder">
+      <span aria-hidden="true">TR</span>
+      <div><strong>Taylor Reed</strong><small>Policyholder</small></div>
+    </div>
+  </header>
+
+  <div class="portal-context">
+    <div>
+      <span class="portal-context-label">YOUR CLAIM</span>
+      <strong>{{ claimId() ? 'Claim journey in progress' : 'Start or resume your claim' }}</strong>
+    </div>
+    <a routerLink="/app/dashboard" [queryParams]="{ role: 'manager' }">Open employee demo ↗</a>
+  </div>
+
+  <main id="portal-main" class="portal-main" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <aside id="portal-help" class="portal-help" aria-label="Claimant help">
+    <div><span aria-hidden="true">i</span><p><strong>Need help?</strong> This portfolio portal records claim status, evidence presence, and demo messages. It does not send production communications or permanently store uploaded files.</p></div>
+    <a routerLink="/">About ClaimsFlow</a>
+  </aside>
+</div>
