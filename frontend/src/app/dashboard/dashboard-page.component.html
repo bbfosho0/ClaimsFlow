@@ -117,7 +117,7 @@
           <article *ngFor="let item of dashboard.workload" [appChangedValue]="item.activeClaims" [changeTone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'">
             <div class="capacity-avatar" aria-hidden="true">{{ item.displayName.slice(0, 2).toUpperCase() }}</div>
             <div class="capacity-copy"><strong>{{ item.displayName }}</strong><span>{{ item.team }} · {{ item.activeClaims }} of {{ item.capacity }} active</span><i><b [style.width.%]="utilization(item.activeClaims, item.capacity)"></b></i></div>
-            <span class="capacity-value" [attr.data-tone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy"><app-animated-number [value]="utilization(item.activeClaims, item.capacity)" format="percentage" /></span>
+            <span class="capacity-value" [attr.data-tone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'"><app-animated-number [value]="utilization(item.activeClaims, item.capacity)" format="percentage" /></span>
           </article>
         </div>
       </section>
