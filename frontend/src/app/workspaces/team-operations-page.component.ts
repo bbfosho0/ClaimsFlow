@@ -13,6 +13,7 @@ import {
   OperationalFilters,
 } from '../core/operational-data/operational-data.models';
 import { OperationalDataStore } from '../core/operational-data/operational-data.store';
+import { OperationalClockService } from '../core/operational-data/operational-clock.service';
 import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
 import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
 import { OperationalFilterBarComponent } from '../shared/operational/operational-filter-bar.component';
@@ -34,20 +35,18 @@ import { OperationalRefreshStatusComponent } from '../shared/operational/operati
 })
 export class TeamOperationsPageComponent implements OnInit, OnDestroy {
   private readonly operational = inject(OperationalDataStore);
+  private readonly clock = inject(OperationalClockService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly subscription = new Subscription();
   private release: (() => void) | null = null;
   private activeFilterKey = '';
-  private readonly clockId = setInterval(() => {
-    if (globalThis.document?.visibilityState !== 'hidden') this.now.set(Date.now());
-  }, 1_000);
 
   readonly state = this.operational.team;
   readonly snapshot = computed(() => this.state().value);
   readonly filters = signal<OperationalFilters>(DEFAULT_OPERATIONAL_FILTERS);
   readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPERATIONAL_FILTER_OPTIONS);
-  readonly now = signal(Date.now());
+  readonly now = this.clock.now;
 
   ngOnInit(): void {
     this.subscription.add(this.route.queryParams.subscribe(params => {
@@ -62,7 +61,6 @@ export class TeamOperationsPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.clockId);
     this.subscription.unsubscribe();
     this.release?.();
   }
