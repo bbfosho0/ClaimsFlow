@@ -1,0 +1,49 @@
+<article
+  class="metric-card"
+  [attr.data-variant]="variant()"
+  [attr.data-tone]="tone()"
+  [attr.data-stale]="stale() ? 'true' : null">
+  @if (loading()) {
+    <div class="metric-card-skeleton" role="status" [attr.aria-label]="'Loading ' + label()">
+      <i></i><i></i><i></i><i></i>
+    </div>
+  } @else {
+    <header class="metric-card-header">
+      <span class="metric-card-label">{{ label() }}</span>
+      @if (definition()) {
+        <span class="metric-definition" aria-label="Metric definition" [title]="definition()">i</span>
+      }
+    </header>
+
+    @if (noData()) {
+      <div class="metric-card-empty">{{ noDataLabel() }}</div>
+    } @else {
+      <div class="metric-card-value" [attr.aria-label]="valueAriaLabel() || null">
+        @if (isNumeric(value())) {
+          <app-animated-number [value]="value()" [format]="format()" [currency]="currency()" />
+        } @else {
+          {{ value() }}
+        }
+      </div>
+
+      <div class="metric-card-meta">
+        @if (delta(); as metricDelta) {
+          <app-metric-delta
+            [change]="metricDelta"
+            [inverse]="inverseDelta()"
+            [currentPeriod]="currentPeriod()"
+            [previousPeriod]="previousPeriod()"
+            [currentValue]="currentValue()"
+            [previousValue]="previousValue()" />
+        }
+        @if (helper()) { <p>{{ helper() }}</p> }
+      </div>
+
+      <div class="metric-card-visual"><ng-content select="[metric-visual]" /></div>
+    }
+
+    @if (stale()) {
+      <p class="metric-card-stale" role="status">{{ staleMessage() }}</p>
+    }
+  }
+</article>
