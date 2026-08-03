@@ -43,8 +43,10 @@ const analytics: AnalyticsSnapshot = {
   comparison: {
     previousFrom: '2026-06-04', previousTo: '2026-07-03',
     previousTotalClaims: 10, previousEstimatedExposure: 100000,
-    previousAverageResolutionHours: 44, claimVolumeChangePercentage: 20,
-    exposureChangePercentage: 25, resolutionTimeChangePercentage: -9.1,
+    previousAverageResolutionHours: 44,
+    claimVolumeChange: { kind: 'PERCENTAGE', percentage: 20 },
+    exposureChange: { kind: 'PERCENTAGE', percentage: 25 },
+    resolutionTimeChange: { kind: 'PERCENTAGE', percentage: -9.1 },
   },
   claimVolume: [{ date: '2026-08-02', count: 4 }, { date: '2026-08-03', count: 8 }],
   resolvedVolume: [{ date: '2026-08-02', count: 1 }, { date: '2026-08-03', count: 3 }],
@@ -102,16 +104,36 @@ describe('Deployment-truthful workspaces', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
 
-  it('renders backend analytics without unsupported payout or fraud claims', async () => {
+  it('renders backend analytics and finite comparison labels without unsupported claims', async () => {
     await TestBed.configureTestingModule({ imports: [AnalyticsPageComponent], providers: [provideRouter([]), { provide: OperationalDataStore, useValue: operationalStore() }] }).compileComponents();
     const fixture = TestBed.createComponent(AnalyticsPageComponent);
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Estimated exposure');
     expect(text).toContain('SLA compliance');
+    expect(text).toContain('+20.0% vs prior period');
+    expect(text).not.toContain('NaN');
+    expect(text).not.toContain('Infinity');
     expect(text).not.toContain('Fraud Savings');
     expect(text).not.toContain('Total Payouts');
     expect(fixture.nativeElement.querySelectorAll('[data-chart-summary]').length).toBeGreaterThan(0);
+  });
+
+  it('labels a zero-denominator current value as new rather than plus one hundred percent', async () => {
+    const newAnalytics: AnalyticsSnapshot = {
+      ...analytics,
+      comparison: {
+        ...analytics.comparison,
+        claimVolumeChange: { kind: 'NEW', percentage: null },
+      },
+    };
+    const store = operationalStore();
+    store.analytics = signal(resource(newAnalytics)).asReadonly();
+    await TestBed.configureTestingModule({ imports: [AnalyticsPageComponent], providers: [provideRouter([]), { provide: OperationalDataStore, useValue: store }] }).compileComponents();
+    const fixture = TestBed.createComponent(AnalyticsPageComponent);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('New vs prior period');
+    expect(fixture.nativeElement.textContent).not.toContain('+100.0%');
   });
 
   it('renders navigational team advisories without an Apply mutation', async () => {
