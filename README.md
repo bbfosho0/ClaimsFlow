@@ -1,82 +1,138 @@
 # ClaimsFlow
 
-ClaimsFlow is a portfolio-grade insurance claims operations platform built with Angular 20, Spring Boot 3.5, Java 21, and PostgreSQL 16.
+ClaimsFlow is a portfolio-grade insurance claims operations application built with Angular 20, Spring Boot 3.5, Java 21, and PostgreSQL 16.
 
-It demonstrates one end-to-end claim journey across four clearly separated perspectives:
+It demonstrates one connected claim journey across four separated perspectives:
 
 ```text
-Claimant submits and tracks a claim
+Claimant records a claim and evidence state
         ↓
-Adjuster reviews evidence and communicates
+Adjuster reviews assigned work and communicates
         ↓
-Manager monitors operational impact
+Manager sees the portfolio and team impact update
         ↓
-Administrator previews workflow routing
+Administrator validates a local routing simulation
 ```
 
-The system is not a collection of disconnected dashboard mockups. The claimant portal, employee workspaces, deterministic backend policies, scoped messages, audit events, and resettable employer demonstration share real application state.
+The primary employer-demo surfaces are not disconnected mockups. Their claims, assignments, evidence state, messages, audit events, KPIs, filters, charts, queues, and workload summaries come from persisted backend data.
 
-## Product model
+## What is functional
 
 ### Claimant portal
 
-A focused customer experience with a separate shell:
+The independent claimant shell supports:
 
-- Start or resume a claim
-- View status and the next required action
-- Record evidence presence
-- Read claimant-visible messages
-- Review a claimant-safe timeline
+- Starting or resuming a claim
+- Viewing status, evidence progress, SLA expectations, and the next action
+- Recording supported evidence-category presence
+- Reading claimant-visible messages
+- Reviewing a claimant-safe timeline
 
-The portal does not expose internal priority factors, recommendation details, or employee-only notes.
+The claimant cannot submit derived priority, completeness, SLA, internal notes, or recommendation state.
 
 ### Adjuster
 
-The Adjuster role is represented by **Jordan Lee** and includes:
+The **Jordan Lee** demo role exposes:
 
-- My Work
-- Claim Queue
-- Documents
-- Reports
-- Claim Workspace opened contextually from assigned work
+- **My Work** — API-backed assigned work using Jordan Lee’s real seeded UUID
+- **Claim Queue** — search and curated backend filters
+- **Evidence Operations** — persisted evidence categories, claim context, and claimant-visible messages
+- **Claim Workspace** — assignment, status, evidence, recommendation, communication, and audit actions
 
-The functional golden path loads Jordan Lee’s real seeded UUID, queries assigned claims through the API, reviews evidence, and sends a claimant-visible message only after an explicit confirmation step.
+Evidence Operations deliberately does not pretend to provide binary storage, OCR, extraction, file versions, collaborative comments, email, SMS, or unsupported upload processing.
 
 ### Claims Manager
 
 The default employer-facing role is **Alex Morgan, Claims Manager**:
 
-- Operations Overview
-- Claim Queue
-- Analytics
-- AI Insights
-- Team Operations
-- Reports
+- **Operations Overview** — backend-derived portfolio KPIs, categorized live signals, interventions, capacity, and audit activity
+- **Claim Queue** — URL-addressable filters and changed-claim feedback
+- **Operational Analytics** — truthful exposure, volume, resolution, evidence, SLA, distribution, aging, and cohort aggregates
+- **AI Insights** — evidence-grounded advisory recommendations with explicit human review
+- **Team Operations** — workload, capacity, SLA pressure, escalations, advisory links, and operational integrity
 
-The reserved claim appears in the live queue and Manager overview using the exact claim identifier returned by the reset transaction.
+No deployed Manager KPI is sourced from a frontend fixture array.
 
 ### Platform Administrator
 
-The Administrator role is represented by **Priya Shah**:
+The **Priya Shah** role exposes only **Workflow Automation**.
 
-- Workflow Automation
+It can load the real reserved claim and run a deterministic local routing preview. Save Draft and Validate are local-only. Production activation is disabled at the action point with an exact explanation. The simulation cannot approve, deny, pay, close, assign, or otherwise mutate a consequential claim state.
+
+### Not exposed in deployed navigation
+
 - Reports
 - Settings
 
-The workflow builder can load the real reserved claim into a typed **local routing preview**. Save Draft and Validate are local-only. Production activation is disabled and clearly labeled as unavailable.
+The source-only preview routes may remain for future development, but they are absent from the role rails and employer tour.
 
-## Demo roles
+## Reactive operational data
 
-The employee profile menu switches instantly between:
+A bounded Angular `OperationalDataStore` coordinates Dashboard, Queue, Analytics, Team Operations, and Evidence Operations.
 
-- Claims Manager
-- Adjuster
-- Administrator
-- Claimant Portal
+It provides:
 
-This is intentionally a **demo persona system**, not authentication or authorization. Route guards and navigation ownership improve presentation clarity; they are not a substitute for backend security.
+- Immediate invalidation after successful claim creation, assignment, status, evidence, claimant-visible message, or demo reset
+- A quiet **45-second** refresh while the tab is visible
+- Polling pause while the tab is hidden
+- Immediate refresh when the tab becomes visible again
+- Manual Refresh controls with update-age text
+- Cached data during background refresh
+- Last-valid-data retention and a nonblocking stale warning after a transient failure
+- Brief changed-claim and changed-value feedback
 
-The selected role is reflected in the URL and local storage so role-specific views remain understandable when refreshed or shared.
+The application does not require WebSockets or server-sent events for the portfolio demonstration.
+
+## Operational APIs
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/dashboard` | Coherent portfolio snapshot, signal counts, workload, and recent activity |
+| `GET /api/claims` | Searchable and filterable claim queue |
+| `GET /api/analytics` | Backend-derived KPIs, comparisons, trends, distributions, aging, and cohorts |
+| `GET /api/team-operations` | Team and adjuster capacity, SLA, escalations, advisories, and integrity |
+| `GET /api/evidence-operations` | Read-only evidence operations projection and claimant-visible messages |
+| `POST /api/demo/reset` | Configuration-gated reset of the reserved employer journey |
+
+Supported operational filters are:
+
+- Date range
+- Claim type
+- Priority
+- Status
+- Team or adjuster
+- Region
+
+Visible filters issue real backend queries and recalculate dependent KPIs, charts, tables, and lists.
+
+## Deterministic employer data
+
+When `CLAIMSFLOW_DEMO_ENABLED=true`, ClaimsFlow ensures a deterministic **48-claim fictional historical portfolio** exists.
+
+The dataset covers:
+
+- All claim types
+- Five fictional operating regions
+- Every status and priority
+- Several evidence-completeness bands
+- Assigned and unassigned work
+- Current, at-risk, overdue, and resolved SLA states
+- Multiple teams and adjusters
+- Persisted status and audit history
+- Resolution timestamps for operational analytics
+
+Stable UUIDs and a defined clock make the history repeatable. The separate reserved Taylor Reed claim remains independently resettable.
+
+The reset transaction:
+
+- Preserves the 48-claim historical portfolio
+- Deletes only claims using `taylor.reed@example.com`
+- Creates one fresh claim through the normal application service
+- Assigns the stable Jordan Lee adjuster
+- Adds one claimant-visible welcome message
+- Returns the real claim and adjuster IDs
+
+Repeated resets leave exactly one reserved claim.
 
 ## Employer walkthrough
 
@@ -86,63 +142,58 @@ Open:
 http://localhost:4200/tour
 ```
 
-The walkthrough follows one claim through five steps:
+The tour follows one claim through:
 
-1. **Claimant Portal** — clear status, progress, messages, and next action
-2. **Adjuster Review** — evidence, human-confirmed communication, and bounded guidance
-3. **Manager Impact** — SLA, priority, evidence, ownership, and portfolio context
-4. **Administrator Routing** — local workflow simulation using the real claim
+1. **Claimant Portal** — status, evidence progress, messages, and next action
+2. **Adjuster Review** — evidence and human-confirmed communication
+3. **Manager Impact** — reactive priority, SLA, ownership, and portfolio context
+4. **Administrator Routing** — local simulation with the same real claim
 5. **Engineering Proof** — architecture, authority boundaries, tests, and delivery
 
-The controller navigates real application routes, preserves the claim ID, supplies the correct demo role, supports arrow-key navigation, and highlights stable `data-tour-target` elements. It does not replay screenshots or own business logic.
+The tour preserves the real claim ID, supplies the appropriate demo role, supports keyboard navigation, and highlights stable targets on real application routes.
 
 ## Routes
 
-### Public and claimant routes
+### Public and claimant
 
 | Route | Purpose |
 | --- | --- |
 | `/` | Portfolio showcase |
-| `/tour` | Five-step employer walkthrough and engineering proof |
+| `/tour` | Employer walkthrough |
 | `/portal` | Claimant home and resume entry point |
-| `/portal/claims/new` | Claimant-mode typed claim intake |
-| `/portal/claims/:id` | Claim status, next action, progress, and timeline |
-| `/portal/claims/:id/documents` | Evidence-presence recording |
-| `/portal/claims/:id/messages` | Claimant-visible message history |
+| `/portal/claims/new` | Claimant claim intake |
+| `/portal/claims/:id` | Claim status and timeline |
+| `/portal/claims/:id/documents` | Supported evidence-category recording |
+| `/portal/claims/:id/messages` | Claimant-visible messages |
 
-### Employee routes
+### Deployed employee navigation
 
-| Route | Primary role | Purpose |
+| Route | Role | Purpose |
 | --- | --- | --- |
-| `/app/dashboard` | Manager | Portfolio pressure and golden-journey impact |
-| `/app/my-work` | Adjuster | API-backed personal assigned work |
-| `/app/claims` | Manager, Adjuster | Filterable queue and selected-claim context |
-| `/app/claims/:id` | Manager, Adjuster | Dossier, evidence, communications, decisions, and audit |
+| `/app/dashboard` | Manager | Operations Overview |
+| `/app/claims` | Manager, Adjuster | Functional Claim Queue |
 | `/app/claims/new` | Manager, Adjuster | Employee claim intake |
-| `/app/analytics` | Manager | Performance and operational analytics |
-| `/app/intelligence` | Manager | Portfolio review and advisory intelligence |
-| `/app/documents` | Adjuster | Document investigation workspace |
-| `/app/team-ops` | Manager | Capacity and SLA operations |
-| `/app/workflows` | Administrator | Local workflow routing preview |
-| `/app/reports` | All employee roles | Reporting workspace |
-| `/app/settings` | Administrator | Governance and integration configuration surface |
+| `/app/claims/:id` | Manager, Adjuster | Authoritative Claim Workspace |
+| `/app/my-work` | Adjuster | Assigned work |
+| `/app/analytics` | Manager | Operational Analytics |
+| `/app/intelligence` | Manager | Advisory AI Insights |
+| `/app/documents` | Adjuster | Evidence Operations |
+| `/app/team-ops` | Manager | Team Operations |
+| `/app/workflows` | Administrator | Local Workflow Automation preview |
 
-Legacy `/dashboard` and `/claims*` URLs redirect to the corresponding `/app/*` routes.
+## Backend authority
 
-## Backend-authoritative behavior
-
-Spring owns and recalculates:
+Spring owns or recalculates:
 
 - Claim number
 - Evidence completeness
-- Priority and priority factors
+- Priority and contributing factors
 - SLA deadline
 - Allowed status transitions
 - Assignment validity
 - Recommendation review validation
+- Operational aggregate snapshots
 - Audit events
-
-The claimant portal may record that a supported evidence category is present or absent. It cannot submit a derived completeness percentage, priority, or SLA.
 
 ## Human authority boundary
 
@@ -150,7 +201,8 @@ ClaimsFlow may:
 
 - Explain an advisory recommendation
 - Identify missing evidence
-- Draft or send a claimant-portal message after confirmation
+- Send a claimant-visible message after explicit confirmation
+- Link an advisory to relevant filtered work
 - Preview workflow routing locally
 - Prepare a reversible action for review
 
@@ -158,12 +210,27 @@ ClaimsFlow may not:
 
 - Approve or deny a claim autonomously
 - Pay or close a claim
-- Change claim status when a message is sent
-- Reassign work without an explicit employee action
-- Activate a production workflow from the portfolio demo
+- Change status merely because a message was sent
+- Reassign work from an advisory without an explicit employee action
+- Activate a production workflow
 - Execute a recommendation review without a human reason and confirmation
 
-Recommendation review state and claim workflow state remain separate.
+## Motion and visual behavior
+
+Motion communicates state rather than decorating every surface:
+
+- KPI numbers interpolate only after values change
+- Bars, rings, and chart paths transition to new backend values
+- Changed claims and values receive a brief semantic highlight
+- Live and SLA-risk indicators use restrained breathing
+- Loading skeletons match the final layout
+- Background refresh keeps current content visible
+- Hover translation remains approximately 1–3 pixels
+- Standard transitions remain approximately 160–280 ms
+
+`prefers-reduced-motion` removes interpolation, breathing, scanning, orbiting, chart drawing, and animated scrolling. Values update immediately instead.
+
+The bounded WebGL Copilot orb remains decorative, low-power, lazy, pausable, and isolated from dense operational controls.
 
 ## Architecture
 
@@ -175,103 +242,44 @@ Angular 20 standalone application
 Spring REST controllers
         |
         v
-Application services and transactions
+Transactional application services
         |
         +-- deterministic claim policies
+        +-- operational aggregate queries
         +-- claimant-safe portal projection
         +-- scoped message boundary
         +-- advisory recommendation provider
-        +-- immutable audit service
+        +-- immutable audit history
+        +-- deterministic demo orchestration
         |
         v
-PostgreSQL 16 and Flyway
+PostgreSQL 16 + Flyway
 ```
-
-The backend is a modular monolith organized by business capability: claims, adjusters, portal messaging, recommendations, audit, dashboard, and deterministic demo orchestration.
-
-## Visual system and motion
-
-The Figma and Figma Make work is treated as art direction. Angular and the browser-rendered application are the implementation source of truth.
-
-The web implementation uses:
-
-- Layered midnight surfaces
-- Cyan, teal, violet, amber, and coral operational signals
-- Restrained 160–280 ms interaction and route motion
-- Browser View Transitions with CSS fallbacks
-- Reduced-motion support
-- Accessible SVG and CSS visualizations
-- One bounded, lazy WebGL Copilot orb
-
-The Copilot effect:
-
-- Is decorative and isolated to the sidebar card
-- Uses a low-power WebGL context
-- Caps device-pixel ratio
-- Pauses when off-screen
-- Handles context loss
-- Falls back to a static CSS orb
-- Disables animation when reduced motion is requested
-
-Shaders are not placed behind tables, forms, evidence records, or decision controls.
 
 ## Technology
 
 | Area | Technology |
 | --- | --- |
 | Frontend | Angular 20.3, standalone lazy routes, signals, RxJS, Reactive Forms, HttpClient |
-| Motion | View Transitions, CSS animation, bounded WebGL effect, reduced-motion fallback |
+| Motion | CSS/SVG state transitions, View Transitions, bounded WebGL, reduced-motion fallback |
 | Backend | Java 21, Spring Boot 3.5, Spring Web, Spring Data JPA |
+| Database | PostgreSQL 16, Flyway |
 | API | REST, Jakarta Validation, RFC 9457 Problem Details, Springdoc OpenAPI |
-| Database | PostgreSQL 16, Flyway migrations |
-| Decision support | Optional provider with strict validation and deterministic fallback |
 | Testing | Jasmine, Karma, JUnit 5, Mockito, MockMvc, Testcontainers |
 | Delivery | Docker Compose and GitHub Actions |
 
-## Repository structure
+## Quick start
 
-```text
-backend/                       Spring Boot API and domain modules
-frontend/                      Angular showcase, portals, tour, and employee app
-design/figma/                  Frozen Figma-to-code maps
-docs/design/                   Design handoff and implementation notes
-docs/superpowers/specs/        Approved product architecture
-docs/superpowers/plans/        Approved implementation plan and review
-docker-compose.yml             Local PostgreSQL
-.github/workflows/ci.yml       Frontend and backend verification
-.github/workflows/visual-qa.yml Backend-backed rendered route capture
-AGENTS.md                      Engineering conventions
-```
+### Prerequisites
 
-## Prerequisites
-
-- Git
 - JDK 21
 - Maven 3.9+
 - Node.js 22+
 - npm 10+
 - Docker with Compose
-- Google Chrome for Karma
+- Google Chrome
 
-Verify Java selection:
-
-```bash
-java -version
-mvn -version
-```
-
-Both commands must use Java 21.
-
-## Quick start
-
-### 1. Clone
-
-```bash
-git clone https://github.com/bbfosho0/ClaimsFlow.git
-cd ClaimsFlow
-```
-
-### 2. Start PostgreSQL
+### Start PostgreSQL
 
 ```bash
 docker compose up -d db
@@ -280,7 +288,7 @@ docker compose ps
 
 Wait for the database service to report `healthy`.
 
-### 3. Start Spring Boot
+### Start Spring Boot
 
 ```bash
 cd backend
@@ -293,7 +301,7 @@ Health endpoint:
 http://localhost:8080/actuator/health
 ```
 
-### 4. Start Angular
+### Start Angular
 
 In a second terminal:
 
@@ -303,17 +311,13 @@ npm ci
 npm start
 ```
 
-Open:
-
-```text
-http://localhost:4200
-```
+Open `http://localhost:4200`.
 
 The Angular development server proxies `/api` and `/actuator` to port `8080`.
 
-## Enable the deterministic employer journey
+## Enable the employer journey
 
-The reset endpoint is **disabled by default**. Enable it only for local portfolio demonstration or controlled visual QA.
+The reset endpoint and deterministic historical seeding are disabled by default.
 
 PowerShell:
 
@@ -326,31 +330,13 @@ mvn spring-boot:run
 Bash:
 
 ```bash
+cd backend
 CLAIMSFLOW_DEMO_ENABLED=true mvn spring-boot:run
 ```
 
-Then use **Reset Demo Journey** from the employee profile menu.
-
-The reset transaction:
-
-- Deletes only claims owned by the reserved fictional email `taylor.reed@example.com`
-- Preserves unrelated claims
-- Creates one deterministic baseline claim through normal application services
-- Assigns the stable seeded Jordan Lee adjuster
-- Adds a claimant-visible welcome message
-- Returns the real claim and adjuster IDs
-
-Calling reset repeatedly leaves exactly one reserved claim.
-
-## Optional recommendation provider
-
-Remote recommendations are opt-in. Set the provider key in the backend process environment. Never commit a key.
-
-Without a key, after a provider failure, or after an invalid response, ClaimsFlow uses the deterministic fallback. The result remains advisory and cannot mutate claim workflow state.
+Then choose **Reset Demo Journey** from the employee profile menu.
 
 ## Configuration
-
-Defaults match `docker-compose.yml`:
 
 ```text
 DB_URL=jdbc:postgresql://localhost:5432/claimsflow
@@ -361,7 +347,7 @@ CLAIMSFLOW_DEMO_ENABLED=false
 OPENAI_API_KEY=
 ```
 
-Changing the backend port also requires updating `frontend/proxy.conf.json`.
+Remote recommendations are optional. Without a valid provider response, ClaimsFlow uses its deterministic advisory fallback.
 
 ## Verification
 
@@ -381,55 +367,48 @@ npm run test:ci
 npm run build
 ```
 
-### Complete local verification
+### Visual QA
+
+`.github/workflows/visual-qa.yml` starts PostgreSQL, Spring Boot in demo mode, and Angular, then runs:
 
 ```bash
-docker compose up -d db
-cd backend && mvn verify
-cd ../frontend && npm ci && npm run test:ci && npm run build
+cd frontend
+CHROME_EXECUTABLE=/path/to/chrome node scripts/capture-operational-visual-qa.mjs
 ```
 
-GitHub Actions runs:
+The workflow validates and uploads **18 screenshots** covering:
 
-- Independent backend verification
-- Frontend tests and production build
-- PostgreSQL-backed deterministic demo reset
-- Desktop and mobile screenshots of claimant, adjuster, manager, administrator, tour, and premium workspace routes
+- Claimant, Adjuster, Manager, Administrator, and tour surfaces
+- Dashboard baseline and evidence-changed states
+- SLA-filtered Claim Queue
+- Default and region-filtered Analytics
+- Default and team-filtered Team Operations
+- Evidence Operations before and after evidence mutation
+- A failed background refresh retaining the last valid Dashboard snapshot
+- Reduced-motion rendering
+- Mobile claimant, Manager, and Evidence Operations layouts
 
-## Important API behavior
+## Explicit limitations
 
-- Errors use Problem Details with stable application codes.
-- Missing routes return a real 404 Problem Details response rather than a generic 500.
-- Claim transitions are validated by deterministic policy.
-- Claimant messages are filtered by audience.
-- Internal notes never appear in the claimant portal feed.
-- Sending a message appends an audit event but does not change claim status.
-- Recommendation approval or rejection requires a decision, reviewer, and reason.
-- Reviewing a recommendation does not change claim status.
-- Demo reset is configuration-gated and scoped to one reserved fictional identity.
-
-## Current limitations
-
-- No production authentication, authorization, or single sign-on
-- Demo role switching is presentation-only
-- Evidence categories are persisted, but binary files are not stored in object storage
+- No production authentication, authorization, or SSO
+- Demo persona switching is presentation-only
+- Evidence categories are persisted; binary files are not stored
+- No OCR, extraction, file versioning, or collaborative document comments
 - No email, SMS, payment, carrier, or policy-administration integration
-- Workflow Save Draft and Validate are local-only
+- Workflow draft, validation, and simulation are local-only
 - Production workflow activation is disabled
-- One fictional organization and deterministic demonstration dataset
-- No cloud deployment configuration
+- Reports and Settings are not deployed navigation surfaces
+- The operating portfolio is deterministic fictional data
+- No cloud deployment configuration is included
 
-These boundaries are explicit so the portfolio demonstrates real workflow integrity without pretending unsupported integrations exist.
+These boundaries are explicit so the project demonstrates real state, backend aggregation, reactivity, accessibility, testing, and product judgment without overstating production capability.
 
-## Design sources
+## Design and implementation records
 
-The final design handoff and role-aware implementation documents are recorded in:
-
-- `docs/design/claimsflow-final-mvp-handoff.md`
 - `docs/superpowers/specs/2026-08-02-role-aware-claims-journey-design.md`
 - `docs/superpowers/plans/2026-08-02-role-aware-claims-journey-implementation.md`
-- `design/figma/claimsflow-component-map.json`
-- `design/figma/claimsflow-motion-map.json`
-- `design/figma/claimsflow-shader-map.json`
+- `docs/superpowers/specs/2026-08-03-deployment-truthful-employer-mvp-design.md`
+- `docs/superpowers/plans/2026-08-03-deployment-truthful-employer-mvp.md`
+- `docs/demo-script.md`
 
-Figma is a design reference. The Angular application, Spring API, automated tests, and rendered screenshots define the implemented product.
+Figma remains an art-direction source. The Angular application, Spring API, automated tests, and exact-head rendered screenshots define the implemented product.
