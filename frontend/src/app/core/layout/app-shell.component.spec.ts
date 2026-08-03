@@ -43,7 +43,7 @@ describe('AppShellComponent', () => {
     return links.map(link => link.getAttribute('href')?.split('?')[0] ?? '');
   }
 
-  it('renders the manager rail and persona by default', () => {
+  it('renders the finished manager rail and persona by default', () => {
     const fixture = render();
 
     expect(destinations(fixture)).toEqual([
@@ -52,7 +52,6 @@ describe('AppShellComponent', () => {
       '/app/analytics',
       '/app/intelligence',
       '/app/team-ops',
-      '/app/reports',
     ]);
     expect(fixture.nativeElement.textContent).toContain('Alex Morgan');
     expect(fixture.nativeElement.textContent).toContain('Claims Manager');
@@ -60,9 +59,11 @@ describe('AppShellComponent', () => {
     expect(fixture.nativeElement.querySelector('a.skip-link')?.getAttribute('href')).toBe('#main-content');
     expect(fixture.nativeElement.querySelector('#main-content')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('AI Copilot');
+    expect(fixture.nativeElement.textContent).not.toContain('Reports');
+    expect(fixture.nativeElement.textContent).not.toContain('Settings');
   });
 
-  it('renders only adjuster destinations and Jordan Lee', () => {
+  it('renders only finished adjuster destinations and Jordan Lee', () => {
     roleState.set('adjuster');
     const fixture = render();
 
@@ -70,25 +71,24 @@ describe('AppShellComponent', () => {
       '/app/my-work',
       '/app/claims',
       '/app/documents',
-      '/app/reports',
     ]);
     expect(fixture.nativeElement.textContent).toContain('Jordan Lee');
     expect(fixture.nativeElement.textContent).toContain('Senior Adjuster');
+    expect(fixture.nativeElement.textContent).toContain('Evidence Operations');
     expect(fixture.nativeElement.textContent).not.toContain('Team Operations');
+    expect(fixture.nativeElement.textContent).not.toContain('Reports');
   });
 
-  it('renders only administrator destinations and Priya Shah', () => {
+  it('renders only Workflow Automation for the administrator', () => {
     roleState.set('admin');
     const fixture = render();
 
-    expect(destinations(fixture)).toEqual([
-      '/app/workflows',
-      '/app/reports',
-      '/app/settings',
-    ]);
+    expect(destinations(fixture)).toEqual(['/app/workflows']);
     expect(fixture.nativeElement.textContent).toContain('Priya Shah');
     expect(fixture.nativeElement.textContent).toContain('Platform Administrator');
     expect(fixture.nativeElement.textContent).not.toContain('Claim Queue');
+    expect(fixture.nativeElement.textContent).not.toContain('Reports');
+    expect(fixture.nativeElement.textContent).not.toContain('Settings');
   });
 
   it('renders the universal search and accessible role switcher', () => {
