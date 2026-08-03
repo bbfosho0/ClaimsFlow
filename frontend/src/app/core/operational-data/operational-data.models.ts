@@ -103,6 +103,21 @@ export interface DistributionPoint {
   readonly percentage: number;
 }
 
+export interface ResolutionByType {
+  readonly key: string;
+  readonly label: string;
+  readonly averageHours: number | null;
+  readonly resolvedClaims: number;
+}
+
+export interface MonetaryDistributionPoint {
+  readonly key: string;
+  readonly label: string;
+  readonly amount: number;
+  readonly count: number;
+  readonly percentage: number;
+}
+
 export interface CohortRow {
   readonly weekStart: string;
   readonly totalClaims: number;
@@ -118,10 +133,14 @@ export interface AnalyticsSnapshot {
   readonly comparison: AnalyticsComparison;
   readonly claimVolume: readonly TimePoint[];
   readonly resolvedVolume: readonly TimePoint[];
+  readonly openPortfolioTrend?: readonly TimePoint[];
   readonly statusDistribution: readonly DistributionPoint[];
   readonly priorityDistribution: readonly DistributionPoint[];
   readonly regionDistribution: readonly DistributionPoint[];
   readonly agingBands: readonly DistributionPoint[];
+  readonly evidenceReadinessBands?: readonly DistributionPoint[];
+  readonly resolutionByClaimType?: readonly ResolutionByType[];
+  readonly exposureByClaimType?: readonly MonetaryDistributionPoint[];
   readonly cohorts: readonly CohortRow[];
 }
 
@@ -142,6 +161,10 @@ export interface TeamWorkload {
   readonly utilizationPercentage: number;
   readonly evidenceReadinessPercentage: number;
   readonly slaCompliancePercentage: number;
+  readonly atRiskClaims?: number;
+  readonly overdueClaims?: number;
+  readonly highPriorityClaims?: number;
+  readonly nextSlaDeadline?: string | null;
 }
 
 export interface AdjusterWorkload {
@@ -151,6 +174,11 @@ export interface AdjusterWorkload {
   readonly activeClaims: number;
   readonly capacity: number;
   readonly utilizationPercentage: number;
+  readonly atRiskClaims?: number;
+  readonly overdueClaims?: number;
+  readonly highPriorityClaims?: number;
+  readonly evidenceReadinessPercentage?: number;
+  readonly nextSlaDeadline?: string | null;
 }
 
 export interface TeamEscalation {
@@ -180,6 +208,22 @@ export interface IntegrityScore {
   readonly label: string;
 }
 
+export interface TeamPriorityMix {
+  readonly team: string;
+  readonly segments: readonly DistributionPoint[];
+}
+
+export interface TeamSlaPerformance {
+  readonly team: string;
+  readonly compliancePercentage: number | null;
+  readonly resolvedClaims: number;
+}
+
+export interface CapacityTrendPoint {
+  readonly date: string;
+  readonly utilizationPercentage: number;
+}
+
 export interface TeamOperationsSnapshot {
   readonly generatedAt: string;
   readonly options: OperationalFilterOptions;
@@ -189,6 +233,9 @@ export interface TeamOperationsSnapshot {
   readonly escalations: readonly TeamEscalation[];
   readonly advisories: readonly TeamAdvisory[];
   readonly integrity: IntegrityScore;
+  readonly teamPriorityMix?: readonly TeamPriorityMix[];
+  readonly teamSlaPerformance?: readonly TeamSlaPerformance[];
+  readonly capacityTrend?: readonly CapacityTrendPoint[];
 }
 
 export interface EvidenceClaimSummary {
@@ -203,6 +250,7 @@ export interface EvidenceClaimSummary {
   readonly slaDeadline: string;
   readonly adjusterName?: string;
   readonly team?: string;
+  readonly evidence?: readonly EvidenceCategory[];
 }
 
 export interface EvidenceCategory {
@@ -228,11 +276,19 @@ export interface EvidenceClaimDetail extends EvidenceClaimSummary {
   readonly claimantMessages: readonly EvidenceClaimantMessage[];
 }
 
+export interface EvidenceOperationsKpis {
+  readonly claimsMissingEvidence: number;
+  readonly averageReadinessPercentage: number;
+  readonly atRiskWithEvidenceGap: number;
+  readonly fullyCompleteClaims: number;
+}
+
 export interface EvidenceOperationsSnapshot {
   readonly generatedAt: string;
   readonly options: OperationalFilterOptions;
   readonly claims: readonly EvidenceClaimSummary[];
   readonly selected: EvidenceClaimDetail | null;
+  readonly kpis?: EvidenceOperationsKpis;
 }
 
 export type OperationalSnapshot =
