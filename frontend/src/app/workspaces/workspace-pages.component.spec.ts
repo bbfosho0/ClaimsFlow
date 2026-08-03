@@ -86,7 +86,7 @@ function resource<T>(value: T): OperationalResource<T> {
   return { value, loading: false, refreshing: false, stale: false, error: '', updatedAt: new Date('2026-08-03T12:00:00Z'), changedClaimIds: [] };
 }
 
-function operationalStore(): jasmine.SpyObj<OperationalDataStore> & Record<string, unknown> {
+function operationalStore(): any {
   const store = jasmine.createSpyObj<OperationalDataStore>('OperationalDataStore', ['activateAnalytics', 'activateTeam', 'activateEvidence', 'refresh']);
   store.activateAnalytics.and.returnValue(() => undefined);
   store.activateTeam.and.returnValue(() => undefined);
