@@ -59,6 +59,8 @@ const snapshot: DashboardSnapshot = {
     evidenceReadiness: { kind: 'PERCENTAGE', percentage: 3.1 },
   },
   openPortfolioTrend: [{ date: '2026-08-02', value: 6 }, { date: '2026-08-03', value: 7 }],
+  createdTrend: [{ date: '2026-08-02', value: 2 }, { date: '2026-08-03', value: 1 }],
+  resolvedTrend: [{ date: '2026-08-02', value: 1 }, { date: '2026-08-03', value: 2 }],
   exposureTrend: [{ date: '2026-08-02', amount: 820000 }, { date: '2026-08-03', amount: 875000 }],
   slaPressureTrend: [{ date: '2026-08-02', atRisk: 1, overdue: 1 }, { date: '2026-08-03', atRisk: 2, overdue: 1 }],
   evidenceReadinessBands: [
@@ -95,7 +97,7 @@ describe('DashboardPageComponent', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
 
-  it('renders the reactive portfolio snapshot and resolves the golden claim from the URL', async () => {
+  it('renders the Midnight Violet operational hierarchy from backend data', async () => {
     const claims = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['get']);
     claims.get.and.returnValue(of(goldenClaim));
     const resource = signal({
@@ -123,17 +125,26 @@ describe('DashboardPageComponent', () => {
     await harness.navigateByUrl('/dashboard?claimId=claim-demo', DashboardPageComponent);
     harness.detectChanges();
 
+    const root = harness.routeNativeElement!;
     expect(operational.activateDashboard).toHaveBeenCalled();
     expect(claims.get).toHaveBeenCalledWith('claim-demo');
-    expect(harness.routeNativeElement?.querySelector('[data-tour-target="manager-golden-journey"]')).not.toBeNull();
-    expect(harness.routeNativeElement?.textContent).toContain('CLM-2026-DEMO');
-    expect(harness.routeNativeElement?.textContent).toContain('64% of all claims open');
-    expect(harness.routeNativeElement?.textContent).toContain('78%');
-    expect(harness.routeNativeElement?.querySelector('[data-tour-target="priority-command"]')).not.toBeNull();
-    expect(harness.routeNativeElement?.querySelectorAll('.instrument-cell').length).toBe(4);
-    expect(harness.routeNativeElement?.textContent).toContain('Intervention queue');
-    expect(harness.routeNativeElement?.textContent).toContain('Team capacity');
-    expect(harness.routeNativeElement?.textContent).toContain('Claims Intake');
-    expect(harness.routeNativeElement?.textContent).toContain('Operational event feed');
+    expect(root.querySelector('[data-tour-target="manager-golden-journey"]')).not.toBeNull();
+    expect(root.textContent).toContain('CLM-2026-DEMO');
+    expect(root.querySelectorAll('app-metric-card').length).toBe(4);
+    expect(root.textContent).toContain('Open claims');
+    expect(root.textContent).toContain('Estimated exposure');
+    expect(root.textContent).toContain('SLA pressure');
+    expect(root.textContent).toContain('Evidence readiness');
+    expect(root.textContent).toContain('$875.0K');
+    expect(root.textContent).toContain('2 due <24h · 1 overdue');
+    expect(root.querySelector('app-line-area-chart')).not.toBeNull();
+    expect(root.textContent).toContain('Portfolio pulse');
+    expect(root.textContent).toContain('Intervention queue');
+    expect(root.textContent).toContain('SLA deadline profile');
+    expect(root.textContent).toContain('Team capacity');
+    expect(root.textContent).toContain('Evidence readiness bands');
+    expect(root.textContent).toContain('Priority mix');
+    expect(root.textContent).toContain('Operational event feed');
+    expect(root.querySelector('app-command-field')).toBeNull();
   });
 });
