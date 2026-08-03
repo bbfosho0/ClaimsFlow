@@ -3,8 +3,13 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
+  operationalFilterKey,
+  parseOperationalFilters,
+  serializeOperationalFilters,
+} from '../core/operational-data/operational-filter-codec';
+import {
   DEFAULT_OPERATIONAL_FILTERS,
-  OperationalFilterOptions,
+  EMPTY_OPERATIONAL_FILTER_OPTIONS,
   OperationalFilters,
 } from '../core/operational-data/operational-data.models';
 import { OperationalDataStore } from '../core/operational-data/operational-data.store';
@@ -12,11 +17,6 @@ import { AnimatedNumberComponent } from '../shared/operational/animated-number.c
 import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
 import { OperationalFilterBarComponent } from '../shared/operational/operational-filter-bar.component';
 import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
-import { parseOperationalFilters, serializeOperationalFilters } from './analytics-page.component';
-
-const EMPTY_OPTIONS: OperationalFilterOptions = {
-  claimTypes: [], priorities: [], statuses: [], regions: [], teams: [], adjusters: [],
-};
 
 @Component({
   standalone: true,
@@ -38,6 +38,7 @@ export class TeamOperationsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly subscription = new Subscription();
   private release: (() => void) | null = null;
+  private activeFilterKey = '';
   private readonly clockId = setInterval(() => {
     if (globalThis.document?.visibilityState !== 'hidden') this.now.set(Date.now());
   }, 1_000);
@@ -45,13 +46,16 @@ export class TeamOperationsPageComponent implements OnInit, OnDestroy {
   readonly state = this.operational.team;
   readonly snapshot = computed(() => this.state().value);
   readonly filters = signal<OperationalFilters>(DEFAULT_OPERATIONAL_FILTERS);
-  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPTIONS);
+  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPERATIONAL_FILTER_OPTIONS);
   readonly now = signal(Date.now());
 
   ngOnInit(): void {
     this.subscription.add(this.route.queryParams.subscribe(params => {
       const next = parseOperationalFilters(params);
+      const nextKey = operationalFilterKey(next);
       this.filters.set(next);
+      if (nextKey === this.activeFilterKey) return;
+      this.activeFilterKey = nextKey;
       this.release?.();
       this.release = this.operational.activateTeam(next);
     }));
