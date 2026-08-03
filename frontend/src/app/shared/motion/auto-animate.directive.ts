@@ -2,22 +2,28 @@ import { AfterViewInit, Directive, ElementRef, Input, OnDestroy, inject } from '
 import { AutoAnimateOptions, AnimationController, autoAnimate } from '@formkit/auto-animate';
 
 @Directive({
-  selector: '[cfAutoAnimate]',
+  selector: '[cfAutoAnimate],[appAutoAnimate]',
   standalone: true,
 })
 export class AutoAnimateDirective implements AfterViewInit, OnDestroy {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private controller: AnimationController | null = null;
+  private options: Partial<AutoAnimateOptions> | '' = '';
 
-  @Input() cfAutoAnimate: Partial<AutoAnimateOptions> | '' = '';
+  @Input()
+  set cfAutoAnimate(value: Partial<AutoAnimateOptions> | '') { this.options = value; }
+
+  @Input()
+  set appAutoAnimate(value: Partial<AutoAnimateOptions> | string | '') {
+    this.options = typeof value === 'object' ? value : '';
+  }
 
   ngAfterViewInit(): void {
     if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const options = this.cfAutoAnimate || {
+    this.controller = autoAnimate(this.element.nativeElement, this.options || {
       duration: 180,
       easing: 'cubic-bezier(.22, 1, .36, 1)',
-    };
-    this.controller = autoAnimate(this.element.nativeElement, options);
+    });
   }
 
   ngOnDestroy(): void {
