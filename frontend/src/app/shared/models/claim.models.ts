@@ -1,4 +1,5 @@
 export type ClaimType = 'AUTO' | 'PROPERTY' | 'PERSONAL_INJURY';
+export type ClaimRegion = 'NORTHEAST' | 'SOUTHEAST' | 'MIDWEST' | 'SOUTHWEST' | 'WEST';
 export type ClaimPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ClaimStatus = 'NEW' | 'UNDER_REVIEW' | 'WAITING_FOR_INFORMATION' | 'READY_FOR_DECISION' | 'RESOLVED' | 'CLOSED';
 export type RecommendationReviewState = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -9,6 +10,7 @@ export interface Adjuster {
   displayName: string;
   email: string;
   role: string;
+  team: string;
   workloadCapacity: number;
 }
 
@@ -24,11 +26,15 @@ export interface ClaimSummary {
   claimNumber: string;
   claimantName: string;
   claimType: ClaimType;
+  region: ClaimRegion;
   priority: ClaimPriority;
   status: ClaimStatus;
   assignedAdjusterName?: string;
+  assignedTeam?: string;
   slaDeadline: string;
   completenessPercentage: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClaimPage {
@@ -45,6 +51,7 @@ export interface ClaimDetail {
   claimantName: string;
   claimantEmail: string;
   claimType: ClaimType;
+  region: ClaimRegion;
   incidentDate: string;
   estimatedLoss: number;
   description: string;
@@ -59,6 +66,7 @@ export interface ClaimDetail {
   slaDeadline: string;
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string;
   version: number;
 }
 
@@ -100,6 +108,7 @@ export interface AuditEvent {
 export interface ClaimMessage {
   id: string;
   author: string;
+  audience?: MessageAudience;
   body: string;
   createdAt: string;
 }
