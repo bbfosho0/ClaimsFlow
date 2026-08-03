@@ -1,6 +1,5 @@
 package com.claimsflow.analytics.application;
 
-import static com.claimsflow.operations.application.MetricChange.ChangeKind.NEW;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -16,7 +15,6 @@ import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalQueryService;
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -71,15 +69,16 @@ class AnalyticsServiceTest {
         assertThat(snapshot.kpis().evidenceReadinessPercentage()).isEqualTo(75);
         assertThat(snapshot.kpis().slaCompliancePercentage()).isEqualTo(100);
 
-        assertThat(snapshot.comparison().claimVolumeChange().kind()).isEqualTo(NEW);
+        assertThat(snapshot.comparison().claimVolumeChange().kind()).isEqualTo("NEW");
         assertThat(snapshot.comparison().claimVolumeChange().percentage()).isNull();
-        assertThat(snapshot.comparison().exposureChange().kind()).isEqualTo(NEW);
-        assertThat(snapshot.comparison().resolutionTimeChange().kind()).isEqualTo(NEW);
+        assertThat(snapshot.comparison().exposureChange().kind()).isEqualTo("NEW");
+        assertThat(snapshot.comparison().resolutionTimeChange().kind()).isEqualTo("NEW");
 
         assertThat(snapshot.claimVolume()).hasSize(7);
         assertThat(snapshot.claimVolume().get(0).count()).isEqualTo(1);
         assertThat(snapshot.claimVolume().get(1).count()).isEqualTo(1);
-        assertThat(snapshot.resolvedVolume()).filteredOn(point -> point.count() > 0).singleElement()
+        assertThat(snapshot.resolvedVolume().stream().filter(point -> point.count() > 0).toList())
+            .singleElement()
             .extracting(point -> point.date())
             .isEqualTo(LocalDate.of(2026, 7, 3));
         assertThat(snapshot.statusDistribution()).extracting(point -> point.key())
