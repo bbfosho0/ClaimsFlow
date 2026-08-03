@@ -4,6 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ApiError } from '../core/api/api-error';
+import { MetricCardComponent } from '../shared/metrics/metric-card.component';
+import { AutoAnimateDirective } from '../shared/motion/auto-animate.directive';
+import { GsapRevealDirective } from '../shared/motion/gsap-reveal.directive';
 import { humanizeEnum } from '../shared/presentation/claim-presentation';
 import { RecommendationReviewCoordinator } from '../shared/recommendation-review/recommendation-review-coordinator.service';
 import { ClaimAssistantPanelComponent } from './components/claim-assistant-panel.component';
@@ -15,9 +18,19 @@ import { IntelligenceMode, IntelligenceQueueItem, IntelligenceWorkspace, Prepare
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterLink, IntelligenceReviewQueueComponent, IntelligenceDossierComponent, ClaimAssistantPanelComponent, IntelligenceActionDialogComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MetricCardComponent,
+    AutoAnimateDirective,
+    GsapRevealDirective,
+    IntelligenceReviewQueueComponent,
+    IntelligenceDossierComponent,
+    ClaimAssistantPanelComponent,
+    IntelligenceActionDialogComponent,
+  ],
   templateUrl: './claims-intelligence-page.component.html',
-  styleUrl: './claims-intelligence-page.component.css',
+  styleUrls: ['./claims-intelligence-page.component.css', './claims-intelligence-midnight-violet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
@@ -40,6 +53,10 @@ export class ClaimsIntelligencePageComponent implements OnInit {
   readonly preparedDraft = signal('');
 
   readonly selectedQueueItem = computed(() => this.queue().find(item => item.claim.id === this.selectedId()) ?? null);
+  readonly reviewCount = computed(() => this.queue().length);
+  readonly criticalAttentionCount = computed(() => this.queue().filter(item => item.tone === 'critical').length);
+  readonly evidenceBlockedCount = computed(() => this.queue().filter(item => item.claim.completenessPercentage < 100).length);
+  readonly readyForDecisionCount = computed(() => this.queue().filter(item => item.claim.status === 'READY_FOR_DECISION').length);
   readonly reasoningNodes = computed(() => {
     const workspace = this.workspace();
     return workspace ? this.facade.evidenceNodes(workspace.claim, workspace.recommendation) : [];
