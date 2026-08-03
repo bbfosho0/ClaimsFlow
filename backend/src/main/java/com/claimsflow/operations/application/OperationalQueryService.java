@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public final class OperationalQueryService {
+public class OperationalQueryService {
     private final ClaimJpaRepository claims;
     private final AdjusterJpaRepository adjusters;
 
