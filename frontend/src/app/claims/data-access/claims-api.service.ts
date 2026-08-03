@@ -2,7 +2,18 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api/api-config';
-import { Adjuster, AuditEvent, ClaimDetail, ClaimPage, ClaimStatus, CreateClaimRequest, Recommendation, RecommendationReviewState } from '../../shared/models/claim.models';
+import {
+  Adjuster,
+  AuditEvent,
+  ClaimDetail,
+  ClaimMessage,
+  ClaimPage,
+  ClaimStatus,
+  CreateClaimRequest,
+  MessageAudience,
+  Recommendation,
+  RecommendationReviewState,
+} from '../../shared/models/claim.models';
 import { ClaimFilters } from './claim-filter-codec';
 
 @Injectable({ providedIn: 'root' })
@@ -22,6 +33,12 @@ export class ClaimsApiService {
   get(id: string): Observable<ClaimDetail> { return this.http.get<ClaimDetail>(`${API_BASE_URL}/claims/${id}`); }
   assign(id: string, adjusterId: string, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/assignment`, { adjusterId, actor }); }
   updateStatus(id: string, status: ClaimStatus, actor: string): Observable<ClaimDetail> { return this.http.patch<ClaimDetail>(`${API_BASE_URL}/claims/${id}/status`, { status, actor }); }
+  addMessage(
+    id: string,
+    request: { author: string; audience: MessageAudience; body: string },
+  ): Observable<ClaimMessage> {
+    return this.http.post<ClaimMessage>(`${API_BASE_URL}/claims/${id}/messages`, request);
+  }
   getLatestRecommendation(id: string): Observable<Recommendation | null> { return this.http.get<Recommendation | null>(`${API_BASE_URL}/claims/${id}/recommendations/latest`); }
   generateRecommendation(id: string): Observable<Recommendation> { return this.http.post<Recommendation>(`${API_BASE_URL}/claims/${id}/recommendations`, {}); }
   reviewRecommendation(

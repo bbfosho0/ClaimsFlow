@@ -58,27 +58,32 @@ const approvedRecommendation: Recommendation = {
 };
 
 describe('ClaimDetailPageComponent', () => {
-  it('presents advisory decision support and requires a human reason before approval', async () => {
+  function createApi(): jasmine.SpyObj<ClaimsApiService> {
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', [
       'get',
       'getAdjusters',
       'getAudit',
       'assign',
       'updateStatus',
+      'addMessage',
       'generateRecommendation',
     ]);
-    const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>(
-      'RecommendationReviewCoordinator',
-      ['review'],
-    );
     api.get.and.returnValue(of(claim));
     api.getAdjusters.and.returnValue(of([claim.assignedAdjuster!]));
     api.getAudit.and.returnValue(of([
       { id: 'audit-1', actor: 'System', actionType: 'CLAIM_CREATED', summary: 'Claim created', occurredAt: '2026-07-23T09:32:00Z' },
       { id: 'audit-2', actor: 'Interview User', actionType: 'ASSIGNED', summary: 'Assigned to Maya Chen', occurredAt: '2026-07-23T09:41:00Z' },
     ]));
-    reviewCoordinator.review.and.returnValue(of(approvedRecommendation));
+    api.addMessage.and.returnValue(of({
+      id: 'message-1',
+      author: 'Jordan Lee',
+      body: 'Please add the missing evidence.',
+      createdAt: '2026-08-03T06:00:00Z',
+    }));
+    return api;
+  }
 
+  async function configure(api: jasmine.SpyObj<ClaimsApiService>, reviewCoordinator: jasmine.SpyObj<RecommendationReviewCoordinator>) {
     await TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'claims/:id', component: ClaimDetailPageComponent }]),
@@ -86,6 +91,13 @@ describe('ClaimDetailPageComponent', () => {
         { provide: RecommendationReviewCoordinator, useValue: reviewCoordinator },
       ],
     }).compileComponents();
+  }
+
+  it('presents advisory decision support and requires a human reason before approval', async () => {
+    const api = createApi();
+    const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>('RecommendationReviewCoordinator', ['review']);
+    reviewCoordinator.review.and.returnValue(of(approvedRecommendation));
+    await configure(api, reviewCoordinator);
 
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl('/claims/claim-1', ClaimDetailPageComponent);
@@ -138,5 +150,40 @@ describe('ClaimDetailPageComponent', () => {
       decision: 'APPROVED',
       reason: 'Evidence gaps should be resolved before the claim advances.',
     });
+  });
+
+  it('requires confirmation before posting a claimant-visible message and leaves status unchanged', async () => {
+    const api = createApi();
+    const reviewCoordinator = jasmine.createSpyObj<RecommendationReviewCoordinator>('RecommendationReviewCoordinator', ['review']);
+    await configure(api, reviewCoordinator);
+
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/claims/claim-1', ClaimDetailPageComponent);
+    component.setTab('communications');
+    component.claimantMessage.setValue('Please add clear photos of the front-end damage.');
+    harness.detectChanges();
+
+    let root = harness.routeNativeElement!;
+    const reviewButton = Array.from(root.querySelectorAll('button'))
+      .find(button => button.textContent?.includes('Review and send')) as HTMLButtonElement;
+    reviewButton.click();
+    harness.detectChanges();
+
+    expect(api.addMessage).not.toHaveBeenCalled();
+    root = harness.routeNativeElement!;
+    expect(root.querySelector('[role="dialog"]')?.textContent).toContain('Status remains Under Review');
+
+    const sendButton = Array.from(root.querySelectorAll('button'))
+      .find(button => button.textContent?.includes('Send to claimant portal')) as HTMLButtonElement;
+    sendButton.click();
+    harness.detectChanges();
+
+    expect(api.addMessage).toHaveBeenCalledWith('claim-1', {
+      author: 'Jordan Lee',
+      audience: 'CLAIMANT',
+      body: 'Please add clear photos of the front-end damage.',
+    });
+    expect(component.claim()?.status).toBe('UNDER_REVIEW');
+    expect(harness.routeNativeElement?.textContent).toContain('Request sent to the claimant portal.');
   });
 });

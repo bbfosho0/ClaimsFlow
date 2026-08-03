@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
@@ -15,7 +15,6 @@ import {
 import { ReviewDecision } from '../../shared/recommendation-review/recommendation-review.models';
 import { RecommendationReviewCoordinator } from '../../shared/recommendation-review/recommendation-review-coordinator.service';
 import { reviewReasonValidators } from '../../shared/recommendation-review/recommendation-review.validators';
-import { ProgressIndicatorComponent } from '../../shared/ui/progress-indicator/progress-indicator.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 
@@ -23,7 +22,7 @@ type WorkspaceTab = 'dossier' | 'evidence' | 'communications' | 'audit';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, StatusBadgeComponent, ProgressIndicatorComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, StatusBadgeComponent],
   templateUrl: './claim-detail-page.component.html',
   styleUrl: './claim-detail-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,14 +43,21 @@ export class ClaimDetailPageComponent implements OnInit {
   readonly assignmentError = signal('');
   readonly statusError = signal('');
   readonly recommendationError = signal('');
+  readonly messageError = signal('');
+  readonly messageSuccess = signal('');
   readonly activeTab = signal<WorkspaceTab>('dossier');
   readonly pendingReview = signal<ReviewDecision | null>(null);
+  readonly pendingMessageConfirmation = signal(false);
   readonly reviewSuccess = signal('');
   readonly adjusterId = new FormControl('', { nonNullable: true });
   readonly nextStatus = new FormControl<ClaimStatus | ''>('', { nonNullable: true });
   readonly reviewReason = new FormControl('', {
     nonNullable: true,
     validators: reviewReasonValidators(),
+  });
+  readonly claimantMessage = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(1200)],
   });
 
   label = humanizeEnum;
@@ -72,6 +78,7 @@ export class ClaimDetailPageComponent implements OnInit {
         this.adjusters.set(value.adjusters);
         this.audit.set(value.audit);
         this.adjusterId.setValue(value.claim.assignedAdjuster?.id ?? '');
+        this.claimantMessage.setValue(this.defaultMessage(value.claim));
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -137,6 +144,50 @@ export class ClaimDetailPageComponent implements OnInit {
     });
   }
 
+  openMessageConfirmation(): void {
+    this.messageError.set('');
+    this.messageSuccess.set('');
+    if (this.claimantMessage.invalid) {
+      this.claimantMessage.markAsTouched();
+      return;
+    }
+    this.pendingMessageConfirmation.set(true);
+  }
+
+  cancelMessageConfirmation(): void {
+    if (this.acting()) return;
+    this.pendingMessageConfirmation.set(false);
+  }
+
+  confirmClaimantMessage(): void {
+    if (this.claimantMessage.invalid || !this.pendingMessageConfirmation()) return;
+    const body = this.claimantMessage.value.trim();
+    if (!body) {
+      this.claimantMessage.markAsTouched();
+      return;
+    }
+
+    this.acting.set(true);
+    this.messageError.set('');
+    this.api.addMessage(this.id, {
+      author: 'Jordan Lee',
+      audience: 'CLAIMANT',
+      body,
+    }).subscribe({
+      next: () => {
+        this.messageSuccess.set('Request sent to the claimant portal.');
+        this.pendingMessageConfirmation.set(false);
+        this.acting.set(false);
+        this.refreshAudit();
+      },
+      error: (error: unknown) => {
+        this.messageError.set(this.message(error, 'The claimant message could not be added.'));
+        this.pendingMessageConfirmation.set(false);
+        this.acting.set(false);
+      },
+    });
+  }
+
   generate(): void {
     this.acting.set(true);
     this.recommendationError.set('');
@@ -197,6 +248,13 @@ export class ClaimDetailPageComponent implements OnInit {
         this.acting.set(false);
       },
     });
+  }
+
+  private defaultMessage(item: ClaimDetail): string {
+    const missing = item.missingEvidence.length
+      ? item.missingEvidence.join(', ').toLowerCase()
+      : 'the requested supporting evidence';
+    return `Hello ${item.claimantName}, we are reviewing claim ${item.claimNumber}. Please add ${missing} in your claim portal so the review can continue.`;
   }
 
   private refreshAudit(): void {

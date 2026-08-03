@@ -58,13 +58,23 @@
         </section>
 
         <section class="panel communications-panel" *ngIf="activeTab() === 'communications'">
-          <div class="section-heading"><div><p class="eyebrow">COMMUNICATIONS</p><h2>Prepared, not automatically sent</h2></div><span class="cf-chip" data-tone="advisory">Operator approval</span></div>
+          <div class="section-heading"><div><p class="eyebrow">CLAIMANT COMMUNICATION</p><h2>Send a controlled evidence request</h2></div><span class="cf-chip" data-tone="advisory">Human confirmation</span></div>
           <article class="communication-draft">
-            <div><span>DRAFT / EVIDENCE REQUEST</span><strong>Request outstanding documentation</strong></div>
-            <p>Hello {{ item.claimantName }}, we are reviewing claim {{ item.claimNumber }}. Please provide the outstanding evidence listed in your claim portal so the review can continue.</p>
-            <div class="communication-actions"><button class="button secondary" type="button">Edit draft</button><button class="button primary" type="button">Prepare for sending</button></div>
+            <div><span>DRAFT / CLAIMANT PORTAL</span><strong>Request outstanding documentation</strong></div>
+            <label class="message-composer-label" for="claimant-message">Message visible to {{ item.claimantName }}</label>
+            <textarea id="claimant-message" [formControl]="claimantMessage" rows="7" maxlength="1200"></textarea>
+            <div class="message-composer-meta">
+              <small [class.field-error]="claimantMessage.touched && claimantMessage.invalid">{{ claimantMessage.value.length }} / 1200 characters</small>
+              <span>Claim status remains {{ label(item.status) }}.</span>
+            </div>
+            <div *ngIf="messageSuccess()" class="success-message" role="status">{{ messageSuccess() }}</div>
+            <div *ngIf="messageError()" class="inline-error" role="alert">{{ messageError() }}</div>
+            <div class="communication-actions">
+              <button class="button secondary" type="button" (click)="claimantMessage.setValue('')" [disabled]="acting()">Clear draft</button>
+              <button class="button primary" type="button" (click)="openMessageConfirmation()" [disabled]="acting() || claimantMessage.invalid">Review and send →</button>
+            </div>
           </article>
-          <p class="communication-note">This portfolio implementation demonstrates controlled drafting. It does not send claimant communications without a configured provider and explicit operator action.</p>
+          <p class="communication-note">This action writes one claimant-visible message and one audit event. It does not change workflow status, approve a recommendation, or send email or SMS.</p>
         </section>
 
         <section class="panel audit-panel" *ngIf="activeTab() === 'audit'">
@@ -123,6 +133,17 @@
           <span aria-hidden="true">▲</span><div><p class="eyebrow">SLA ATTENTION</p><h2>{{ sla(item.slaDeadline).label }}</h2></div><p>Review evidence and workflow state before the deadline.</p>
         </section>
       </aside>
+    </div>
+
+    <div class="dialog-backdrop" *ngIf="pendingMessageConfirmation()" (click)="cancelMessageConfirmation()">
+      <section class="review-dialog message-review-dialog" role="dialog" aria-modal="true" aria-labelledby="message-dialog-title" (click)="$event.stopPropagation()">
+        <p class="eyebrow">CLAIMANT PORTAL / FINAL REVIEW</p>
+        <h2 id="message-dialog-title">Send this request to {{ item.claimantName }}?</h2>
+        <p>The claimant will see the message exactly as written below. Claim status and recommendation state will not change.</p>
+        <blockquote>{{ claimantMessage.value }}</blockquote>
+        <div class="result-preview"><strong>Exact result</strong><ul><li>One claimant-visible message is created.</li><li>Jordan Lee is recorded as the author.</li><li>An audit event is appended.</li><li>Status remains {{ label(item.status) }}.</li></ul></div>
+        <div class="dialog-actions"><button class="button secondary" type="button" [disabled]="acting()" (click)="cancelMessageConfirmation()">Edit message</button><button class="button primary" type="button" [disabled]="acting()" (click)="confirmClaimantMessage()">{{ acting() ? 'Sending…' : 'Send to claimant portal' }}</button></div>
+      </section>
     </div>
 
     <div class="dialog-backdrop" *ngIf="pendingReview() as decision" (click)="cancelReview()">

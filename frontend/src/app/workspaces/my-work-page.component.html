@@ -1,0 +1,65 @@
+<section class="workspace-page my-work-page page-enter">
+  <header class="my-work-hero">
+    <div>
+      <p class="eyebrow">ADJUSTER DESK / JORDAN LEE</p>
+      <h1>My Work</h1>
+      <p>Assigned claims, evidence gaps, and the next human action—grounded in the real ClaimsFlow API.</p>
+    </div>
+    <a class="button secondary" routerLink="/app/claims">Open claim queue →</a>
+  </header>
+
+  <div class="my-work-metrics" aria-label="Adjuster workload summary">
+    <article><span>ASSIGNED CLAIMS</span><strong>{{ assignedClaims().length }}</strong><small>API-backed</small></article>
+    <article><span>HIGH ATTENTION</span><strong>{{ urgentCount() }}</strong><small>High or critical priority</small></article>
+    <article><span>EVIDENCE GAPS</span><strong>{{ evidenceGapCount() }}</strong><small>Below 100% completeness</small></article>
+    <article><span>ACTIVE ADJUSTER</span><strong>Jordan Lee</strong><small>{{ adjusterId() ? 'Seeded UUID resolved' : 'Reset required' }}</small></article>
+  </div>
+
+  <div *ngIf="loading()" class="workspace-panel my-work-state" role="status">Loading Jordan Lee’s assigned claims…</div>
+  <div *ngIf="error()" class="my-work-alert" role="alert">{{ error() }}</div>
+
+  <section class="workspace-panel assigned-claims-panel" *ngIf="!loading()">
+    <header>
+      <div><span>PERSONAL QUEUE</span><strong>Assigned claims</strong></div>
+      <span>{{ assignedClaims().length }} returned by the backend</span>
+    </header>
+
+    <div *ngIf="!adjusterId()" class="my-work-empty">
+      <strong>Reset the golden journey to resolve Jordan Lee’s adjuster ID.</strong>
+      <p>Use the profile menu, choose <b>Reset Demo Journey</b>, then return to My Work.</p>
+    </div>
+
+    <div *ngIf="adjusterId() && !assignedClaims().length && !error()" class="my-work-empty">
+      <strong>No assigned claims were returned.</strong>
+      <p>The workspace is connected; assign a claim to Jordan Lee or reset the demo journey.</p>
+    </div>
+
+    <div class="assigned-claim-list" *ngIf="assignedClaims().length">
+      <a *ngFor="let claim of assignedClaims()" [routerLink]="['/app/claims', claim.id]" class="assigned-claim-card" [class.golden]="isGoldenJourney(claim)">
+        <div class="claim-card-heading">
+          <div>
+            <span>{{ claim.claimNumber }}</span>
+            <strong>{{ claim.claimantName }}</strong>
+          </div>
+          <span *ngIf="isGoldenJourney(claim)" class="golden-badge">Golden journey</span>
+        </div>
+        <div class="claim-card-status">
+          <app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="claim.priority === 'CRITICAL' ? '!' : '•'" />
+          <app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" icon="•" />
+        </div>
+        <dl>
+          <div><dt>Evidence</dt><dd>{{ claim.completenessPercentage }}%</dd></div>
+          <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+          <div><dt>Type</dt><dd>{{ label(claim.claimType) }}</dd></div>
+        </dl>
+        <span class="open-claim">Open claim workspace →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="demo-workload" aria-label="Secondary demo workload">
+    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Follow-up review block</strong><p>Three secondary claims are reserved for visual workload context. They are intentionally not presented as API-backed records.</p></article>
+    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Decision preparation</strong><p>Two recommendations are awaiting explicit operator review. No claim status changes automatically.</p></article>
+    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Daily commitment</strong><p>Complete claimant evidence requests before the final SLA review window.</p></article>
+  </section>
+</section>

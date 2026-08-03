@@ -2,6 +2,7 @@ export type ClaimType = 'AUTO' | 'PROPERTY' | 'PERSONAL_INJURY';
 export type ClaimPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ClaimStatus = 'NEW' | 'UNDER_REVIEW' | 'WAITING_FOR_INFORMATION' | 'READY_FOR_DECISION' | 'RESOLVED' | 'CLOSED';
 export type RecommendationReviewState = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type MessageAudience = 'CLAIMANT' | 'INTERNAL';
 
 export interface Adjuster {
   id: string;
@@ -94,4 +95,11 @@ export interface AuditEvent {
   previousValue?: string;
   newValue?: string;
   occurredAt: string;
+}
+
+export interface ClaimMessage {
+  id: string;
+  author: string;
+  body: string;
+  createdAt: string;
 }
