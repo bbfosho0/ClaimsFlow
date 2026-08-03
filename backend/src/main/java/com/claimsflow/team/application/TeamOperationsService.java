@@ -2,29 +2,48 @@ package com.claimsflow.team.application;
 
 import com.claimsflow.adjuster.domain.Adjuster;
 import com.claimsflow.adjuster.persistence.AdjusterJpaRepository;
-import com.claimsflow.claim.domain.*;
-import com.claimsflow.operations.application.*;
-import com.claimsflow.team.api.TeamOperationsResponses.*;
-import java.time.*;
-import java.util.*;
+import com.claimsflow.claim.domain.Claim;
+import com.claimsflow.claim.domain.ClaimPriority;
+import com.claimsflow.operations.application.OperationalFilterOptionsService;
+import com.claimsflow.operations.application.OperationalFilters;
+import com.claimsflow.operations.application.OperationalMetrics;
+import com.claimsflow.operations.application.OperationalMetrics.SlaState;
+import com.claimsflow.operations.application.OperationalQueryService;
+import com.claimsflow.team.api.TeamOperationsResponses.AdjusterWorkload;
+import com.claimsflow.team.api.TeamOperationsResponses.Advisory;
+import com.claimsflow.team.api.TeamOperationsResponses.Escalation;
+import com.claimsflow.team.api.TeamOperationsResponses.IntegrityScore;
+import com.claimsflow.team.api.TeamOperationsResponses.TeamKpis;
+import com.claimsflow.team.api.TeamOperationsResponses.TeamOperationsSnapshot;
+import com.claimsflow.team.api.TeamOperationsResponses.TeamWorkload;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TeamOperationsService {
-    private static final Set<ClaimStatus> CLOSED = EnumSet.of(ClaimStatus.RESOLVED, ClaimStatus.CLOSED);
-
     private final OperationalQueryService query;
     private final AdjusterJpaRepository adjusterRepository;
+    private final OperationalFilterOptionsService filterOptions;
     private final Clock clock;
 
     public TeamOperationsService(
             OperationalQueryService query,
             AdjusterJpaRepository adjusterRepository,
+            OperationalFilterOptionsService filterOptions,
             Clock clock) {
         this.query = query;
         this.adjusterRepository = adjusterRepository;
+        this.filterOptions = filterOptions;
         this.clock = clock;
     }
 
@@ -32,51 +51,44 @@ public class TeamOperationsService {
     public TeamOperationsSnapshot snapshot(OperationalFilters filters) {
         Instant now = clock.instant();
         List<Claim> claims = query.find(filters);
-        List<Claim> open = claims.stream().filter(this::isOpen).toList();
-        List<Adjuster> activeAdjusters = adjusterRepository.findByActiveTrueOrderByDisplayNameAsc().stream()
-            .filter(adjuster -> filters.team() == null || filters.team().equals(adjuster.getTeam()))
-            .filter(adjuster -> filters.adjusterId() == null || filters.adjusterId().equals(adjuster.getId()))
-            .toList();
+        List<Claim> openClaims = claims.stream().filter(OperationalMetrics::isOpen).toList();
+        List<Adjuster> activeAdjusters = selectedActiveAdjusters(filters);
 
-        long atRisk = open.stream().filter(claim -> isAtRisk(claim, now)).count();
-        long overdue = open.stream().filter(claim -> claim.getSlaDeadline().isBefore(now)).count();
-        long assigned = open.stream().filter(claim -> claim.getAssignedAdjuster() != null).count();
-        int readiness = averageCompleteness(claims);
-        int assignmentCoverage = percent(assigned, open.size());
-        int slaCompliance = slaCompliance(claims);
+        long atRisk = openClaims.stream()
+            .filter(claim -> OperationalMetrics.slaState(claim, now) == SlaState.AT_RISK)
+            .count();
+        long overdue = openClaims.stream()
+            .filter(claim -> OperationalMetrics.slaState(claim, now) == SlaState.OVERDUE)
+            .count();
+        long assigned = openClaims.stream().filter(claim -> claim.getAssignedAdjuster() != null).count();
+        int readiness = OperationalMetrics.averageCompleteness(claims);
+        int assignmentCoverage = OperationalMetrics.percent(assigned, openClaims.size());
+        int slaCompliance = OperationalMetrics.slaCompliance(claims);
         int totalCapacity = activeAdjusters.stream().mapToInt(Adjuster::getWorkloadCapacity).sum();
-        int utilization = percent(assigned, totalCapacity);
+        int utilization = Math.min(100, OperationalMetrics.percent(assigned, totalCapacity));
 
-        Map<UUID, Long> activeByAdjuster = open.stream()
+        Map<UUID, Long> activeByAdjuster = openClaims.stream()
             .filter(claim -> claim.getAssignedAdjuster() != null)
             .collect(Collectors.groupingBy(
                 claim -> claim.getAssignedAdjuster().getId(),
                 Collectors.counting()));
 
         List<AdjusterWorkload> adjusterWorkloads = activeAdjusters.stream()
-            .map(adjuster -> {
-                long count = activeByAdjuster.getOrDefault(adjuster.getId(), 0L);
-                return new AdjusterWorkload(
-                    adjuster.getId(),
-                    adjuster.getDisplayName(),
-                    adjuster.getTeam(),
-                    count,
-                    adjuster.getWorkloadCapacity(),
-                    Math.min(100, percent(count, adjuster.getWorkloadCapacity())));
-            })
-            .sorted(Comparator.comparingInt(AdjusterWorkload::utilizationPercentage).reversed())
+            .map(adjuster -> adjusterWorkload(adjuster, activeByAdjuster))
+            .sorted(Comparator
+                .comparingInt(AdjusterWorkload::utilizationPercentage)
+                .reversed()
+                .thenComparing(AdjusterWorkload::displayName))
             .toList();
 
         Map<String, List<Adjuster>> adjustersByTeam = activeAdjusters.stream()
             .collect(Collectors.groupingBy(Adjuster::getTeam, TreeMap::new, Collectors.toList()));
         List<TeamWorkload> teamWorkloads = adjustersByTeam.entrySet().stream()
-            .map(entry -> teamWorkload(entry.getKey(), entry.getValue(), claims, open))
+            .map(entry -> teamWorkload(entry.getKey(), entry.getValue(), claims, openClaims))
             .toList();
 
-        List<Escalation> escalations = open.stream()
-            .filter(claim -> claim.getSlaDeadline().isBefore(now)
-                || isAtRisk(claim, now)
-                || claim.getPriority() == ClaimPriority.CRITICAL)
+        List<Escalation> escalations = openClaims.stream()
+            .filter(claim -> isEscalation(claim, now))
             .sorted(Comparator
                 .comparingInt((Claim claim) -> escalationRank(claim, now))
                 .thenComparing(Claim::getSlaDeadline)
@@ -85,7 +97,14 @@ public class TeamOperationsService {
             .map(claim -> escalation(claim, now))
             .toList();
 
-        List<Advisory> advisories = advisories(overdue, atRisk, open.size() - assigned, claims.stream().filter(claim -> claim.getCompletenessPercentage() < 100).count());
+        long incompleteOpenClaims = openClaims.stream()
+            .filter(claim -> claim.getCompletenessPercentage() < 100)
+            .count();
+        List<Advisory> advisories = advisories(
+            overdue,
+            atRisk,
+            openClaims.size() - assigned,
+            incompleteOpenClaims);
         int overall = Math.round(
             slaCompliance * 0.40f
                 + readiness * 0.30f
@@ -99,20 +118,38 @@ public class TeamOperationsService {
 
         return new TeamOperationsSnapshot(
             now,
-            query.options(),
+            filterOptions.options(),
             new TeamKpis(
-                open.size(),
+                openClaims.size(),
                 atRisk,
                 overdue,
                 slaCompliance,
                 readiness,
                 assignmentCoverage,
-                Math.min(100, utilization)),
+                utilization),
             teamWorkloads,
             adjusterWorkloads,
             escalations,
             advisories,
             integrity);
+    }
+
+    private List<Adjuster> selectedActiveAdjusters(OperationalFilters filters) {
+        return adjusterRepository.findByActiveTrueOrderByDisplayNameAsc().stream()
+            .filter(adjuster -> filters.team() == null || filters.team().equals(adjuster.getTeam()))
+            .filter(adjuster -> filters.adjusterId() == null || filters.adjusterId().equals(adjuster.getId()))
+            .toList();
+    }
+
+    private AdjusterWorkload adjusterWorkload(Adjuster adjuster, Map<UUID, Long> activeByAdjuster) {
+        long activeClaims = activeByAdjuster.getOrDefault(adjuster.getId(), 0L);
+        return new AdjusterWorkload(
+            adjuster.getId(),
+            adjuster.getDisplayName(),
+            adjuster.getTeam(),
+            activeClaims,
+            adjuster.getWorkloadCapacity(),
+            Math.min(100, OperationalMetrics.percent(activeClaims, adjuster.getWorkloadCapacity())));
     }
 
     private TeamWorkload teamWorkload(
@@ -122,19 +159,31 @@ public class TeamOperationsService {
             List<Claim> openClaims) {
         Set<UUID> ids = adjusters.stream().map(Adjuster::getId).collect(Collectors.toSet());
         List<Claim> teamClaims = allClaims.stream()
-            .filter(claim -> claim.getAssignedAdjuster() != null && ids.contains(claim.getAssignedAdjuster().getId()))
+            .filter(claim -> isAssignedTo(claim, ids))
             .toList();
-        long active = openClaims.stream()
-            .filter(claim -> claim.getAssignedAdjuster() != null && ids.contains(claim.getAssignedAdjuster().getId()))
+        long activeClaims = openClaims.stream()
+            .filter(claim -> isAssignedTo(claim, ids))
             .count();
         int capacity = adjusters.stream().mapToInt(Adjuster::getWorkloadCapacity).sum();
         return new TeamWorkload(
             team,
-            active,
+            activeClaims,
             capacity,
-            Math.min(100, percent(active, capacity)),
-            averageCompleteness(teamClaims),
-            slaCompliance(teamClaims));
+            Math.min(100, OperationalMetrics.percent(activeClaims, capacity)),
+            OperationalMetrics.averageCompleteness(teamClaims),
+            OperationalMetrics.slaCompliance(teamClaims));
+    }
+
+    private boolean isAssignedTo(Claim claim, Set<UUID> ids) {
+        return claim.getAssignedAdjuster() != null
+            && ids.contains(claim.getAssignedAdjuster().getId());
+    }
+
+    private boolean isEscalation(Claim claim, Instant now) {
+        SlaState state = OperationalMetrics.slaState(claim, now);
+        return state == SlaState.OVERDUE
+            || state == SlaState.AT_RISK
+            || claim.getPriority() == ClaimPriority.CRITICAL;
     }
 
     private List<Advisory> advisories(long overdue, long atRisk, long unassigned, long incomplete) {
@@ -165,7 +214,7 @@ public class TeamOperationsService {
         if (incomplete > 0) {
             result.add(new Advisory(
                 "Evidence follow-up",
-                incomplete + " claims have incomplete evidence.",
+                incomplete + " active claims have incomplete evidence.",
                 "/app/claims",
                 Map.of("sort", "completenessPercentage,asc"),
                 "advisory"));
@@ -182,10 +231,17 @@ public class TeamOperationsService {
     }
 
     private Escalation escalation(Claim claim, Instant now) {
-        boolean overdue = claim.getSlaDeadline().isBefore(now);
-        boolean atRisk = isAtRisk(claim, now);
-        String reason = overdue ? "SLA overdue" : atRisk ? "SLA due within 24 hours" : "Critical-priority review";
-        String tone = overdue ? "critical" : atRisk ? "warning" : "advisory";
+        SlaState state = OperationalMetrics.slaState(claim, now);
+        String reason = switch (state) {
+            case OVERDUE -> "SLA overdue";
+            case AT_RISK -> "SLA due within 24 hours";
+            default -> "Critical-priority review";
+        };
+        String tone = switch (state) {
+            case OVERDUE -> "critical";
+            case AT_RISK -> "warning";
+            default -> "advisory";
+        };
         return new Escalation(
             claim.getId(),
             claim.getClaimNumber(),
@@ -198,38 +254,11 @@ public class TeamOperationsService {
     }
 
     private int escalationRank(Claim claim, Instant now) {
-        if (claim.getSlaDeadline().isBefore(now)) return 0;
-        if (isAtRisk(claim, now)) return 1;
-        if (claim.getPriority() == ClaimPriority.CRITICAL) return 2;
-        return 3;
-    }
-
-    private boolean isAtRisk(Claim claim, Instant now) {
-        return !claim.getSlaDeadline().isBefore(now)
-            && !claim.getSlaDeadline().isAfter(now.plus(Duration.ofHours(24)));
-    }
-
-    private boolean isOpen(Claim claim) {
-        return !CLOSED.contains(claim.getStatus());
-    }
-
-    private int averageCompleteness(List<Claim> claims) {
-        if (claims.isEmpty()) return 0;
-        return (int) Math.round(claims.stream().mapToInt(Claim::getCompletenessPercentage).average().orElse(0));
-    }
-
-    private int slaCompliance(List<Claim> claims) {
-        List<Claim> resolved = claims.stream().filter(claim -> claim.getResolvedAt() != null).toList();
-        if (resolved.isEmpty()) return 100;
-        long within = resolved.stream()
-            .filter(claim -> !claim.getResolvedAt().isAfter(claim.getSlaDeadline()))
-            .count();
-        return percent(within, resolved.size());
-    }
-
-    private int percent(long numerator, long denominator) {
-        if (denominator == 0) return 0;
-        return (int) Math.round(numerator * 100.0 / denominator);
+        return switch (OperationalMetrics.slaState(claim, now)) {
+            case OVERDUE -> 0;
+            case AT_RISK -> 1;
+            default -> claim.getPriority() == ClaimPriority.CRITICAL ? 2 : 3;
+        };
     }
 
     private String integrityLabel(int score) {
