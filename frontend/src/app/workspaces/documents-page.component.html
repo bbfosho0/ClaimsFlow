@@ -1,17 +1,21 @@
 <section class="operational-workspace documents-workspace page-enter">
-  <h1 class="sr-only">Evidence Operations</h1>
+  <header class="evidence-operations-header">
+    <div>
+      <p class="eyebrow">EVIDENCE COMMAND</p>
+      <h1>Evidence Operations</h1>
+      <p>Find claims blocked by missing evidence, inspect exactly what is absent, and preserve the claimant-visible communication boundary.</p>
+    </div>
+    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+  </header>
+
   <app-operational-filter-bar
     [filters]="filters()"
     [options]="options()"
     (filtersChange)="updateFilters($event)" />
 
-  <div class="operational-toolbar">
-    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
-  </div>
-
   @if (state().loading && !snapshot()) {
-    <div class="operational-loading-grid" role="status" aria-label="Loading evidence operations">
-      <i class="cf-skeleton"></i><i class="cf-skeleton"></i><i class="cf-skeleton"></i>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading evidence operations">
+      <app-metric-card *ngFor="let item of [1,2,3,4]" label="Evidence metric" [loading]="true" variant="hero" />
     </div>
   } @else if (!snapshot() && state().error) {
     <section class="operational-panel operational-error" role="alert">
@@ -21,17 +25,68 @@
   }
 
   @if (snapshot(); as evidenceOperations) {
+    <section class="evidence-kpi-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Evidence operations key performance indicators" cfGsapReveal>
+      <app-metric-card
+        label="Claims missing evidence"
+        [value]="evidenceOperations.kpis?.claimsMissingEvidence || 0"
+        variant="hero"
+        tone="warning"
+        helper="Open claims below 100% completeness"
+        definition="Open claims with one or more persisted evidence categories missing." />
+      <app-metric-card
+        label="Average evidence readiness"
+        [value]="evidenceOperations.kpis?.averageReadinessPercentage || 0"
+        format="percentage"
+        variant="hero"
+        tone="brand"
+        helper="Average completeness across matching claims"
+        definition="Average persisted evidence completeness across the filtered claim set.">
+        <app-metric-radial
+          metric-visual
+          label="Average evidence readiness"
+          tone="brand"
+          [value]="evidenceOperations.kpis?.averageReadinessPercentage || 0" />
+      </app-metric-card>
+      <app-metric-card
+        label="SLA risk with evidence gap"
+        [value]="evidenceOperations.kpis?.atRiskWithEvidenceGap || 0"
+        variant="hero"
+        tone="critical"
+        helper="Due within 24 hours and incomplete"
+        definition="Open claims due within 24 hours that remain below 100% evidence completeness." />
+      <app-metric-card
+        label="Fully complete"
+        [value]="evidenceOperations.kpis?.fullyCompleteClaims || 0"
+        variant="hero"
+        tone="healthy"
+        helper="Claims at 100% persisted completeness"
+        definition="Filtered claims with every represented evidence category persisted as present." />
+    </section>
+
     @if (!evidenceOperations.claims.length) {
       <section class="operational-panel operational-empty">
         <strong>No claims match these evidence filters.</strong>
         <span>Reset the filters to return to the complete deterministic portfolio.</span>
-        <button type="button" class="button secondary" (click)="updateFilters({ from: '', to: '', claimType: '', priority: '', status: '', adjusterId: '', team: '', region: '' })">Reset filters</button>
+        <button type="button" class="button secondary" (click)="resetFilters()">Reset filters</button>
       </section>
     } @else {
-      <div class="evidence-layout">
+      <section class="panel evidence-matrix-panel" cfGsapReveal [gsapRevealDelay]="0.08">
+        <div class="surface-heading compact-heading">
+          <div><p class="eyebrow">PORTFOLIO MATRIX</p><h2>Evidence completeness matrix</h2></div>
+          <span>{{ evidenceOperations.claims.length }} matching claims · Missing evidence ranked first</span>
+        </div>
+        <app-evidence-matrix
+          title="Evidence completeness matrix"
+          description="Claims by incident report, photos, proof of ownership, medical documentation, and total completeness."
+          [headers]="headers"
+          [rows]="matrixRows(evidenceOperations.claims)"
+          (selected)="selectMatrixRow($event)" />
+      </section>
+
+      <div class="evidence-layout" cfGsapReveal [gsapRevealDelay]="0.12">
         <aside class="operational-panel evidence-results" aria-label="Claims with evidence state">
           <header><div><strong>Evidence queue</strong><span>{{ evidenceOperations.claims.length }} matching claims</span></div></header>
-          <div class="evidence-result-list">
+          <div class="evidence-result-list" cfAutoAnimate>
             <button
               type="button"
               class="evidence-result"
@@ -54,37 +109,44 @@
               <a class="button secondary" [routerLink]="['/app/claims', claim.id]">Open authoritative Claim Workspace →</a>
             </header>
 
-            <dl class="claim-context-grid">
-              <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
-              <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
-              <div><dt>Region</dt><dd>{{ label(claim.region) }}</dd></div>
-              <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
-              <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
-              <div><dt>Owner</dt><dd>{{ claim.adjusterName || 'Unassigned' }}</dd></div>
-              <div><dt>Team</dt><dd>{{ claim.team || 'No team assigned' }}</dd></div>
-              <div><dt>Exposure</dt><dd><app-animated-number [value]="claim.estimatedLoss" format="currency" /></dd></div>
-            </dl>
+            <div class="selected-evidence-summary">
+              <app-metric-radial
+                label="Claim evidence completeness"
+                [tone]="claim.completenessPercentage === 100 ? 'healthy' : claim.completenessPercentage >= 75 ? 'warning' : 'critical'"
+                [value]="claim.completenessPercentage" />
+              <dl class="claim-context-grid">
+                <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
+                <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
+                <div><dt>Region</dt><dd>{{ label(claim.region) }}</dd></div>
+                <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+                <div><dt>Owner</dt><dd>{{ claim.adjusterName || 'Unassigned' }}</dd></div>
+                <div><dt>Team</dt><dd>{{ claim.team || 'No team assigned' }}</dd></div>
+                <div><dt>Exposure</dt><dd><app-animated-number [value]="claim.estimatedLoss" format="currency" /></dd></div>
+              </dl>
+            </div>
 
             <section aria-labelledby="evidence-category-title">
               <header><div><strong id="evidence-category-title">Evidence categories</strong><span>Presence state is stored on the claim; binary files are not represented.</span></div></header>
-              <div class="evidence-category-grid">
+              <div class="evidence-category-grid" cfAutoAnimate>
                 <article class="evidence-category" *ngFor="let category of claim.evidence" [attr.data-present]="category.present" [appChangedValue]="category.present" [changeTone]="category.present ? 'healthy' : 'warning'">
                   <span>{{ category.label }}</span><strong>{{ category.state }}</strong>
                   <small>{{ category.present ? 'Persisted as received' : 'Outstanding for this claim' }}</small>
                 </article>
               </div>
             </section>
+          </main>
 
-            <section class="message-timeline" aria-labelledby="claimant-message-title">
-              <header><div><strong id="claimant-message-title">Claimant-visible messages</strong><span>Internal notes are excluded by the backend audience boundary.</span></div></header>
-              @if (!claim.claimantMessages.length) {
-                <div class="operational-empty"><strong>No claimant-visible messages recorded.</strong><span>Communication can be sent from the authoritative Claim Workspace.</span></div>
-              }
+          <aside class="operational-panel message-timeline" aria-labelledby="claimant-message-title">
+            <header><div><strong id="claimant-message-title">Claimant-visible messages</strong><span>Internal notes are excluded by the backend audience boundary.</span></div></header>
+            @if (!claim.claimantMessages.length) {
+              <div class="operational-empty"><strong>No claimant-visible messages recorded.</strong><span>Communication can be sent from the authoritative Claim Workspace.</span></div>
+            }
+            <div class="message-list" cfAutoAnimate>
               <article class="message-card" *ngFor="let message of claim.claimantMessages">
                 <strong>{{ message.author }}</strong><p>{{ message.body }}</p><time>{{ message.createdAt | date:'medium' }}</time>
               </article>
-            </section>
-          </main>
+            </div>
+          </aside>
         }
       </div>
     }
