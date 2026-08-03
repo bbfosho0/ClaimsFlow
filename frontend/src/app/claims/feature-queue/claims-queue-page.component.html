@@ -1,6 +1,6 @@
 <section class="cf-page page-enter queue-page" [attr.data-density]="density()">
   <header class="cf-page-header queue-header">
-    <div><p class="eyebrow">CLAIMS COMMAND / PRIORITIZED WORK</p><h1>Claims Queue</h1><p>Filter the portfolio, inspect review context, and move directly into the claim that needs attention.</p></div>
+    <div><p class="eyebrow">CLAIMS COMMAND / PRIORITIZED WORK</p><h1>Claims Queue</h1><p>Filter the persisted portfolio, inspect review context, and move directly into the claim that needs attention.</p></div>
     <a class="button primary" routerLink="/app/claims/new"><span aria-hidden="true">+</span> New claim</a>
   </header>
 
@@ -13,9 +13,15 @@
     <div class="command-heading"><div><p class="eyebrow">COMMAND FILTERS</p><strong>Portfolio query</strong></div><span>{{ data()?.totalElements ?? 0 }} results</span></div>
     <div class="filter-grid">
       <label class="search-field">Search<input [formControl]="q" placeholder="Claim number or claimant"></label>
+      <label>From<input type="date" [formControl]="from"></label>
+      <label>To<input type="date" [formControl]="to"></label>
+      <label>Claim type<select [formControl]="claimType"><option value="">All types</option><option *ngFor="let item of claimTypes" [value]="item">{{ label(item) }}</option></select></label>
       <label>Status<select [formControl]="status"><option value="">All statuses</option><option *ngFor="let item of statuses" [value]="item">{{ label(item) }}</option></select></label>
       <label>Priority<select [formControl]="priority"><option value="">All priorities</option><option *ngFor="let item of priorities" [value]="item">{{ label(item) }}</option></select></label>
-      <label>Assignment<select [formControl]="assignment"><option value="">All claims</option><option value="unassigned">Unassigned</option></select></label>
+      <label>Ownership<select [formControl]="assignment"><option value="">All claims</option><option value="unassigned">Unassigned only</option></select></label>
+      <label>Adjuster<select [formControl]="adjusterId"><option value="">All adjusters</option><option *ngFor="let item of adjusters()" [value]="item.id">{{ item.displayName }}</option></select></label>
+      <label>Team<select [formControl]="team"><option value="">All teams</option><option *ngFor="let item of teams()" [value]="item">{{ item }}</option></select></label>
+      <label>Region<select [formControl]="region"><option value="">All regions</option><option *ngFor="let item of regions" [value]="item">{{ label(item) }}</option></select></label>
       <div class="filter-actions"><button class="button primary" type="submit">Apply</button><button class="button secondary" type="button" (click)="reset()">Reset</button></div>
     </div>
     <div class="command-footer">
@@ -31,24 +37,25 @@
     </div>
   </form>
 
-  <div *ngIf="loading()" class="panel loading-state" role="status">Loading claims command data…</div>
-  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+  <div class="queue-refresh-row"><app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" /></div>
+  <div *ngIf="loading()" class="panel loading-state cf-skeleton" role="status">Loading claims command data…</div>
+  <div *ngIf="error()" class="alert queue-error" role="alert"><span>{{ error() }}</span><button type="button" class="button secondary" (click)="refresh()">Retry</button></div>
 
   <div *ngIf="data() as page" class="queue-layout">
     <section class="panel table-panel" aria-labelledby="queue-table-title">
-      <div class="table-meta"><div><p class="eyebrow">PRIORITIZED CLAIMS</p><h2 id="queue-table-title">{{ page.totalElements }} active records</h2></div><span>{{ resultRange(page) }} · Page {{ page.page + 1 }} of {{ page.totalPages || 1 }}</span></div>
-      <div *ngIf="!page.content.length" class="empty">No claims match the selected command filters.</div>
+      <div class="table-meta"><div><p class="eyebrow">PRIORITIZED CLAIMS</p><h2 id="queue-table-title">{{ page.totalElements }} matching records</h2></div><span>{{ resultRange(page) }} · Page {{ page.page + 1 }} of {{ page.totalPages || 1 }}</span></div>
+      <div *ngIf="!page.content.length" class="empty queue-empty"><strong>No claims match the selected command filters.</strong><button type="button" class="button secondary" (click)="reset()">Reset filters</button></div>
 
       <div class="table-wrap" *ngIf="page.content.length">
         <table aria-label="Claims work queue">
           <thead><tr><th>Claim</th><th>Claimant</th><th>Priority</th><th>Status</th><th>Owner</th><th>SLA</th><th>Evidence</th></tr></thead>
           <tbody>
-            <tr *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" (click)="selectClaim(claim)" (keydown.enter)="selectClaim(claim)" tabindex="0" [attr.data-tour-target]="isGoldenJourney(claim) ? 'urgent-claim' : null">
-              <td><a [routerLink]="['/app/claims', claim.id]">{{ claim.claimNumber }}</a><small>{{ label(claim.claimType) }}</small><span *ngIf="isGoldenJourney(claim)" class="cf-chip" data-tone="healthy">Golden journey</span></td>
+            <tr *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" [changeTone]="claim.priority === 'CRITICAL' ? 'critical' : claim.completenessPercentage < 100 ? 'warning' : 'healthy'" (click)="selectClaim(claim)" (keydown.enter)="selectClaim(claim)" tabindex="0" [attr.data-tour-target]="isGoldenJourney(claim) ? 'urgent-claim' : null">
+              <td><a [routerLink]="['/app/claims', claim.id]">{{ claim.claimNumber }}</a><small>{{ label(claim.claimType) }}<ng-container *ngIf="claim.region"> · {{ label(claim.region) }}</ng-container></small><span *ngIf="isGoldenJourney(claim)" class="cf-chip" data-tone="healthy">Golden journey</span></td>
               <td><strong>{{ claim.claimantName }}</strong><small>{{ claim.slaDeadline | date:'mediumDate' }} deadline</small></td>
               <td><app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="priorityIcon(claim.priority)" /></td>
               <td><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /></td>
-              <td [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</td>
+              <td [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}<small *ngIf="claim.assignedTeam">{{ claim.assignedTeam }}</small></td>
               <td><span class="sla-label" [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</span><small>{{ sla(claim.slaDeadline).detail }}</small></td>
               <td><app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" [compact]="true" /></td>
             </tr>
@@ -57,11 +64,11 @@
       </div>
 
       <div class="mobile-claims" *ngIf="page.content.length">
-        <article class="claim-card" *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" (click)="selectClaim(claim)">
+        <article class="claim-card" *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" (click)="selectClaim(claim)">
           <div class="claim-card-top"><a [routerLink]="['/app/claims', claim.id]">{{ claim.claimNumber }}</a><app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="priorityIcon(claim.priority)" /></div>
           <span *ngIf="isGoldenJourney(claim)" class="cf-chip" data-tone="healthy">Golden journey</span>
           <h2>{{ claim.claimantName }}</h2>
-          <div class="claim-card-meta"><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /><span>{{ label(claim.claimType) }}</span></div>
+          <div class="claim-card-meta"><app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" [icon]="statusIcon(claim.status)" /><span>{{ label(claim.claimType) }}<ng-container *ngIf="claim.region"> · {{ label(claim.region) }}</ng-container></span></div>
           <div class="claim-card-row"><span [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</span><span class="sla-label" [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</span></div>
           <app-progress-indicator [value]="claim.completenessPercentage" label="Claim completeness" [tone]="completenessTone(claim.completenessPercentage)" />
         </article>
@@ -73,8 +80,8 @@
     <aside class="panel claim-inspector" *ngIf="selectedClaim() as claim" aria-label="Selected claim context">
       <div class="inspector-header"><div><p class="eyebrow">SELECTED CONTEXT</p><h2>{{ claim.claimNumber }}</h2></div><span class="cf-chip" [attr.data-tone]="claim.priority === 'CRITICAL' ? 'critical' : claim.priority === 'HIGH' ? 'warning' : 'live'">{{ label(claim.priority) }}</span></div>
       <div *ngIf="isGoldenJourney(claim)" class="golden-inspector-note"><strong>Golden journey</strong><span>This row is the live claim shared by the claimant, adjuster, manager, and administrator demo.</span></div>
-      <div class="claimant-identity"><span aria-hidden="true">{{ claim.claimantName.slice(0, 2).toUpperCase() }}</span><div><strong>{{ claim.claimantName }}</strong><small>{{ label(claim.claimType) }} claim</small></div></div>
-      <dl class="inspector-facts"><div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div><div><dt>Owner</dt><dd [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</dd></div><div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).detail }}</dd></div><div><dt>Evidence</dt><dd>{{ claim.completenessPercentage }}% complete</dd></div></dl>
+      <div class="claimant-identity"><span aria-hidden="true">{{ claim.claimantName.slice(0, 2).toUpperCase() }}</span><div><strong>{{ claim.claimantName }}</strong><small>{{ label(claim.claimType) }}<ng-container *ngIf="claim.region"> · {{ label(claim.region) }}</ng-container></small></div></div>
+      <dl class="inspector-facts"><div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div><div><dt>Owner</dt><dd [class.unassigned]="!claim.assignedAdjusterName">{{ claim.assignedAdjusterName || 'Unassigned' }}</dd></div><div><dt>Team</dt><dd>{{ claim.assignedTeam || 'No team' }}</dd></div><div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).detail }}</dd></div><div><dt>Evidence</dt><dd>{{ claim.completenessPercentage }}% complete</dd></div></dl>
       <app-progress-indicator [value]="claim.completenessPercentage" label="Evidence completeness" [tone]="completenessTone(claim.completenessPercentage)" />
       <div class="review-rationale"><p class="eyebrow">WHY THIS CLAIM</p><ul><li *ngIf="claim.priority === 'HIGH' || claim.priority === 'CRITICAL'">Priority requires accelerated review.</li><li *ngIf="claim.completenessPercentage < 100">Evidence remains incomplete.</li><li *ngIf="!claim.assignedAdjusterName">Ownership is unresolved.</li><li>SLA state: {{ sla(claim.slaDeadline).label }}.</li></ul></div>
       <a class="button primary inspector-action" [routerLink]="['/app/claims', claim.id]">Open claim workspace →</a>
