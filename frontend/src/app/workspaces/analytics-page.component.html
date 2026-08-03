@@ -26,12 +26,12 @@
       <article class="operational-kpi" [appChangedValue]="analytics.kpis.estimatedExposure">
         <span>Estimated exposure</span>
         <strong><app-animated-number [value]="analytics.kpis.estimatedExposure" format="currency" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.exposureChangePercentage)" [attr.data-negative]="comparisonTone(analytics.comparison.exposureChangePercentage) === 'false'">{{ signed(analytics.comparison.exposureChangePercentage) }}</small>
+        <small [attr.data-positive]="comparisonTone(analytics.comparison.exposureChange)" [attr.data-negative]="comparisonTone(analytics.comparison.exposureChange) === 'false'">{{ comparisonLabel(analytics.comparison.exposureChange) }}</small>
       </article>
       <article class="operational-kpi" [appChangedValue]="analytics.kpis.totalClaims">
         <span>Total claims</span>
         <strong><app-animated-number [value]="analytics.kpis.totalClaims" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.claimVolumeChangePercentage)" [attr.data-negative]="comparisonTone(analytics.comparison.claimVolumeChangePercentage) === 'false'">{{ signed(analytics.comparison.claimVolumeChangePercentage) }}</small>
+        <small [attr.data-positive]="comparisonTone(analytics.comparison.claimVolumeChange)" [attr.data-negative]="comparisonTone(analytics.comparison.claimVolumeChange) === 'false'">{{ comparisonLabel(analytics.comparison.claimVolumeChange) }}</small>
       </article>
       <article class="operational-kpi" data-tone="warning" [appChangedValue]="analytics.kpis.openClaims" changeTone="warning">
         <span>Open claims</span>
@@ -46,7 +46,7 @@
       <article class="operational-kpi" data-tone="advisory" [appChangedValue]="analytics.kpis.averageResolutionHours" changeTone="advisory">
         <span>Average resolution</span>
         <strong><app-animated-number [value]="analytics.kpis.averageResolutionHours" format="hours" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.resolutionTimeChangePercentage, true)" [attr.data-negative]="comparisonTone(analytics.comparison.resolutionTimeChangePercentage, true) === 'false'">{{ signed(analytics.comparison.resolutionTimeChangePercentage) }}</small>
+        <small [attr.data-positive]="comparisonTone(analytics.comparison.resolutionTimeChange, true)" [attr.data-negative]="comparisonTone(analytics.comparison.resolutionTimeChange, true) === 'false'">{{ comparisonLabel(analytics.comparison.resolutionTimeChange) }}</small>
       </article>
       <article class="operational-kpi" data-tone="healthy" [appChangedValue]="analytics.kpis.evidenceReadinessPercentage" changeTone="healthy">
         <span>Evidence readiness</span>
