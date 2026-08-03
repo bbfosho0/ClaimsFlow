@@ -3,8 +3,13 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
+  operationalFilterKey,
+  parseOperationalFilters,
+  serializeOperationalFilters,
+} from '../core/operational-data/operational-filter-codec';
+import {
   DEFAULT_OPERATIONAL_FILTERS,
-  OperationalFilterOptions,
+  EMPTY_OPERATIONAL_FILTER_OPTIONS,
   OperationalFilters,
 } from '../core/operational-data/operational-data.models';
 import { OperationalDataStore } from '../core/operational-data/operational-data.store';
@@ -13,11 +18,6 @@ import { ChangedValueDirective } from '../shared/operational/changed-value.direc
 import { OperationalFilterBarComponent } from '../shared/operational/operational-filter-bar.component';
 import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
 import { formatSla, humanizeEnum } from '../shared/presentation/claim-presentation';
-import { parseOperationalFilters, serializeOperationalFilters } from './analytics-page.component';
-
-const EMPTY_OPTIONS: OperationalFilterOptions = {
-  claimTypes: [], priorities: [], statuses: [], regions: [], teams: [], adjusters: [],
-};
 
 @Component({
   standalone: true,
@@ -39,12 +39,13 @@ export class DocumentsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly subscription = new Subscription();
   private release: (() => void) | null = null;
+  private activeResourceKey = '';
 
   readonly state = this.operational.evidence;
   readonly snapshot = computed(() => this.state().value);
   readonly filters = signal<OperationalFilters>(DEFAULT_OPERATIONAL_FILTERS);
   readonly selectedClaimId = signal('');
-  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPTIONS);
+  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPERATIONAL_FILTER_OPTIONS);
   readonly selected = computed(() => this.snapshot()?.selected ?? null);
 
   label = humanizeEnum;
@@ -56,8 +57,11 @@ export class DocumentsPageComponent implements OnInit, OnDestroy {
       const selectedClaimId = typeof params['selectedClaimId'] === 'string'
         ? params['selectedClaimId']
         : this.readSession('claimsflow.demoClaimId');
+      const resourceKey = `${operationalFilterKey(filters)}&selectedClaimId=${encodeURIComponent(selectedClaimId)}`;
       this.filters.set(filters);
       this.selectedClaimId.set(selectedClaimId);
+      if (resourceKey === this.activeResourceKey) return;
+      this.activeResourceKey = resourceKey;
       this.release?.();
       this.release = this.operational.activateEvidence(filters, selectedClaimId);
     }));
