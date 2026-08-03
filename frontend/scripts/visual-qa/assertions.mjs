@@ -61,13 +61,15 @@ export class BrowserDiagnostics {
     const url = this.requests.get(event.requestId) ?? '';
     this.requests.delete(event.requestId);
     if (!url.includes('/api/')) return;
-    if (event.canceled || event.errorText === 'net::ERR_ABORTED') return;
+
     const failure = { url, errorText: event.errorText ?? 'unknown network failure' };
     if ([...this.allowedFailurePredicates].some(predicate => predicate(failure))) {
       this.allowedRequestFailures.push(failure);
-    } else {
-      this.unexpectedRequestFailures.push(failure);
+      return;
     }
+
+    if (event.canceled || event.errorText === 'net::ERR_ABORTED') return;
+    this.unexpectedRequestFailures.push(failure);
   }
 }
 
