@@ -62,7 +62,7 @@ export class ClaimsApiService {
     request: { author: string; audience: MessageAudience; body: string },
   ): Observable<ClaimMessage> {
     return this.http.post<ClaimMessage>(`${API_BASE_URL}/claims/${id}/messages`, request).pipe(
-      tap(() => this.operational.invalidate(['evidence'], [id])),
+      tap(() => this.operational.invalidate(['evidence', 'myWork'], [id])),
     );
   }
 
@@ -82,7 +82,7 @@ export class ClaimsApiService {
 
   private invalidateClaimMutation(claimId: string): void {
     this.operational.invalidate(
-      ['dashboard', 'queue', 'analytics', 'team', 'evidence'],
+      ['dashboard', 'queue', 'myWork', 'analytics', 'team', 'evidence'],
       [claimId],
     );
   }
