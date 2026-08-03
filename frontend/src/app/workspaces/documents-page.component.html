@@ -1,0 +1,92 @@
+<section class="operational-workspace documents-workspace page-enter">
+  <h1 class="sr-only">Evidence Operations</h1>
+  <app-operational-filter-bar
+    [filters]="filters()"
+    [options]="options()"
+    (filtersChange)="updateFilters($event)" />
+
+  <div class="operational-toolbar">
+    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+  </div>
+
+  @if (state().loading && !snapshot()) {
+    <div class="operational-loading-grid" role="status" aria-label="Loading evidence operations">
+      <i class="cf-skeleton"></i><i class="cf-skeleton"></i><i class="cf-skeleton"></i>
+    </div>
+  } @else if (!snapshot() && state().error) {
+    <section class="operational-panel operational-error" role="alert">
+      <strong>Evidence Operations could not be loaded.</strong><span>{{ state().error }}</span>
+      <button type="button" class="button secondary" (click)="refresh()">Retry</button>
+    </section>
+  }
+
+  @if (snapshot(); as evidenceOperations) {
+    @if (!evidenceOperations.claims.length) {
+      <section class="operational-panel operational-empty">
+        <strong>No claims match these evidence filters.</strong>
+        <span>Reset the filters to return to the complete deterministic portfolio.</span>
+        <button type="button" class="button secondary" (click)="updateFilters({ from: '', to: '', claimType: '', priority: '', status: '', adjusterId: '', team: '', region: '' })">Reset filters</button>
+      </section>
+    } @else {
+      <div class="evidence-layout">
+        <aside class="operational-panel evidence-results" aria-label="Claims with evidence state">
+          <header><div><strong>Evidence queue</strong><span>{{ evidenceOperations.claims.length }} matching claims</span></div></header>
+          <div class="evidence-result-list">
+            <button
+              type="button"
+              class="evidence-result"
+              *ngFor="let claim of evidenceOperations.claims"
+              [class.active]="isSelected(claim.id)"
+              [appChangedValue]="claim.completenessPercentage"
+              [changeTone]="claim.completenessPercentage === 100 ? 'healthy' : 'warning'"
+              (click)="selectClaim(claim.id)">
+              <strong>{{ claim.claimNumber }} · {{ claim.claimantName }}</strong>
+              <span>{{ label(claim.claimType) }} · {{ label(claim.priority) }} · {{ claim.completenessPercentage }}% evidence</span>
+              <small>{{ claim.adjusterName || 'Unassigned' }}<ng-container *ngIf="claim.team"> · {{ claim.team }}</ng-container> · {{ sla(claim.slaDeadline).label }}</small>
+            </button>
+          </div>
+        </aside>
+
+        @if (selected(); as claim) {
+          <main class="operational-panel evidence-detail" data-tour-target="evidence-operations-detail">
+            <header>
+              <div><strong>{{ claim.claimNumber }} · {{ claim.claimantName }}</strong><span>Persisted evidence state and claimant-visible communication</span></div>
+              <a class="button secondary" [routerLink]="['/app/claims', claim.id]">Open authoritative Claim Workspace →</a>
+            </header>
+
+            <dl class="claim-context-grid">
+              <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
+              <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
+              <div><dt>Region</dt><dd>{{ label(claim.region) }}</dd></div>
+              <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
+              <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+              <div><dt>Owner</dt><dd>{{ claim.adjusterName || 'Unassigned' }}</dd></div>
+              <div><dt>Team</dt><dd>{{ claim.team || 'No team assigned' }}</dd></div>
+              <div><dt>Exposure</dt><dd><app-animated-number [value]="claim.estimatedLoss" format="currency" /></dd></div>
+            </dl>
+
+            <section aria-labelledby="evidence-category-title">
+              <header><div><strong id="evidence-category-title">Evidence categories</strong><span>Presence state is stored on the claim; binary files are not represented.</span></div></header>
+              <div class="evidence-category-grid">
+                <article class="evidence-category" *ngFor="let category of claim.evidence" [attr.data-present]="category.present" [appChangedValue]="category.present" [changeTone]="category.present ? 'healthy' : 'warning'">
+                  <span>{{ category.label }}</span><strong>{{ category.state }}</strong>
+                  <small>{{ category.present ? 'Persisted as received' : 'Outstanding for this claim' }}</small>
+                </article>
+              </div>
+            </section>
+
+            <section class="message-timeline" aria-labelledby="claimant-message-title">
+              <header><div><strong id="claimant-message-title">Claimant-visible messages</strong><span>Internal notes are excluded by the backend audience boundary.</span></div></header>
+              @if (!claim.claimantMessages.length) {
+                <div class="operational-empty"><strong>No claimant-visible messages recorded.</strong><span>Communication can be sent from the authoritative Claim Workspace.</span></div>
+              }
+              <article class="message-card" *ngFor="let message of claim.claimantMessages">
+                <strong>{{ message.author }}</strong><p>{{ message.body }}</p><time>{{ message.createdAt | date:'medium' }}</time>
+              </article>
+            </section>
+          </main>
+        }
+      </div>
+    }
+  }
+</section>

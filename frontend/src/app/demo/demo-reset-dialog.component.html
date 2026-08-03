@@ -1,0 +1,20 @@
+<div class="demo-reset-backdrop" (click)="cancel()">
+  <section
+    class="demo-reset-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="demo-reset-title"
+    aria-describedby="demo-reset-description"
+    (click)="$event.stopPropagation()">
+    <div class="dialog-orb" aria-hidden="true"><span>↺</span></div>
+    <p class="dialog-eyebrow">DEMO CONTROL</p>
+    <h2 id="demo-reset-title">Reset the golden journey</h2>
+    <p id="demo-reset-description">Reset only the reserved ClaimsFlow demo journey? Other claims will not be changed.</p>
+    <div class="dialog-boundary"><span aria-hidden="true">✓</span><p><strong>Scoped and reversible</strong>The backend replaces only claims owned by <code>taylor.reed@example.com</code> and returns the new journey identifiers.</p></div>
+    <p *ngIf="error()" class="dialog-error" role="alert">{{ error() }}</p>
+    <div class="dialog-actions">
+      <button type="button" class="dialog-button secondary" [disabled]="loading()" (click)="cancel()">Cancel</button>
+      <button type="button" class="dialog-button primary" [disabled]="loading()" (click)="confirm()">{{ loading() ? 'Resetting journey…' : 'Reset demo journey' }}</button>
+    </div>
+  </section>
+</div>

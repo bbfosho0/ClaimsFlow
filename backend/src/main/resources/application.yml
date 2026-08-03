@@ -25,6 +25,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 claimsflow:
+  demo:
+    enabled: ${CLAIMSFLOW_DEMO_ENABLED:false}
   openai:
     model: gpt-5-nano
     timeout: 10s

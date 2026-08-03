@@ -13,11 +13,18 @@ export class TourOrchestratorService {
   readonly steps = TOUR_STEPS;
 
   start(): Observable<void> {
-    return this.api.list({ ...DEFAULT_FILTERS, size: 50, sort: 'priority,desc' }).pipe(
-      map(page => page.content.find(claim => claim.claimNumber === 'CF-2026-0142') ?? page.content.find(claim => claim.priority === 'CRITICAL' || claim.priority === 'HIGH') ?? page.content[0]),
-      catchError(() => of(undefined)),
-      tap(claim => this.persist({ step: 'portfolio-pressure', claimId: claim?.id ?? '' })),
-      tap(claim => void this.navigateTo(0, claim?.id)),
+    const storedClaimId = this.readSession('claimsflow.demoClaimId');
+    const claimId$ = storedClaimId
+      ? of(storedClaimId)
+      : this.api.list({ ...DEFAULT_FILTERS, size: 50, sort: 'priority,desc' }).pipe(
+          map(page => page.content.find(claim => claim.priority === 'CRITICAL' || claim.priority === 'HIGH') ?? page.content[0]),
+          map(claim => claim?.id ?? ''),
+          catchError(() => of('')),
+        );
+
+    return claimId$.pipe(
+      tap(claimId => this.persist({ step: 'claimant-portal', claimId })),
+      tap(claimId => void this.navigateTo(0, claimId)),
       map(() => undefined),
     );
   }
@@ -28,15 +35,20 @@ export class TourOrchestratorService {
 
   navigateTo(index: number, claimId?: string): Promise<boolean> {
     const step = this.steps[Math.max(0, Math.min(this.steps.length - 1, index))];
-    this.persist({ step: step.id, claimId: claimId ?? '' });
-    return this.router.navigate([step.route(claimId)], {
-      queryParams: { tour: step.id, claimId: claimId || null },
+    const resolvedClaimId = claimId ?? '';
+    this.persist({ step: step.id, claimId: resolvedClaimId });
+    return this.router.navigate([step.route(resolvedClaimId)], {
+      queryParams: {
+        tour: step.id,
+        claimId: resolvedClaimId || null,
+        role: step.role ?? null,
+      },
     });
   }
 
   exit(): Promise<boolean> {
-    sessionStorage.removeItem('claimsflow-tour-progress');
-    return this.router.navigate(['/app/dashboard']);
+    this.removeSession('claimsflow-tour-progress');
+    return this.router.navigate(['/app/dashboard'], { queryParams: { role: 'manager' } });
   }
 
   restore(): { step: TourStepId; claimId: string } | null {
@@ -49,6 +61,26 @@ export class TourOrchestratorService {
   }
 
   private persist(value: { step: TourStepId; claimId: string }): void {
-    sessionStorage.setItem('claimsflow-tour-progress', JSON.stringify(value));
+    try {
+      sessionStorage.setItem('claimsflow-tour-progress', JSON.stringify(value));
+    } catch {
+      // Tour persistence is optional and must not block navigation.
+    }
+  }
+
+  private readSession(key: string): string {
+    try {
+      return sessionStorage.getItem(key) ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  private removeSession(key: string): void {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // Session storage is optional.
+    }
   }
 }

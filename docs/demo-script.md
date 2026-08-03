@@ -1,179 +1,241 @@
 # ClaimsFlow Interview Demo Script
 
-Target length: eight to ten minutes.
+Target length: seven to nine minutes.
 
-The recommended starting point is `http://localhost:4200/`. A compressed version can start at `/tour` and follow the application controller.
+## Before the interview
 
-## 0:00 to 0:50: product problem and showcase
+Start PostgreSQL, Spring Boot, and Angular with the demo environment enabled:
 
-Open the root showcase.
+```bash
+CLAIMSFLOW_DEMO_ENABLED=true mvn spring-boot:run
+```
 
-Explain that claims are not treated as equal rows. Each claim concentrates several operational signals:
+Open the employee application, use the profile menu, and choose **Reset Demo Journey**. Confirm `Demo journey reset.`
 
-- SLA pressure
-- Evidence completeness
-- Ownership
-- Severity
-- Recommendation readiness
+The reset:
 
-Point out the interruptible Initial -> Signal Lock -> Ready sequence, then skip it to demonstrate that motion never blocks access. Mention that reduced-motion users receive the meaningful Ready state immediately.
+- Preserves the deterministic 48-claim historical portfolio
+- Recreates only the reserved fictional Taylor Reed journey
+- Assigns the stable Jordan Lee adjuster
+- Stores the real claim and adjuster IDs for every walkthrough route
 
-## 0:50 to 1:30: architecture
-
-Use the showcase architecture chapter or `docs/architecture.md`.
-
-Explain:
-
-- Angular 20 standalone lazy routes
-- Spring Boot modular monolith
-- Application-service transaction boundaries
-- Deterministic domain policies
-- PostgreSQL and Flyway
-- Optional advisory provider with deterministic fallback
-- Immutable audit events
-
-## 1:30 to 2:20: Operations Overview
-
-Open `/app/dashboard` or begin the guided tour.
-
-Show:
-
-- Priority Command Field
-- Intervention queue
-- Four-cell instrument band
-- Flow Intelligence
-- Team capacity
-- Operational event feed
-
-Explain that dashboard aggregate definitions and claim workflow state are owned by the backend. The SVG Command Field is a visual interpretation with a textual accessibility summary.
-
-## 2:20 to 3:10: Claims Queue
-
-Open `/app/claims`.
-
-Demonstrate:
-
-- Search, status, priority, and assignment filters
-- URL-preserved filter state
-- Comfortable and compact density
-- Semantic desktop table
-- Selected-claim context inspector
-- SLA, ownership, priority, and evidence signals
-
-Open `CF-2026-0142` when present. Otherwise use the highest-priority incomplete claim selected by the guided tour.
-
-## 3:10 to 4:20: Claim Workspace
-
-Show the identity band and authoritative claim dossier.
-
-Switch through:
-
-- Dossier
-- Evidence ledger
-- Communications
-- Audit
-
-Explain that the evidence ledger classifies present and missing evidence without inventing document contents. Assign an adjuster or perform an allowed workflow transition, then show the resulting audit event.
-
-## 4:20 to 5:30: human-controlled recommendation review
-
-Generate a recommendation in the Decision Support section.
-
-Explain the provider boundary:
-
-- `OpenAiClaimInsightProvider` is attempted only when `OPENAI_API_KEY` exists.
-- Only a controlled operational summary is sent.
-- Responses use structured output and local validation.
-- Failures use `RuleBasedClaimInsightProvider`.
-- The remote call completes outside the database transaction.
-- The validated recommendation and audit event are persisted transactionally.
-
-Click Approve guidance or Reject guidance.
-
-Before confirming, point out the exact-result preview:
-
-- Recommendation review state changes.
-- Claim workflow status remains unchanged.
-- The operator reason is appended to the immutable audit timeline.
-
-Enter a meaningful reason and confirm. Show the updated audit event.
-
-## 5:30 to 6:45: Claims Intelligence
-
-Open `/app/intelligence`.
-
-Show:
-
-- Portfolio-wide review queue
-- Attention score and review reason
-- Selected recommendation dossier
-- Confidence composition
-- Source classifications
-- Evidence Reasoning Graph
-- Review, Investigate, and Action assistant modes
-
-Prepare an evidence request. Explain that it creates a local draft only. Nothing is sent, and no claim state changes.
-
-Prepare a recommendation approval or rejection. Explain that Claims Intelligence cannot execute it without the same operator reason, exact preview, explicit confirmation, and audit event enforced by the Claim Workspace.
-
-## 6:45 to 7:25: New Claim
-
-Open `/app/claims/new`.
-
-Move through the four gates:
-
-1. Claimant
-2. Incident
-3. Evidence
-4. Review
-
-Create an incomplete property or auto claim. Point out:
-
-- Reactive form validation
-- Evidence can remain incomplete
-- Oversized file selection reports an error while preserving the form draft
-- Staged files are not falsely presented as backend uploads
-- Spring calculates claim number, completeness, priority, SLA, and initial workflow state
-
-Submit and show the created claim workspace.
-
-## 7:25 to 8:20: guided tour and engineering proof
+## 0:00–0:35 — Product definition
 
 Open `/tour`.
 
-Explain that the controller navigates real routes using stable `data-tour-target` attributes. It does not replay screenshots or own domain state.
+Use this sentence:
+
+> ClaimsFlow connects claimant evidence, adjuster work, manager operations, and administrator routing around one auditable claim.
+
+Explain that the claimant portal is independent from the employee shell and that each employee role sees only completed surfaces relevant to its work.
+
+## 0:35–1:20 — Claimant perspective
+
+Start the walkthrough. It opens the reserved claim in the claimant portal.
 
 Show:
 
-- Previous and next navigation
-- Technical-proof expansion
-- Arrow-key navigation
-- Escape to exit
-- Session-scoped progress
-- Mobile bottom positioning
+- Status and plain-language next action
+- Evidence completeness
+- SLA expectation
+- Claimant-safe timeline
+- Evidence categories
+- Claimant-visible messages
 
-End on the Engineering Proof section and mention the independent frontend and backend GitHub Actions jobs.
+State that the backend owns the claimant projection. It excludes internal priority rationale, recommendations, and internal notes.
 
-## 8:20 to 9:10: code and tests
+Update one supported evidence category. Explain that the application persists evidence presence and recalculates completeness, priority, and SLA. It does not pretend to upload or store a binary file.
 
-Open representative boundaries:
+## 1:20–2:40 — Adjuster perspective
 
-- `CompletenessPolicy`
-- `ClaimTransitionPolicy`
-- `RecommendationService`
-- `RecommendationServiceReviewTest`
-- `IntelligenceFacadeService`
-- `TourOrchestratorService`
-- `SchemaIntegrationTest`
+Advance to the Adjuster step. The same claim ID opens in Jordan Lee’s Claim Workspace.
 
-Explain one transaction, one deterministic rule, one frontend composition boundary, and one regression test.
+Show:
 
-## 9:10 to 9:40: tradeoffs
+- Assigned owner and team
+- Evidence ledger
+- SLA state
+- Allowed backend transitions
+- Evidence-grounded recommendation
+- Audit history
 
-The main architectural tradeoff was a modular monolith instead of microservices. It preserves clear capability boundaries while keeping transactions, local startup, integration testing, and the interview walkthrough reliable.
+Open Communications. Edit the claimant message, select **Review and send**, and pause at the confirmation dialog.
 
-The main visual tradeoff was translating native Figma shaders into bounded CSS and SVG materials on the web. This preserves the premium signal language without placing expensive effects behind dense forms and tables.
+Point out the exact result before confirming:
 
-## Closing statement
+- One claimant-visible message is created
+- Jordan Lee is recorded as the author
+- One audit event is appended
+- Claim status does not change
 
-ClaimsFlow is not an AI-generated dashboard mockup. It is a complete typed workflow where the backend owns business truth, the frontend makes operational pressure legible, intelligence remains advisory, and every consequential human action is auditable.
+Confirm and show `Request sent to the claimant portal.`
+
+Open **My Work** briefly and show that its counts and claim cards come from the same filtered queue resource using Jordan Lee’s real seeded UUID.
+
+## 2:40–4:40 — Manager operational impact
+
+Advance to **Operations Overview**.
+
+Show:
+
+- The live golden-journey summary
+- Open claims and active-portfolio percentage
+- High-priority load
+- Evidence readiness
+- Ownership gap
+- Categorized command-field signal composition
+- Team capacity
+- Recent persisted audit activity
+
+Explain that every displayed number comes from `GET /api/dashboard`; the old fixed meter and fixture arrays are gone.
+
+Point out the refresh status:
+
+- Mutations invalidate active resources immediately
+- Visible tabs refresh every 45 seconds
+- Hidden tabs pause polling
+- Background failure preserves the last valid snapshot and marks it stale
+
+Open an intervention link. It lands in **Claim Queue** with the matching URL filter. Show:
+
+- Search and curated filters
+- Claim type, priority, status, team/adjuster, region, and date range
+- Golden-journey selection
+- Brief changed-row feedback
+- One useful reset action when filters return no results
+
+## 4:40–5:40 — Analytics and Team Operations
+
+Open **Operational Analytics**.
+
+Change Region to **West** and show that all dependent content recalculates:
+
+- Estimated exposure
+- Claim volume
+- Resolved volume
+- Average resolution time
+- Evidence readiness
+- SLA compliance
+- Status, priority, and regional distributions
+- Open-claim aging
+- Resolution cohorts
+
+State that these values come from persisted deterministic claims and resolution timestamps. There are no fake payout, approval-rate, or fraud-savings KPIs.
+
+Open **Team Operations** and filter to one team. Show:
+
+- Workload against configured capacity
+- At-risk and overdue claims
+- Assignment coverage
+- Adjuster utilization
+- Escalations with real deadlines
+- Advisory links to filtered work
+- Operational integrity formula
+
+Recommendations navigate to relevant work. They do not silently rebalance or assign claims.
+
+## 5:40–6:25 — Evidence Operations
+
+Switch to the Adjuster role and open **Evidence Operations**.
+
+Select the reserved claim and show:
+
+- Claim status, priority, region, exposure, SLA, owner, and team
+- Four persisted evidence-category states
+- Claimant-visible message history
+- Link to the authoritative Claim Workspace
+
+State the truthfulness boundary:
+
+- No binary object storage
+- No OCR or extraction
+- No file versions
+- No fake confidence score
+- No collaborative comments
+- No email or SMS stream
+- No unsupported upload action
+
+## 6:25–7:10 — Administrator perspective
+
+Advance to **Workflow Automation**.
+
+The route loads the same real claim into a typed local simulation.
+
+Show:
+
+- Claim type
+- Estimated loss
+- Evidence completeness
+- Priority and status
+- Deterministic routing result
+
+State the boundary at the controls:
+
+- **Save draft** — local state only
+- **Validate** — local validation only
+- **Activate** — disabled with an explanation
+
+This surface cannot approve, deny, pay, close, assign, or mutate production workflow state.
+
+## 7:10–8:15 — Engineering proof
+
+Advance to Engineering Proof and explain:
+
+- Angular 20 standalone routes and signals
+- A bounded `OperationalDataStore`
+- Immediate mutation invalidation
+- Visibility-aware 45-second polling
+- Last-valid-data retention
+- Spring transactional application services
+- Shared JPA operational filters
+- PostgreSQL and Flyway
+- Deterministic 48-claim employer dataset
+- Claimant-safe projection and scoped message audience
+- Human authority over recommendations and workflow state
+- Persistent audit events
+
+Representative files:
+
+- `ClaimApplicationService`
+- `OperationalQueryService`
+- `AnalyticsService`
+- `TeamOperationsService`
+- `EvidenceOperationsService`
+- `OperationalDataStore`
+- `DemoJourneyService`
+- `OperationalDemoDatasetService`
+- `capture-operational-visual-qa.mjs`
+
+## 8:15–8:50 — Premium motion and accessibility
+
+Explain that motion indicates state:
+
+- KPI interpolation occurs only when a value changes
+- Bars, rings, and paths transition to new backend values
+- Changed claims receive a brief semantic highlight
+- Live or SLA-risk indicators use restrained breathing
+- Background refresh does not blank content
+- Loading skeletons preserve layout
+
+Reduced-motion mode updates immediately and disables interpolation, breathing, scanning, orbiting, chart drawing, and animated scrolling.
+
+Charts include names, exact values, focusable points where appropriate, and nonvisual summaries. Status is not communicated by color alone.
+
+## 8:50–9:15 — Verification and close
+
+Show GitHub Actions:
+
+- Maven verification
+- Frontend Karma tests
+- Angular production build
+- PostgreSQL-backed deterministic reset
+- 18 rendered screenshots
+- Baseline and evidence-changed states
+- Filtered Analytics and Team Operations
+- Stale cached-data state
+- Reduced-motion state
+- Desktop and mobile layouts
+
+Use this closing statement:
+
+> ClaimsFlow is a typed end-to-end workflow rather than a static dashboard concept. The backend owns business and operational truth, changes propagate through shared reactive state, every visible control is honest, and consequential decisions remain human and auditable.

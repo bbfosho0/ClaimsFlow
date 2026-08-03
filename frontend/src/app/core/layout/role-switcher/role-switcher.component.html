@@ -1,0 +1,62 @@
+<div class="role-switcher">
+  <button
+    #trigger
+    class="profile-trigger"
+    type="button"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="'Switch demo role. Current role: ' + operator().label"
+    (click)="toggleMenu()"
+    (keydown)="onTriggerKeydown($event)">
+    <span class="profile-avatar" aria-hidden="true">{{ operator().initials }}</span>
+    <span class="profile-copy">
+      <strong>{{ operator().personaName }}</strong>
+      <small>{{ operator().personaTitle }}</small>
+    </span>
+    <span class="demo-role-pill">DEMO ROLE</span>
+    <span class="profile-chevron" aria-hidden="true">⌄</span>
+  </button>
+
+  <div
+    *ngIf="open()"
+    class="role-menu"
+    role="menu"
+    aria-label="Demo role and journey controls"
+    (keydown)="onMenuKeydown($event)">
+    <div class="menu-heading">
+      <span>Explore by responsibility</span>
+      <small>Presentation mode, not authentication</small>
+    </div>
+
+    <button
+      #menuItem
+      *ngFor="let role of roleDefinitions"
+      class="role-choice"
+      type="button"
+      role="menuitemradio"
+      [class.selected]="operator().id === role.id"
+      [attr.aria-checked]="operator().id === role.id"
+      (click)="selectRole(role.id)">
+      <span class="choice-avatar" aria-hidden="true">{{ role.initials }}</span>
+      <span>
+        <strong>{{ role.label }}</strong>
+        <small>{{ role.personaName }} · {{ role.personaTitle }}</small>
+      </span>
+      <i aria-hidden="true">{{ operator().id === role.id ? '✓' : '→' }}</i>
+    </button>
+
+    <div class="menu-separator" role="separator"></div>
+
+    <button #menuItem class="menu-action" type="button" role="menuitem" (click)="openPortal()">
+      <span aria-hidden="true">◎</span>
+      <span><strong>Open Claimant Portal</strong><small>See the customer experience</small></span>
+      <i aria-hidden="true">↗</i>
+    </button>
+
+    <button #menuItem class="menu-action" type="button" role="menuitem" (click)="requestReset()">
+      <span aria-hidden="true">↺</span>
+      <span><strong>Reset Demo Journey</strong><small>Restore only the reserved claim</small></span>
+      <i aria-hidden="true">→</i>
+    </button>
+  </div>
+</div>

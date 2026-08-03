@@ -1,7 +1,11 @@
-<section class="cf-page page-enter intake-page">
+<section class="cf-page page-enter intake-page" [class.portal-intake]="portalMode">
   <header class="cf-page-header intake-header">
-    <div><p class="eyebrow">COMMAND INTAKE / NEW CLAIM</p><h1>Create a claim</h1><p>Capture a review-ready dossier. Backend policies remain authoritative for completeness, priority, SLA, and workflow.</p></div>
-    <a class="button secondary" routerLink="/app/claims">← Back to queue</a>
+    <div>
+      <p class="eyebrow">{{ portalMode ? 'CLAIMANT PORTAL / NEW CLAIM' : 'COMMAND INTAKE / NEW CLAIM' }}</p>
+      <h1>{{ portalMode ? 'Start a claim' : 'Create a claim' }}</h1>
+      <p>{{ portalMode ? 'Tell us what happened and record the evidence you have. ClaimsFlow will calculate the review state after submission.' : 'Capture a review-ready dossier. Backend policies remain authoritative for completeness, priority, SLA, and workflow.' }}</p>
+    </div>
+    <a class="button secondary" [routerLink]="backRoute">{{ portalMode ? '← Back to portal' : '← Back to queue' }}</a>
   </header>
 
   <div #errorSummary *ngIf="errors().length" class="alert error-summary" tabindex="-1" role="alert"><strong>Review the following:</strong><ul><li *ngFor="let error of errors()">{{ error }}</li></ul></div>
@@ -10,7 +14,7 @@
     <nav class="intake-progress" aria-label="Claim intake gates">
       <button type="button" *ngFor="let gate of [1,2,3,4]" [class.active]="currentGate() === gate" [class.complete]="gateComplete(gate)" (click)="setGate(gate)">
         <span>{{ gateComplete(gate) ? '✓' : gate }}</span>
-        <div><strong>{{ gate === 1 ? 'Claimant' : gate === 2 ? 'Incident' : gate === 3 ? 'Evidence' : 'Review' }}</strong><small>{{ gate === 1 ? 'Identity' : gate === 2 ? 'Facts and loss' : gate === 3 ? 'Available items' : 'Submit dossier' }}</small></div>
+        <div><strong>{{ gate === 1 ? 'Claimant' : gate === 2 ? 'Incident' : gate === 3 ? 'Evidence' : 'Review' }}</strong><small>{{ gate === 1 ? 'Identity' : gate === 2 ? 'Facts and loss' : gate === 3 ? 'Available items' : 'Submit claim' }}</small></div>
       </button>
     </nav>
 
@@ -19,13 +23,13 @@
         <section id="intake-gate-1" class="panel form-section" [class.active-gate]="currentGate() === 1">
           <div class="section-heading"><span>01</span><div><p class="eyebrow">CLAIMANT IDENTITY</p><h2>Who is making the claim?</h2></div><button type="button" class="gate-jump" (click)="setGate(2)">Next gate →</button></div>
           <div class="field-grid two-column">
-            <label>Full name<input formControlName="claimantName" autocomplete="name" placeholder="Taylor Morgan"><small *ngIf="form.controls.claimantName.touched && form.controls.claimantName.invalid">Claimant name is required.</small></label>
-            <label>Email<input type="email" formControlName="claimantEmail" autocomplete="email" placeholder="taylor@example.test"><small *ngIf="form.controls.claimantEmail.touched && form.controls.claimantEmail.invalid">Enter a valid email address.</small></label>
+            <label>Full name<input formControlName="claimantName" autocomplete="name" placeholder="Taylor Reed"><small *ngIf="form.controls.claimantName.touched && form.controls.claimantName.invalid">Claimant name is required.</small></label>
+            <label>Email<input type="email" formControlName="claimantEmail" autocomplete="email" placeholder="taylor.reed@example.com"><small *ngIf="form.controls.claimantEmail.touched && form.controls.claimantEmail.invalid">Enter a valid email address.</small></label>
           </div>
         </section>
 
         <section id="intake-gate-2" class="panel form-section" [class.active-gate]="currentGate() === 2">
-          <div class="section-heading"><span>02</span><div><p class="eyebrow">INCIDENT DOSSIER</p><h2>Describe the event and known impact.</h2></div><button type="button" class="gate-jump" (click)="setGate(3)">Next gate →</button></div>
+          <div class="section-heading"><span>02</span><div><p class="eyebrow">INCIDENT DETAILS</p><h2>Describe the event and known impact.</h2></div><button type="button" class="gate-jump" (click)="setGate(3)">Next gate →</button></div>
           <fieldset class="claim-type-fieldset">
             <legend>Claim type</legend>
             <div class="claim-type-grid">
@@ -43,8 +47,8 @@
         </section>
 
         <section id="intake-gate-3" class="panel form-section" [class.active-gate]="currentGate() === 3">
-          <div class="section-heading"><span>03</span><div><p class="eyebrow">EVIDENCE GATE</p><h2>Mark available evidence and stage files.</h2></div><button type="button" class="gate-jump" (click)="setGate(4)">Review dossier →</button></div>
-          <p class="section-intro">Claims may be submitted incomplete. Missing evidence remains visible after backend triage.</p>
+          <div class="section-heading"><span>03</span><div><p class="eyebrow">EVIDENCE</p><h2>Mark available evidence and stage files.</h2></div><button type="button" class="gate-jump" (click)="setGate(4)">Review claim →</button></div>
+          <p class="section-intro">You may submit an incomplete claim. Missing evidence remains visible to you and the claims team.</p>
           <div class="evidence-grid">
             <label class="evidence-card" [class.selected]="form.controls.incidentReportPresent.value"><input type="checkbox" formControlName="incidentReportPresent"><span aria-hidden="true">✓</span><strong>Incident report</strong><small>Formal report or reference number</small></label>
             <label class="evidence-card" [class.selected]="form.controls.photosPresent.value"><input type="checkbox" formControlName="photosPresent"><span aria-hidden="true">▣</span><strong>Damage photos</strong><small>Images documenting the incident</small></label>
@@ -56,27 +60,27 @@
             <input #fileInput class="sr-only" id="evidence-files" type="file" multiple accept="image/*,.pdf,.doc,.docx" (change)="onFilesSelected($event)">
             <label for="evidence-files"><span aria-hidden="true">⇧</span><div><strong>Stage supporting files</strong><small>Images and documents up to 10 MB each. Selection remains local in this portfolio build.</small></div><b>Choose files</b></label>
             <div class="upload-error" *ngIf="uploadError()" role="alert"><strong>Upload validation failed</strong><span>{{ uploadError() }}</span><button type="button" (click)="fileInput.click()">Try another file</button></div>
-            <ul class="file-list" *ngIf="uploadedFiles().length"><li *ngFor="let file of uploadedFiles()"><span aria-hidden="true">✓</span><strong>{{ file }}</strong><small>Ready for provider integration</small></li></ul>
+            <ul class="file-list" *ngIf="uploadedFiles().length"><li *ngFor="let file of uploadedFiles()"><span aria-hidden="true">✓</span><strong>{{ file }}</strong><small>Staged locally for this form</small></li></ul>
             <button class="clear-files" type="button" *ngIf="uploadedFiles().length || uploadError()" (click)="clearUploadedFiles(fileInput)">Clear staged files</button>
           </div>
         </section>
 
         <section id="intake-gate-4" class="panel form-section review-gate" [class.active-gate]="currentGate() === 4" data-tour-target="new-claim-submit">
-          <div class="section-heading"><span>04</span><div><p class="eyebrow">REVIEW GATE</p><h2>Confirm the dossier before submission.</h2></div><span class="cf-chip" [attr.data-tone]="form.valid ? 'healthy' : 'warning'">{{ form.valid ? 'Ready' : 'Needs attention' }}</span></div>
+          <div class="section-heading"><span>04</span><div><p class="eyebrow">REVIEW</p><h2>Confirm the claim before submission.</h2></div><span class="cf-chip" [attr.data-tone]="form.valid ? 'healthy' : 'warning'">{{ form.valid ? 'Ready' : 'Needs attention' }}</span></div>
           <div class="review-grid">
             <article><span>CLAIMANT</span><strong>{{ form.controls.claimantName.value || 'Not entered' }}</strong><small>{{ form.controls.claimantEmail.value || 'Email required' }}</small></article>
             <article><span>INCIDENT</span><strong>{{ selectedClaimTypeLabel() }}</strong><small>{{ form.controls.incidentDate.value || 'Date required' }}</small></article>
-            <article><span>ESTIMATED LOSS</span><strong>{{ form.controls.estimatedLoss.value | currency }}</strong><small>Backend policies calculate priority</small></article>
+            <article><span>ESTIMATED LOSS</span><strong>{{ form.controls.estimatedLoss.value | currency }}</strong><small>Calculated after submission</small></article>
             <article><span>EVIDENCE</span><strong>{{ evidenceCount() }} marked · {{ uploadedFiles().length }} files</strong><small>Incomplete claims are allowed</small></article>
           </div>
-          <div class="authority-note"><span aria-hidden="true">i</span><div><strong>Backend-authoritative triage</strong><p>Completeness, priority, SLA, claim number, workflow state, and audit events are calculated or persisted by Spring application services.</p></div></div>
+          <div class="authority-note"><span aria-hidden="true">i</span><div><strong>ClaimsFlow calculates the review state</strong><p>Claim number, completeness, priority, service expectation, and workflow state are calculated by the claims backend after submission.</p></div></div>
           <div *ngIf="actionError()" class="inline-error" role="alert">{{ actionError() }}</div>
-          <div class="review-actions"><a class="button secondary" routerLink="/app/claims">Cancel</a><button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Creating claim…' : 'Create review-ready claim →' }}</button></div>
+          <div class="review-actions"><a class="button secondary" [routerLink]="backRoute">Cancel</a><button class="button primary" type="submit" [disabled]="submitting()">{{ submitting() ? 'Submitting claim…' : portalMode ? 'Submit claim →' : 'Create review-ready claim →' }}</button></div>
         </section>
       </main>
 
       <aside class="review-panel" aria-label="Claim intake status">
-        <p class="eyebrow">INTAKE CONTROL</p><h2>Dossier status</h2><p>Use the four gates to collect a complete, traceable starting record.</p>
+        <p class="eyebrow">{{ portalMode ? 'CLAIM PROGRESS' : 'INTAKE CONTROL' }}</p><h2>{{ portalMode ? 'Ready to submit?' : 'Dossier status' }}</h2><p>{{ portalMode ? 'Complete the four steps. You can submit even when some evidence is still missing.' : 'Use the four gates to collect a complete, traceable starting record.' }}</p>
         <dl>
           <div><dt>Required fields</dt><dd>{{ requiredCompleted() }} of 6 complete</dd></div>
           <div><dt>Claim type</dt><dd>{{ selectedClaimTypeLabel() }}</dd></div>

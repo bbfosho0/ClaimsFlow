@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/api/api-error';
-import { ClaimType, CreateClaimRequest } from '../../shared/models/claim.models';
+import { ClaimDetail, ClaimType, CreateClaimRequest } from '../../shared/models/claim.models';
 import { ClaimsApiService } from '../data-access/claims-api.service';
 
 function localIsoDate(): string {
@@ -20,16 +20,19 @@ function notFutureDate(control: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './new-claim-page.component.html',
-  styleUrl: './new-claim-page.component.css',
+  styleUrls: ['./new-claim-page.component.css', './new-claim-portal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewClaimPageComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly api = inject(ClaimsApiService);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   @ViewChild('errorSummary') errorSummary?: ElementRef<HTMLElement>;
 
+  readonly portalMode = this.router.url.startsWith('/portal/');
+  readonly backRoute = this.portalMode ? '/portal' : '/app/claims';
   readonly today = localIsoDate();
   readonly submitting = signal(false);
   readonly errors = signal<string[]>([]);
@@ -63,7 +66,7 @@ export class NewClaimPageComponent {
 
   setGate(gate: number): void {
     this.currentGate.set(Math.max(1, Math.min(4, gate)));
-    queueMicrotask(() => document.getElementById(`intake-gate-${gate}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    queueMicrotask(() => this.document.getElementById(`intake-gate-${gate}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
   gateComplete(gate: number): boolean {
@@ -131,12 +134,25 @@ export class NewClaimPageComponent {
     const raw = this.form.getRawValue();
     const request: CreateClaimRequest = { ...raw, claimType: raw.claimType as ClaimType };
     this.api.create(request).subscribe({
-      next: claim => void this.router.navigate(['/app/claims', claim.id]),
+      next: claim => this.completeCreation(claim),
       error: (error: unknown) => {
         this.actionError.set(error instanceof ApiError ? error.message : 'The claim could not be created. Your draft remains in this form.');
         this.submitting.set(false);
       },
     });
+  }
+
+  private completeCreation(claim: ClaimDetail): void {
+    if (this.portalMode) {
+      try {
+        this.document.defaultView?.sessionStorage.setItem('claimsflow.demoClaimId', claim.id);
+      } catch {
+        // The route still works even when session persistence is unavailable.
+      }
+      void this.router.navigate(['/portal/claims', claim.id]);
+      return;
+    }
+    void this.router.navigate(['/app/claims', claim.id]);
   }
 
   private collectErrors(): string[] {

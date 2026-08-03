@@ -1,7 +1,13 @@
 import { Routes } from '@angular/router';
+import { DemoRoleId } from './core/demo-role/demo-role.model';
+import { demoRoleRouteGuard } from './core/demo-role/demo-role-route.guard';
 import { AppShellComponent } from './core/layout/app-shell.component';
 
-const shell = (shellTitle: string, shellSubtitle: string) => ({ shellTitle, shellSubtitle });
+const shell = (
+  shellTitle: string,
+  shellSubtitle: string,
+  allowedDemoRoles: readonly DemoRoleId[],
+) => ({ shellTitle, shellSubtitle, allowedDemoRoles });
 
 export const routes: Routes = [
   {
@@ -16,81 +22,112 @@ export const routes: Routes = [
     title: 'ClaimsFlow guided tour',
   },
   {
+    path: 'portal',
+    loadComponent: () => import('./portal/layout/claimant-shell.component').then(m => m.ClaimantShellComponent),
+    title: 'Claimant Portal | ClaimsFlow',
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./portal/home/portal-home-page.component').then(m => m.PortalHomePageComponent),
+        title: 'My Claim | ClaimsFlow',
+      },
+      {
+        path: 'claims/new',
+        loadComponent: () => import('./claims/feature-create/new-claim-page.component').then(m => m.NewClaimPageComponent),
+        title: 'Start a Claim | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id',
+        loadComponent: () => import('./portal/claim/portal-claim-page.component').then(m => m.PortalClaimPageComponent),
+        title: 'Claim Status | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id/documents',
+        loadComponent: () => import('./portal/documents/portal-documents-page.component').then(m => m.PortalDocumentsPageComponent),
+        title: 'Claim Documents | ClaimsFlow',
+      },
+      {
+        path: 'claims/:id/messages',
+        loadComponent: () => import('./portal/messages/portal-messages-page.component').then(m => m.PortalMessagesPageComponent),
+        title: 'Claim Messages | ClaimsFlow',
+      },
+    ],
+  },
+  {
     path: 'app',
     component: AppShellComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
         path: 'dashboard',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./dashboard/dashboard-page.component').then(m => m.DashboardPageComponent),
-        title: 'Executive Overview | ClaimsFlow',
-        data: shell('Executive Overview', 'Operations performance at a glance.'),
+        title: 'Operations Overview | ClaimsFlow',
+        data: shell('Operations Overview', 'Portfolio pressure, capacity, and intervention state.', ['manager']),
       },
       {
         path: 'claims',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./claims/feature-queue/claims-queue-page.component').then(m => m.ClaimsQueuePageComponent),
         title: 'Claim Queue | ClaimsFlow',
-        data: shell('Claim Queue', 'Prioritized work, ownership, and SLA pressure.'),
+        data: shell('Claim Queue', 'Prioritized work, ownership, and SLA pressure.', ['manager', 'adjuster']),
       },
       {
         path: 'claims/new',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./claims/feature-create/new-claim-page.component').then(m => m.NewClaimPageComponent),
         title: 'New Claim | ClaimsFlow',
-        data: shell('New Claim', 'Guided intake with evidence-ready validation.'),
+        data: shell('New Claim', 'Guided intake with evidence-ready validation.', ['manager', 'adjuster']),
       },
       {
         path: 'claims/:id',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./claims/feature-detail/claim-detail-page.component').then(m => m.ClaimDetailPageComponent),
         title: 'Claim Workspace | ClaimsFlow',
-        data: shell('Claim Workspace', 'Evidence, decisions, workflow, and audit context.'),
+        data: shell('Claim Workspace', 'Evidence, decisions, workflow, and audit context.', ['manager', 'adjuster']),
       },
       {
         path: 'my-work',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.MyWorkPageComponent),
         title: 'My Work | ClaimsFlow',
-        data: shell('My Work', 'Personal queue, focus blocks, and daily commitments.'),
+        data: shell('My Work', 'Assigned claims, evidence gaps, and daily priorities.', ['adjuster']),
       },
       {
         path: 'analytics',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.AnalyticsPageComponent),
-        title: 'Analytics & Reporting | ClaimsFlow',
-        data: shell('Analytics & Reporting', 'Performance, trends, and operational excellence.'),
+        title: 'Operational Analytics | ClaimsFlow',
+        data: shell('Operational Analytics', 'Backend-derived performance, trends, and distributions.', ['manager']),
       },
       {
         path: 'intelligence',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./intelligence/claims-intelligence-page.component').then(m => m.ClaimsIntelligencePageComponent),
         title: 'AI Insights | ClaimsFlow',
-        data: shell('AI Insights', 'Risk, fraud, evidence, and decision intelligence.'),
+        data: shell('AI Insights', 'Evidence-grounded recommendations with human review.', ['manager']),
       },
       {
         path: 'documents',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.DocumentsPageComponent),
-        title: 'Documents & Communications | ClaimsFlow',
-        data: shell('Documents & Communications', 'Manage claim evidence and correspondence.'),
+        title: 'Evidence Operations | ClaimsFlow',
+        data: shell('Evidence Operations', 'Inspect persisted evidence state and claimant-visible communication.', ['adjuster']),
       },
       {
         path: 'team-ops',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.TeamOperationsPageComponent),
-        title: 'Team Operations & SLA Management | ClaimsFlow',
-        data: shell('Team Operations & SLA Management', 'Real-time capacity and SLA command center.'),
+        title: 'Team Operations | ClaimsFlow',
+        data: shell('Team Operations', 'Capacity, SLA pressure, escalations, and advisory actions.', ['manager']),
       },
       {
         path: 'workflows',
+        canActivate: [demoRoleRouteGuard],
         loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.WorkflowsPageComponent),
-        title: 'Workflow Automation & Rules Builder | ClaimsFlow',
-        data: shell('Workflow Automation & Rules Builder', 'Design and validate claims orchestration.'),
-      },
-      {
-        path: 'reports',
-        loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.ReportsPageComponent),
-        title: 'Reports | ClaimsFlow',
-        data: shell('Reports', 'Scheduled reporting and executive-ready exports.'),
-      },
-      {
-        path: 'settings',
-        loadComponent: () => import('./workspaces/workspace-pages.component').then(m => m.SettingsPageComponent),
-        title: 'Settings | ClaimsFlow',
-        data: shell('Settings', 'Workspace configuration, governance, and integrations.'),
+        title: 'Workflow Automation | ClaimsFlow',
+        data: shell('Workflow Automation', 'Validate a local deterministic routing simulation.', ['admin']),
       },
     ],
   },

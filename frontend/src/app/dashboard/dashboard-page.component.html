@@ -6,13 +6,42 @@
       <p>Read pressure across the active portfolio, intervene before SLA exposure becomes failure, and keep every decision traceable.</p>
     </div>
     <div class="header-actions">
-      <span class="cf-chip" data-tone="healthy">All systems healthy</span>
+      <ng-container *ngIf="data() as dashboard; else loadingHealth">
+        <span class="cf-chip cf-live-breathe" [attr.data-tone]="systemTone(dashboard)">{{ systemLabel(dashboard) }}</span>
+      </ng-container>
+      <ng-template #loadingHealth><span class="cf-chip">Operational data loading</span></ng-template>
       <a class="button primary" routerLink="/app/claims/new"><span aria-hidden="true">+</span> Create claim</a>
     </div>
   </header>
 
-  <div *ngIf="loading()" class="panel loading-state" role="status">Loading operational signals…</div>
-  <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
+  <div class="dashboard-refresh-row">
+    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+  </div>
+
+  <div *ngIf="loading()" class="dashboard-skeleton" role="status" aria-label="Loading operational signals">
+    <div class="cf-skeleton skeleton-command"></div>
+    <div class="cf-skeleton skeleton-queue"></div>
+    <div class="cf-skeleton skeleton-band"></div>
+  </div>
+  <div *ngIf="error()" class="alert dashboard-error" role="alert">
+    <span>{{ error() }}</span>
+    <button type="button" class="button secondary" (click)="refresh()">Retry</button>
+  </div>
+
+  <section *ngIf="goldenClaim() as claim" class="panel golden-journey-summary" data-tour-target="manager-golden-journey">
+    <div>
+      <p class="eyebrow">GOLDEN JOURNEY / LIVE BACKEND CLAIM</p>
+      <h2>{{ claim.claimNumber }} · {{ claim.claimantName }}</h2>
+      <p>The same reserved claim submitted in the claimant portal and handled by Jordan Lee is visible in Manager operations.</p>
+    </div>
+    <dl>
+      <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
+      <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
+      <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
+      <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+    </dl>
+    <a class="button secondary" [routerLink]="['/app/claims', claim.id]">Inspect claim →</a>
+  </section>
 
   <ng-container *ngIf="data() as dashboard">
     <div class="command-layout">
@@ -20,11 +49,11 @@
         <div class="surface-heading">
           <div>
             <p class="eyebrow">PRIORITY COMMAND FIELD</p>
-            <h2 id="priority-command-title">{{ activeSignals(dashboard) }} signals require intervention</h2>
+            <h2 id="priority-command-title"><app-animated-number [value]="activeSignals(dashboard)" /> displayed signals require attention</h2>
           </div>
-          <span class="field-state"><i aria-hidden="true"></i> LIVE PORTFOLIO</span>
+          <span class="field-state cf-live-breathe"><i aria-hidden="true"></i> LIVE PORTFOLIO</span>
         </div>
-        <app-command-field [activeCount]="activeSignals(dashboard)" variant="dashboard" />
+        <app-command-field [signalCounts]="dashboard.signalCounts" variant="dashboard" />
       </section>
 
       <section class="intervention-panel panel" aria-labelledby="intervention-title">
@@ -33,31 +62,31 @@
           <a routerLink="/app/claims">Open queue →</a>
         </div>
         <div class="intervention-list">
-          <a *ngFor="let item of interventions(dashboard); let index = index" routerLink="/app/claims" [queryParams]="item.queryParams" [attr.data-tone]="item.tone">
+          <a *ngFor="let item of interventions(dashboard); let index = index" routerLink="/app/claims" [queryParams]="item.queryParams" [attr.data-tone]="item.tone" [appChangedValue]="item.count" [changeTone]="item.tone">
             <span class="intervention-rank">0{{ index + 1 }}</span>
             <span class="intervention-copy"><strong>{{ item.label }}</strong><small>{{ item.detail }}</small></span>
-            <span class="intervention-count">{{ item.count }}</span>
+            <span class="intervention-count"><app-animated-number [value]="item.count" /></span>
           </a>
         </div>
       </section>
     </div>
 
     <section class="instrument-band" aria-label="Portfolio instrument band">
-      <article class="instrument-cell">
-        <span>ACTIVE PORTFOLIO</span><strong>{{ dashboard.openClaims }}</strong><small>Open claims</small>
-        <i style="--meter: 82%"></i>
+      <article class="instrument-cell" [appChangedValue]="dashboard.openClaims">
+        <span>ACTIVE PORTFOLIO</span><strong><app-animated-number [value]="dashboard.openClaims" /></strong><small>{{ dashboard.activePortfolioPercentage }}% of all claims open</small>
+        <i [style.--meter]="dashboard.activePortfolioPercentage + '%'"></i>
       </article>
-      <article class="instrument-cell" data-tone="critical">
-        <span>PRIORITY LOAD</span><strong>{{ dashboard.highPriorityClaims }}</strong><small>High or critical</small>
-        <i [style.--meter]="(dashboard.openClaims ? (dashboard.highPriorityClaims / dashboard.openClaims) * 100 : 0) + '%'"></i>
+      <article class="instrument-cell" data-tone="critical" [appChangedValue]="dashboard.highPriorityClaims" changeTone="critical">
+        <span>PRIORITY LOAD</span><strong><app-animated-number [value]="dashboard.highPriorityClaims" /></strong><small>High or critical</small>
+        <i [style.--meter]="percent(dashboard.highPriorityClaims, dashboard.openClaims) + '%'"></i>
       </article>
-      <article class="instrument-cell" data-tone="healthy">
-        <span>EVIDENCE READY</span><strong>{{ portfolioCompleteness(dashboard) }}%</strong><small>Portfolio completeness</small>
-        <i [style.--meter]="portfolioCompleteness(dashboard) + '%'"></i>
+      <article class="instrument-cell" data-tone="healthy" [appChangedValue]="dashboard.evidenceReadinessPercentage" changeTone="healthy">
+        <span>EVIDENCE READY</span><strong><app-animated-number [value]="dashboard.evidenceReadinessPercentage" format="percentage" /></strong><small>Average portfolio completeness</small>
+        <i [style.--meter]="dashboard.evidenceReadinessPercentage + '%'"></i>
       </article>
-      <article class="instrument-cell" data-tone="warning">
-        <span>OWNERSHIP GAP</span><strong>{{ dashboard.unassignedClaims }}</strong><small>Unassigned claims</small>
-        <i [style.--meter]="(dashboard.openClaims ? (dashboard.unassignedClaims / dashboard.openClaims) * 100 : 0) + '%'"></i>
+      <article class="instrument-cell" data-tone="warning" [appChangedValue]="dashboard.unassignedClaims" changeTone="warning">
+        <span>OWNERSHIP GAP</span><strong><app-animated-number [value]="dashboard.unassignedClaims" /></strong><small>Unassigned claims</small>
+        <i [style.--meter]="percent(dashboard.unassignedClaims, dashboard.openClaims) + '%'"></i>
       </article>
     </section>
 
@@ -65,19 +94,19 @@
       <section class="panel flow-panel">
         <div class="surface-heading compact-heading">
           <div><p class="eyebrow">PORTFOLIO FLOW</p><h2>Flow intelligence</h2></div>
-          <span class="cf-chip" data-tone="live">Updated now</span>
+          <span class="cf-chip" [attr.data-tone]="state().stale ? 'warning' : 'live'">{{ state().stale ? 'Last valid snapshot' : 'Current snapshot' }}</span>
         </div>
         <div class="flow-visual" role="img" [attr.aria-label]="dashboard.openClaims + ' active claims moving through intake, review, decision, and resolution'">
           <div class="flow-line" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="flow-stage"><span>01</span><strong>Intake</strong><small>{{ dashboard.incompleteClaims }} evidence gaps</small></div>
           <div class="flow-stage"><span>02</span><strong>Review</strong><small>{{ dashboard.highPriorityClaims }} priority reviews</small></div>
-          <div class="flow-stage"><span>03</span><strong>Decision</strong><small>{{ dashboard.slaRiskClaims }} SLA risks</small></div>
-          <div class="flow-stage"><span>04</span><strong>Resolved</strong><small>Audit retained</small></div>
+          <div class="flow-stage"><span>03</span><strong>Decision</strong><small>{{ dashboard.slaRiskClaims + dashboard.overdueClaims }} SLA actions</small></div>
+          <div class="flow-stage"><span>04</span><strong>Resolved</strong><small>{{ dashboard.totalClaims - dashboard.openClaims }} claims retained</small></div>
         </div>
         <div class="flow-footer">
-          <span><b>{{ portfolioCompleteness(dashboard) }}%</b> evidence ready</span>
-          <span><b>{{ dashboard.unassignedClaims }}</b> need ownership</span>
-          <span><b>{{ dashboard.slaRiskClaims }}</b> require SLA action</span>
+          <span><b><app-animated-number [value]="dashboard.evidenceReadinessPercentage" format="percentage" /></b> evidence ready</span>
+          <span><b><app-animated-number [value]="dashboard.unassignedClaims" /></b> need ownership</span>
+          <span><b><app-animated-number [value]="dashboard.slaRiskClaims + dashboard.overdueClaims" /></b> require SLA action</span>
         </div>
       </section>
 
@@ -85,10 +114,10 @@
         <div class="surface-heading compact-heading"><div><p class="eyebrow">ACTIVE REVIEWERS</p><h2>Team capacity</h2></div></div>
         <div *ngIf="!dashboard.workload.length" class="empty">No active adjusters.</div>
         <div class="capacity-list">
-          <article *ngFor="let item of dashboard.workload">
+          <article *ngFor="let item of dashboard.workload" [appChangedValue]="item.activeClaims" [changeTone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'">
             <div class="capacity-avatar" aria-hidden="true">{{ item.displayName.slice(0, 2).toUpperCase() }}</div>
-            <div class="capacity-copy"><strong>{{ item.displayName }}</strong><span>{{ item.activeClaims }} of {{ item.capacity }} active</span><i><b [style.width.%]="utilization(item.activeClaims, item.capacity)"></b></i></div>
-            <span class="capacity-value" [attr.data-tone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'">{{ utilization(item.activeClaims, item.capacity) }}%</span>
+            <div class="capacity-copy"><strong>{{ item.displayName }}</strong><span>{{ item.team }} · {{ item.activeClaims }} of {{ item.capacity }} active</span><i><b [style.width.%]="utilization(item.activeClaims, item.capacity)"></b></i></div>
+            <span class="capacity-value" [attr.data-tone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'"><app-animated-number [value]="utilization(item.activeClaims, item.capacity)" format="percentage" /></span>
           </article>
         </div>
       </section>
@@ -100,7 +129,7 @@
           <li *ngFor="let item of dashboard.recentActivity">
             <span class="event-marker" aria-hidden="true"></span>
             <div><strong>{{ item.summary }}</strong><small>{{ item.actor }} · {{ item.occurredAt | date:'medium' }}</small></div>
-            <span class="event-type">{{ item.actionType }}</span>
+            <a class="event-type" [routerLink]="['/app/claims', item.claimId]">{{ item.actionType }}</a>
           </li>
         </ol>
       </section>

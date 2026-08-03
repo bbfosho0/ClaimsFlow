@@ -7,13 +7,13 @@ import { TourOrchestratorService } from './tour-orchestrator.service';
 
 const page: ClaimPage = {
   content: [{
-    id: 'claim-142',
-    claimNumber: 'CF-2026-0142',
-    claimantName: 'Taylor Morgan',
+    id: 'claim-fallback',
+    claimNumber: 'CLM-2026-FALLBACK',
+    claimantName: 'Taylor Reed',
     claimType: 'PROPERTY',
-    priority: 'CRITICAL',
+    priority: 'HIGH',
     status: 'UNDER_REVIEW',
-    completenessPercentage: 75,
+    completenessPercentage: 50,
     slaDeadline: '2026-08-03T12:00:00Z',
   }],
   page: 0,
@@ -24,8 +24,9 @@ const page: ClaimPage = {
 
 describe('TourOrchestratorService', () => {
   beforeEach(() => sessionStorage.clear());
+  afterEach(() => sessionStorage.clear());
 
-  it('defines the six approved steps and starts on the real dashboard route', () => {
+  function configure() {
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     router.navigate.and.resolveTo(true);
     const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list']);
@@ -37,46 +38,57 @@ describe('TourOrchestratorService', () => {
         { provide: ClaimsApiService, useValue: api },
       ],
     });
-    const service = TestBed.inject(TourOrchestratorService);
+    return { router, api, service: TestBed.inject(TourOrchestratorService) };
+  }
 
-    expect(service.steps.length).toBe(6);
+  it('defines the five approved role-bound steps and starts in the claimant portal', () => {
+    sessionStorage.setItem('claimsflow.demoClaimId', 'claim-demo');
+    const { router, api, service } = configure();
+
+    expect(service.steps.length).toBe(5);
     expect(service.steps.map(step => step.id)).toEqual([
-      'portfolio-pressure',
-      'prioritized-queue',
-      'claim-investigation',
-      'human-authority',
-      'review-ready-intake',
+      'claimant-portal',
+      'adjuster-review',
+      'manager-impact',
+      'administrator-routing',
       'engineering-proof',
     ]);
 
     service.start().subscribe();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/app/dashboard'], {
-      queryParams: { tour: 'portfolio-pressure', claimId: 'claim-142' },
+    expect(api.list).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/portal/claims/claim-demo'], {
+      queryParams: { tour: 'claimant-portal', claimId: 'claim-demo', role: null },
     });
-    expect(service.restore()).toEqual({ step: 'portfolio-pressure', claimId: 'claim-142' });
+    expect(service.restore()).toEqual({ step: 'claimant-portal', claimId: 'claim-demo' });
   });
 
-  it('routes claim-specific steps with the resolved claim id and clears progress on exit', async () => {
-    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    router.navigate.and.resolveTo(true);
-    const api = jasmine.createSpyObj<ClaimsApiService>('ClaimsApiService', ['list']);
+  it('falls back to a real queue claim when the demo identifier is absent', () => {
+    const { router, api, service } = configure();
 
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: Router, useValue: router },
-        { provide: ClaimsApiService, useValue: api },
-      ],
+    service.start().subscribe();
+
+    expect(api.list).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/portal/claims/claim-fallback'], {
+      queryParams: { tour: 'claimant-portal', claimId: 'claim-fallback', role: null },
     });
-    const service = TestBed.inject(TourOrchestratorService);
+  });
 
-    await service.navigateTo(2, 'claim-142');
-    expect(router.navigate).toHaveBeenCalledWith(['/app/claims/claim-142'], {
-      queryParams: { tour: 'claim-investigation', claimId: 'claim-142' },
+  it('routes employee steps with the correct demo role and clears progress on exit', async () => {
+    const { router, service } = configure();
+
+    await service.navigateTo(1, 'claim-demo');
+    expect(router.navigate).toHaveBeenCalledWith(['/app/claims/claim-demo'], {
+      queryParams: { tour: 'adjuster-review', claimId: 'claim-demo', role: 'adjuster' },
+    });
+
+    await service.navigateTo(3, 'claim-demo');
+    expect(router.navigate).toHaveBeenCalledWith(['/app/workflows'], {
+      queryParams: { tour: 'administrator-routing', claimId: 'claim-demo', role: 'admin' },
     });
 
     await service.exit();
     expect(sessionStorage.getItem('claimsflow-tour-progress')).toBeNull();
-    expect(router.navigate).toHaveBeenCalledWith(['/app/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/app/dashboard'], { queryParams: { role: 'manager' } });
   });
 });

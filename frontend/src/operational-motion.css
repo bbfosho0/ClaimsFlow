@@ -1,0 +1,69 @@
+@import url('./app/claims/feature-queue/claims-queue-operational.css');
+
+:root {
+  --cf-duration-fast: 160ms;
+  --cf-duration-state: 220ms;
+  --cf-duration-emphasis: 280ms;
+  --cf-duration-highlight: 1200ms;
+  --cf-ease-operational: cubic-bezier(.2, .8, .2, 1);
+}
+
+.cf-value-changed {
+  animation: cf-value-highlight var(--cf-duration-highlight) var(--cf-ease-operational) both;
+}
+
+.cf-value-changed[data-change-tone='critical'] { --change-glow: rgb(255 101 112 / .34); }
+.cf-value-changed[data-change-tone='warning'] { --change-glow: rgb(247 183 91 / .3); }
+.cf-value-changed[data-change-tone='healthy'] { --change-glow: rgb(43 227 183 / .28); }
+.cf-value-changed[data-change-tone='advisory'] { --change-glow: rgb(157 126 255 / .28); }
+.cf-value-changed[data-change-tone='live'],
+.cf-value-changed:not([data-change-tone]) { --change-glow: rgb(66 205 236 / .3); }
+
+@keyframes cf-value-highlight {
+  0% { box-shadow: 0 0 0 0 var(--change-glow); }
+  22% { box-shadow: 0 0 0 5px var(--change-glow), 0 0 26px var(--change-glow); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.cf-live-breathe {
+  animation: cf-live-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes cf-live-breathe {
+  0%, 100% { opacity: .72; filter: brightness(.92); }
+  50% { opacity: 1; filter: brightness(1.14); }
+}
+
+.cf-skeleton {
+  position: relative;
+  overflow: hidden;
+  color: transparent !important;
+  background: rgb(96 126 131 / .12) !important;
+}
+
+.cf-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / .08), transparent);
+  animation: cf-skeleton-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes cf-skeleton-sweep { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cf-duration-fast: 0ms;
+    --cf-duration-state: 0ms;
+    --cf-duration-emphasis: 0ms;
+    --cf-duration-highlight: 0ms;
+  }
+
+  html { scroll-behavior: auto; }
+  .cf-value-changed,
+  .cf-live-breathe,
+  .cf-skeleton::after {
+    animation: none !important;
+  }
+}

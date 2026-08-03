@@ -1,9 +1,6 @@
 name: Visual QA
 
 on:
-  push:
-    branches:
-      - 'design/midnight-command-v2-parity'
   pull_request:
   workflow_dispatch:
 
@@ -13,17 +10,61 @@ permissions:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: claimsflow
+          POSTGRES_USER: claimsflow
+          POSTGRES_PASSWORD: claimsflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U claimsflow -d claimsflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Install dependencies
+
+      - name: Install frontend dependencies
         run: npm ci --silent
         working-directory: frontend
+
+      - name: Start Spring Boot API
+        shell: bash
+        working-directory: backend
+        env:
+          DB_URL: jdbc:postgresql://127.0.0.1:5432/claimsflow
+          DB_USERNAME: claimsflow
+          DB_PASSWORD: claimsflow
+          CLAIMSFLOW_DEMO_ENABLED: 'true'
+        run: |
+          mvn -q spring-boot:run > /tmp/claimsflow-api.log 2>&1 &
+          echo $! > /tmp/claimsflow-api.pid
+          for attempt in {1..90}; do
+            if curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          tail -n 200 /tmp/claimsflow-api.log
+          exit 1
+
       - name: Start Angular application
         shell: bash
         working-directory: frontend
@@ -31,52 +72,75 @@ jobs:
           npm start -- --host 127.0.0.1 --port 4200 > /tmp/claimsflow-ng.log 2>&1 &
           echo $! > /tmp/claimsflow-ng.pid
           for attempt in {1..60}; do
-            if curl --fail --silent http://127.0.0.1:4200/app/analytics > /dev/null; then
+            if curl --fail --silent http://127.0.0.1:4200/tour > /dev/null; then
               exit 0
             fi
             sleep 2
           done
-          cat /tmp/claimsflow-ng.log
+          tail -n 200 /tmp/claimsflow-ng.log
           exit 1
-      - name: Capture desktop routes
+
+      - name: Capture and assert reactive employer journey
         shell: bash
+        working-directory: frontend
+        env:
+          BASE_URL: http://127.0.0.1:4200
+          OUTPUT_DIRECTORY: visual-qa
         run: |
-          mkdir -p visual-qa
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           if [ -z "$CHROME" ]; then
             echo "Chrome executable not found"
             exit 1
           fi
-          for route in analytics documents team-ops workflows; do
-            "$CHROME" \
-              --headless=new \
-              --no-sandbox \
-              --disable-gpu \
-              --hide-scrollbars \
-              --force-device-scale-factor=1 \
-              --window-size=1440,1180 \
-              --virtual-time-budget=5000 \
-              --screenshot="visual-qa/${route}-1440x1180.png" \
-              "http://127.0.0.1:4200/app/${route}"
-          done
-      - name: Capture mobile shell
+          CHROME_EXECUTABLE="$CHROME" node scripts/capture-operational-visual-qa.mjs
+
+      - name: Validate visual evidence manifest
         shell: bash
+        working-directory: frontend
         run: |
-          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          "$CHROME" \
-            --headless=new \
-            --no-sandbox \
-            --disable-gpu \
-            --hide-scrollbars \
-            --force-device-scale-factor=1 \
-            --window-size=390,844 \
-            --virtual-time-budget=5000 \
-            --screenshot="visual-qa/analytics-mobile-390x844.png" \
-            "http://127.0.0.1:4200/app/analytics"
-      - name: Upload screenshots
+          count="$(find visual-qa -maxdepth 1 -name '*.png' | wc -l | tr -d ' ')"
+          test "$count" -eq 18
+          test -s visual-qa/manifest.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('visual-qa/manifest.json', 'utf8'));
+          if (manifest.screenshotCount !== 18 || manifest.screenshots.length !== 18) {
+            throw new Error(`Invalid screenshot count: ${manifest.screenshotCount}`);
+          }
+          if (manifest.consoleErrors.length || manifest.browserExceptions.length || manifest.unexpectedRequestFailures.length) {
+            throw new Error('Manifest contains browser or network failures.');
+          }
+          if (!manifest.allowedRequestFailures.some(failure => failure.url.includes('/api/dashboard'))) {
+            throw new Error('Stale-data dashboard failure was not exercised.');
+          }
+          const filenames = new Set(manifest.screenshots.map(item => item.filename));
+          for (const item of manifest.screenshots) {
+            if (!item.sha256 || item.bytes < 5_000 || item.width < 390 || item.height < 844) {
+              throw new Error(`Invalid screenshot metadata for ${item.filename}`);
+            }
+          }
+          if (filenames.size !== 18) throw new Error('Visual manifest contains duplicate filenames.');
+          console.log(`Validated ${manifest.screenshotCount} screenshots in ${manifest.graphicsMode} mode.`);
+          NODE
+
+      - name: Upload visual evidence
         uses: actions/upload-artifact@v4
         with:
-          name: claimsflow-visual-qa
-          path: visual-qa/*.png
+          name: claimsflow-operational-visual-qa
+          path: |
+            frontend/visual-qa/*.png
+            frontend/visual-qa/manifest.json
           if-no-files-found: error
+          retention-days: 5
+
+      - name: Preserve visual QA failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claimsflow-visual-qa-logs
+          path: |
+            /tmp/claimsflow-api.log
+            /tmp/claimsflow-ng.log
+            frontend/visual-qa/manifest.failure.json
+          if-no-files-found: warn
           retention-days: 3

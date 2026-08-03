@@ -1,9 +1,10 @@
+import { DemoRoleId } from '../core/demo-role/demo-role.model';
+
 export type TourStepId =
-  | 'portfolio-pressure'
-  | 'prioritized-queue'
-  | 'claim-investigation'
-  | 'human-authority'
-  | 'review-ready-intake'
+  | 'claimant-portal'
+  | 'adjuster-review'
+  | 'manager-impact'
+  | 'administrator-routing'
   | 'engineering-proof';
 
 export interface TourStep {
@@ -13,5 +14,6 @@ export interface TourStep {
   notice: string;
   technicalProof: string;
   target: string;
+  role?: DemoRoleId;
   route: (claimId?: string) => string;
 }
