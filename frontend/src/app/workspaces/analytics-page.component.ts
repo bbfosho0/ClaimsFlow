@@ -3,9 +3,14 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
+  operationalFilterKey,
+  parseOperationalFilters,
+  serializeOperationalFilters,
+} from '../core/operational-data/operational-filter-codec';
+import {
   DEFAULT_OPERATIONAL_FILTERS,
   DistributionPoint,
-  OperationalFilterOptions,
+  EMPTY_OPERATIONAL_FILTER_OPTIONS,
   OperationalFilters,
   TimePoint,
 } from '../core/operational-data/operational-data.models';
@@ -14,10 +19,6 @@ import { AnimatedNumberComponent } from '../shared/operational/animated-number.c
 import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
 import { OperationalFilterBarComponent } from '../shared/operational/operational-filter-bar.component';
 import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
-
-const EMPTY_OPTIONS: OperationalFilterOptions = {
-  claimTypes: [], priorities: [], statuses: [], regions: [], teams: [], adjusters: [],
-};
 
 @Component({
   standalone: true,
@@ -38,16 +39,20 @@ export class AnalyticsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly subscription = new Subscription();
   private release: (() => void) | null = null;
+  private activeFilterKey = '';
 
   readonly state = this.operational.analytics;
   readonly snapshot = computed(() => this.state().value);
   readonly filters = signal<OperationalFilters>(DEFAULT_OPERATIONAL_FILTERS);
-  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPTIONS);
+  readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPERATIONAL_FILTER_OPTIONS);
 
   ngOnInit(): void {
     this.subscription.add(this.route.queryParams.subscribe(params => {
       const next = parseOperationalFilters(params);
+      const nextKey = operationalFilterKey(next);
       this.filters.set(next);
+      if (nextKey === this.activeFilterKey) return;
+      this.activeFilterKey = nextKey;
       this.release?.();
       this.release = this.operational.activateAnalytics(next);
     }));
@@ -74,7 +79,7 @@ export class AnalyticsPageComponent implements OnInit, OnDestroy {
     const max = Math.max(1, ...points.map(point => point.count));
     const denominator = Math.max(1, points.length - 1);
     return points.map((point, index) => {
-      const x = (index / denominator) * 100;
+      const x = points.length === 1 ? 50 : (index / denominator) * 100;
       const y = height - (point.count / max) * (height - 12) - 6;
       return `${x.toFixed(2)},${y.toFixed(2)}`;
     }).join(' ');
@@ -94,7 +99,8 @@ export class AnalyticsPageComponent implements OnInit, OnDestroy {
   }
 
   relativeWidth(point: DistributionPoint, points: readonly DistributionPoint[]): number {
-    return Math.round(point.count * 100 / this.maxDistribution(points));
+    if (point.count === 0) return 0;
+    return Math.max(2, Math.round(point.count * 100 / this.maxDistribution(points)));
   }
 
   signed(value: number): string {
@@ -110,26 +116,4 @@ export class AnalyticsPageComponent implements OnInit, OnDestroy {
   trackDistribution(_: number, item: DistributionPoint): string {
     return item.key;
   }
-}
-
-export function parseOperationalFilters(params: Record<string, unknown>): OperationalFilters {
-  const value = (key: string) => typeof params[key] === 'string' ? String(params[key]) : '';
-  return {
-    from: value('from'),
-    to: value('to'),
-    claimType: allowed(value('claimType'), ['AUTO', 'PROPERTY', 'PERSONAL_INJURY']),
-    priority: allowed(value('priority'), ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-    status: allowed(value('status'), ['NEW', 'UNDER_REVIEW', 'WAITING_FOR_INFORMATION', 'READY_FOR_DECISION', 'RESOLVED', 'CLOSED']),
-    adjusterId: value('adjusterId'),
-    team: value('team'),
-    region: allowed(value('region'), ['NORTHEAST', 'SOUTHEAST', 'MIDWEST', 'SOUTHWEST', 'WEST']),
-  } as OperationalFilters;
-}
-
-export function serializeOperationalFilters(filters: OperationalFilters): Record<string, string> {
-  return Object.fromEntries(Object.entries(filters).filter(([, value]) => Boolean(value)));
-}
-
-function allowed<T extends string>(value: string, values: readonly T[]): T | '' {
-  return values.includes(value as T) ? value as T : '';
 }
