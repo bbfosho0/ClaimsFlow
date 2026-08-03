@@ -1,0 +1,111 @@
+name: Finish claim workspace truthfulness pass
+
+on:
+  push:
+    branches:
+      - design/midnight-violet-operations
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: design/midnight-violet-operations
+      - name: Apply claim workspace and source-audit patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          ts_path = root / 'frontend/src/app/claims/feature-detail/claim-detail-page.component.ts'
+          html_path = root / 'frontend/src/app/claims/feature-detail/claim-detail-page.component.html'
+          css_path = root / 'frontend/src/app/claims/feature-detail/claim-detail-midnight-violet.css'
+          audit_path = root / 'frontend/scripts/audit-deployed-source.mjs'
+          audit_test_path = root / 'frontend/scripts/audit-deployed-source.test.mjs'
+
+          ts = ts_path.read_text()
+          ts = ts.replace(
+              "import { Adjuster, AuditEvent, ClaimDetail, ClaimStatus, Recommendation } from '../../shared/models/claim.models';",
+              "import { MetricRadialComponent } from '../../shared/metrics/metric-radial.component';\nimport { AutoAnimateDirective } from '../../shared/motion/auto-animate.directive';\nimport { GsapRevealDirective } from '../../shared/motion/gsap-reveal.directive';\nimport { Adjuster, AuditEvent, ClaimDetail, ClaimStatus, Recommendation } from '../../shared/models/claim.models';",
+          )
+          ts = ts.replace(
+              "imports: [CommonModule, ReactiveFormsModule, RouterLink, StatusBadgeComponent],",
+              "imports: [CommonModule, ReactiveFormsModule, RouterLink, StatusBadgeComponent, MetricRadialComponent, AutoAnimateDirective, GsapRevealDirective],",
+          )
+          ts = ts.replace(
+              "styleUrl: './claim-detail-page.component.css',",
+              "styleUrls: ['./claim-detail-page.component.css', './claim-detail-midnight-violet.css'],",
+          )
+          ts_path.write_text(ts)
+
+          html = html_path.read_text()
+          html = html.replace(
+              '<div class="identity-instruments">',
+              '<div class="identity-instruments" appGsapReveal="metrics">\n        <article><span>ESTIMATED LOSS</span><strong>{{ item.estimatedLoss | currency }}</strong><small>Backend claim estimate</small></article>',
+              1,
+          )
+          html = html.replace('<nav class="workspace-tabs"', '<nav class="workspace-tabs" appAutoAnimate="subtle"', 1)
+          html = html.replace('<section class="panel evidence-ledger"', '<section class="panel evidence-ledger" appGsapReveal="panel"', 1)
+          html = html.replace('<ol class="timeline">', '<ol class="timeline" appAutoAnimate="subtle">', 1)
+          html = html.replace('<section class="decision-panel"', '<section class="decision-panel" appGsapReveal="panel"', 1)
+          html = re.sub(
+              r'\s*<span><i><b style="width:88%"></b></i><em>Policy alignment</em><strong>88%</strong></span>',
+              '',
+              html,
+          )
+          marker = '            <ul class="missing-information" *ngIf="insight.missingInformation.length">'
+          flow = '''            <div class="reasoning-flow" aria-label="Evidence to recommendation reasoning flow">
+              <article><span>01</span><strong>Evidence inputs</strong><small>{{ item.completenessPercentage }}% complete · {{ item.missingEvidence.length }} missing</small></article>
+              <i aria-hidden="true">→</i>
+              <article><span>02</span><strong>Rules and constraints</strong><small>{{ item.priorityFactors.length }} priority factors · human authority required</small></article>
+              <i aria-hidden="true">→</i>
+              <article><span>03</span><strong>Recommendation</strong><small>{{ insight.confidence }}% recommendation confidence · advisory only</small></article>
+            </div>
+'''
+          if marker in html and 'reasoning-flow' not in html:
+              html = html.replace(marker, flow + marker, 1)
+          html_path.write_text(html)
+
+          css_path.write_text('''
+          .claim-identity-band .identity-instruments { grid-template-columns: repeat(4, minmax(125px, 1fr)); }
+          .claim-identity-band .identity-instruments article:first-child { background: radial-gradient(circle at 100% 0%, rgb(139 92 246 / .16), transparent 48%), rgb(255 255 255 / .018); }
+          .reasoning-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 9px; margin-top: 18px; }
+          .reasoning-flow article { min-height: 96px; display: grid; align-content: center; gap: 5px; border: 1px solid color-mix(in srgb, var(--cf-color-brand-lilac) 20%, var(--cf-color-border-hairline)); border-radius: 13px; padding: 13px; background: color-mix(in srgb, var(--cf-color-brand-violet) 5%, var(--cf-color-surface-elevated)); }
+          .reasoning-flow article > span { color: var(--cf-color-brand-lilac); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+          .reasoning-flow article strong { color: var(--cf-color-text-primary); font-size: 11px; }
+          .reasoning-flow article small { color: var(--cf-color-text-muted); font-size: 9px; line-height: 1.45; }
+          .reasoning-flow > i { align-self: center; color: var(--cf-color-brand-lilac); font-style: normal; }
+          @media (max-width: 1120px) { .claim-identity-band .identity-instruments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          @media (max-width: 720px) { .reasoning-flow { grid-template-columns: 1fr; } .reasoning-flow > i { transform: rotate(90deg); justify-self: center; } }
+          @media (prefers-reduced-motion: reduce) { .reasoning-flow > i { transform: none; } }
+          '''.strip() + '\n')
+
+          audit = audit_path.read_text()
+          needle = "    if (file.endsWith('.html')\n        && /\\b(?:Upload Documents|OCR extraction|Storage used|Bulk Actions|Version history|Send SMS)\\b/i.test(line)) {\n      report('unsupported-product-claim', number, 'Remove unsupported document-management or messaging capability copy.');\n    }\n"
+          addition = needle + "\n    if (file.endsWith('.html') && /Policy alignment|width:88%/i.test(line)) {\n      report('fabricated-metric', number, 'Calculated-looking policy alignment must come from a backend contract or be removed.');\n    }\n"
+          if "fabricated-metric" not in audit:
+              audit = audit.replace(needle, addition)
+          audit_path.write_text(audit)
+
+          audit_test = audit_test_path.read_text()
+          case_line = "    ['frontend/src/app/claims/feature-detail/claim-detail-page.component.html', '<strong>Policy alignment</strong>', 'fabricated-metric'],\n"
+          if "fabricated-metric" not in audit_test:
+              audit_test = audit_test.replace(
+                  "    ['frontend/src/app/workspaces/documents-page.component.html', '<button>Upload Documents</button>', 'unsupported-product-claim'],\n",
+                  "    ['frontend/src/app/workspaces/documents-page.component.html', '<button>Upload Documents</button>', 'unsupported-product-claim'],\n" + case_line,
+              )
+          audit_test_path.write_text(audit_test)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/src/app/claims/feature-detail frontend/scripts/audit-deployed-source.mjs frontend/scripts/audit-deployed-source.test.mjs
+          git commit -m "feat: complete claim workspace truthfulness pass"
+          git push origin HEAD:design/midnight-violet-operations
