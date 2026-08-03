@@ -6,7 +6,9 @@
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "test": "ng test",
-    "test:ci": "ng test --watch=false --browsers=ChromeHeadless"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "audit:source:test": "node --test scripts/audit-deployed-source.test.mjs",
+    "audit:source": "node scripts/audit-deployed-source.mjs"
   },
   "dependencies": {
     "@angular/animations": "20.3.0",
