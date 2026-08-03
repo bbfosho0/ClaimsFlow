@@ -75,15 +75,20 @@ export interface AnalyticsKpis {
   readonly slaCompliancePercentage: number;
 }
 
+export interface MetricChange {
+  readonly kind: 'PERCENTAGE' | 'NEW' | 'CLEARED' | 'UNCHANGED';
+  readonly percentage: number | null;
+}
+
 export interface AnalyticsComparison {
   readonly previousFrom: string;
   readonly previousTo: string;
   readonly previousTotalClaims: number;
   readonly previousEstimatedExposure: number;
   readonly previousAverageResolutionHours: number;
-  readonly claimVolumeChangePercentage: number;
-  readonly exposureChangePercentage: number;
-  readonly resolutionTimeChangePercentage: number;
+  readonly claimVolumeChange: MetricChange;
+  readonly exposureChange: MetricChange;
+  readonly resolutionTimeChange: MetricChange;
 }
 
 export interface TimePoint {
