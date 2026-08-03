@@ -117,12 +117,13 @@ export async function assertCurrentPage(cdp, scenario, timeoutMilliseconds = 24_
 
 export async function waitForText(cdp, expectedText, timeoutMilliseconds = 8_000) {
   const deadline = Date.now() + timeoutMilliseconds;
+  const expected = normalizeText(expectedText);
   while (Date.now() < deadline) {
     const evaluation = await cdp.send('Runtime.evaluate', {
       expression: `document.body?.innerText ?? ''`,
       returnByValue: true,
     });
-    if (String(evaluation.result?.value ?? '').includes(expectedText)) return;
+    if (normalizeText(evaluation.result?.value ?? '').includes(expected)) return;
     await delay(200);
   }
   throw new Error(`Timed out waiting for visible text: ${expectedText}`);
@@ -236,11 +237,20 @@ function pageMatchesScenario(state, scenario) {
   for (const [key, value] of Object.entries(scenario.expectedQuery)) {
     if (current.searchParams.get(key) !== value) return false;
   }
-  if (!scenario.requiredText.every(text => state.bodyText.includes(text))) return false;
-  if (scenario.forbiddenText.some(text => state.bodyText.includes(text))) return false;
+  const bodyText = normalizeText(state.bodyText);
+  if (!scenario.requiredText.every(text => bodyText.includes(normalizeText(text)))) return false;
+  if (scenario.forbiddenText.some(text => bodyText.includes(normalizeText(text)))) return false;
   if (state.alerts.length) return false;
-  if (!state.bodyText.trim() || state.headingCount < 1) return false;
+  if (!bodyText || state.headingCount < 1) return false;
   return true;
+}
+
+function normalizeText(value) {
+  return String(value)
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('en-US');
 }
 
 function pngDimensions(bytes) {
