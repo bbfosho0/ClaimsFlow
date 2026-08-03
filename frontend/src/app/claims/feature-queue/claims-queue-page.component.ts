@@ -4,6 +4,9 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { OperationalDataStore } from '../../core/operational-data/operational-data.store';
+import { MetricCardComponent } from '../../shared/metrics/metric-card.component';
+import { AutoAnimateDirective } from '../../shared/motion/auto-animate.directive';
+import { GsapRevealDirective } from '../../shared/motion/gsap-reveal.directive';
 import {
   Adjuster,
   ClaimPage,
@@ -12,6 +15,7 @@ import {
   ClaimStatus,
   ClaimSummary,
   ClaimType,
+  QueueSummary,
 } from '../../shared/models/claim.models';
 import { ChangedValueDirective } from '../../shared/operational/changed-value.directive';
 import { OperationalRefreshStatusComponent } from '../../shared/operational/operational-refresh-status.component';
@@ -22,6 +26,8 @@ import {
   priorityTone,
   statusTone,
 } from '../../shared/presentation/claim-presentation';
+import { StackedChartSegment } from '../../shared/visualizations/chart.models';
+import { StackedBarChartComponent } from '../../shared/visualizations/stacked-bar-chart.component';
 import { ProgressIndicatorComponent } from '../../shared/ui/progress-indicator/progress-indicator.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 import { ClaimFilters, DEFAULT_FILTERS, parseClaimFilters, serializeClaimFilters } from '../data-access/claim-filter-codec';
@@ -36,13 +42,21 @@ type QueueDensity = 'comfortable' | 'compact';
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
+    MetricCardComponent,
+    AutoAnimateDirective,
+    GsapRevealDirective,
+    StackedBarChartComponent,
     StatusBadgeComponent,
     ProgressIndicatorComponent,
     ChangedValueDirective,
     OperationalRefreshStatusComponent,
   ],
   templateUrl: './claims-queue-page.component.html',
-  styleUrls: ['./claims-queue-page.component.css', './claims-queue-golden-journey.css'],
+  styleUrls: [
+    './claims-queue-page.component.css',
+    './claims-queue-golden-journey.css',
+    './claims-queue-midnight-violet.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
@@ -161,6 +175,26 @@ export class ClaimsQueuePageComponent implements OnInit, OnDestroy {
     if (this.filters.team) active.push({ key: 'team', label: this.filters.team });
     if (this.filters.region) active.push({ key: 'region', label: humanizeEnum(this.filters.region) });
     return active;
+  }
+
+  summary(page: ClaimPage): QueueSummary {
+    return page.summary ?? {
+      totalMatching: page.totalElements,
+      atRiskClaims: 0,
+      overdueClaims: 0,
+      unassignedClaims: 0,
+      evidenceReadinessPercentage: 0,
+      priorityDistribution: [],
+    };
+  }
+
+  prioritySegments(page: ClaimPage): readonly StackedChartSegment[] {
+    return this.summary(page).priorityDistribution.map(point => ({
+      key: point.key,
+      label: point.label,
+      value: point.count,
+      tone: point.key === 'CRITICAL' ? 'critical' : point.key === 'HIGH' ? 'warning' : point.key === 'MEDIUM' ? 'brand' : 'neutral',
+    }));
   }
 
   goTo(page: number): void {
