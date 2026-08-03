@@ -114,7 +114,7 @@ class TeamOperationsServiceTest {
             .containsExactly("Overdue SLA intervention", "Ownership gap", "Evidence follow-up");
         assertThat(snapshot.advisories().get(0).queryParams()).containsEntry("sort", "slaDeadline,asc");
         assertThat(snapshot.advisories().get(1).queryParams()).containsEntry("assignment", "unassigned");
-        assertThat(snapshot.integrity().overall()).isEqualTo(65);
+        assertThat(snapshot.integrity().overall()).isEqualTo(66);
         assertThat(snapshot.integrity().label()).isEqualTo("Watch");
     }
 
