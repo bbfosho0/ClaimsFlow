@@ -21,24 +21,24 @@
 
   @if (snapshot(); as operations) {
     <section class="operational-kpi-grid" aria-label="Team operations key performance indicators">
-      <article class="operational-kpi" [appChangedValue]="operations.kpis.activeClaims"><span>Active claims</span><strong><app-animated-number [value]="operations.kpis.activeClaims" /></strong><small>Open filtered workload</small></article>
-      <article class="operational-kpi" data-tone="warning" [appChangedValue]="operations.kpis.atRiskClaims" changeTone="warning"><span>SLA at risk</span><strong><app-animated-number [value]="operations.kpis.atRiskClaims" /></strong><small>Due within 24 hours</small></article>
-      <article class="operational-kpi" data-tone="critical" [appChangedValue]="operations.kpis.overdueClaims" changeTone="critical"><span>Overdue</span><strong><app-animated-number [value]="operations.kpis.overdueClaims" /></strong><small>Past persisted deadline</small></article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.slaCompliancePercentage" changeTone="healthy"><span>SLA compliance</span><strong><app-animated-number [value]="operations.kpis.slaCompliancePercentage" format="percentage" /></strong><small>Resolved within deadline</small></article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.evidenceReadinessPercentage" changeTone="healthy"><span>Evidence readiness</span><strong><app-animated-number [value]="operations.kpis.evidenceReadinessPercentage" format="percentage" /></strong><small>Average persisted completeness</small></article>
-      <article class="operational-kpi" data-tone="advisory" [appChangedValue]="operations.kpis.assignmentCoveragePercentage" changeTone="advisory"><span>Assignment coverage</span><strong><app-animated-number [value]="operations.kpis.assignmentCoveragePercentage" format="percentage" /></strong><small>Open claims with ownership</small></article>
-      <article class="operational-kpi" [attr.data-tone]="operations.kpis.overallUtilizationPercentage >= 85 ? 'warning' : 'healthy'" [appChangedValue]="operations.kpis.overallUtilizationPercentage"><span>Reviewer utilization</span><strong><app-animated-number [value]="operations.kpis.overallUtilizationPercentage" format="percentage" /></strong><small>Active claims ÷ configured capacity</small></article>
+      <article class="operational-kpi" [appChangedValue]="operations.kpis.activeClaims"><span>Active claims</span><strong><app-animated-number [value]="operations.kpis.activeClaims" /></strong><small>Open claims in the selected filters</small></article>
+      <article class="operational-kpi" data-tone="warning" [appChangedValue]="operations.kpis.atRiskClaims" changeTone="warning"><span>SLA at risk</span><strong><app-animated-number [value]="operations.kpis.atRiskClaims" /></strong><small>Open claims due within 24 hours</small></article>
+      <article class="operational-kpi" data-tone="critical" [appChangedValue]="operations.kpis.overdueClaims" changeTone="critical"><span>Overdue</span><strong><app-animated-number [value]="operations.kpis.overdueClaims" /></strong><small>Open claims past their persisted deadline</small></article>
+      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.slaCompliancePercentage" changeTone="healthy"><span>SLA compliance</span><strong><app-animated-number [value]="operations.kpis.slaCompliancePercentage" format="percentage" /></strong><small>Resolved claims on or before deadline</small></article>
+      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.evidenceReadinessPercentage" changeTone="healthy"><span>Evidence readiness</span><strong><app-animated-number [value]="operations.kpis.evidenceReadinessPercentage" format="percentage" /></strong><small>Average completeness across selected claims</small></article>
+      <article class="operational-kpi" data-tone="advisory" [appChangedValue]="operations.kpis.assignmentCoveragePercentage" changeTone="advisory"><span>Assignment coverage</span><strong><app-animated-number [value]="operations.kpis.assignmentCoveragePercentage" format="percentage" /></strong><small>Open claims with an assigned reviewer</small></article>
+      <article class="operational-kpi" [attr.data-tone]="operations.kpis.overallUtilizationPercentage >= 85 ? 'warning' : 'healthy'" [appChangedValue]="operations.kpis.overallUtilizationPercentage"><span>Selected workload utilization</span><strong><app-animated-number [value]="operations.kpis.overallUtilizationPercentage" format="percentage" /></strong><small>Assigned open claims ÷ selected active reviewer capacity</small></article>
     </section>
 
     <section class="operational-grid">
       <article class="operational-panel chart-wide">
-        <header><div><strong>Team workload and capacity</strong><span>Persisted assignments against configured adjuster capacity</span></div></header>
-        @if (!operations.teams.length) {<div class="operational-empty"><strong>No team workload matches the filters.</strong></div>}
+        <header><div><strong>Team workload and capacity</strong><span>Selected persisted assignments against active reviewer capacity</span></div></header>
+        @if (!operations.teams.length) {<div class="operational-empty"><strong>No team workload matches the filters.</strong><span>Choose a broader team or adjuster scope to restore capacity context.</span></div>}
         <div class="workload-grid">
           <article class="workload-card" *ngFor="let team of operations.teams" [appChangedValue]="team.activeClaims" [changeTone]="team.utilizationPercentage >= 85 ? 'warning' : 'healthy'">
             <span>{{ team.name }}</span><strong>{{ team.activeClaims }} / {{ team.capacity }}</strong>
             <i><b [style.width.%]="team.utilizationPercentage"></b></i>
-            <small>{{ team.utilizationPercentage }}% utilized · {{ team.slaCompliancePercentage }}% SLA · {{ team.evidenceReadinessPercentage }}% evidence</small>
+            <small>{{ team.utilizationPercentage }}% selected workload · {{ team.slaCompliancePercentage }}% resolved-claim SLA · {{ team.evidenceReadinessPercentage }}% average evidence</small>
           </article>
         </div>
       </article>
@@ -53,19 +53,19 @@
       </article>
 
       <article class="operational-panel chart-half">
-        <header><div><strong>Adjuster capacity</strong><span>Live ownership and configured capacity</span></div></header>
+        <header><div><strong>Adjuster capacity</strong><span>Assigned open claims against each selected active reviewer’s configured capacity</span></div></header>
         <div class="workload-grid">
           <article class="workload-card" *ngFor="let adjuster of operations.adjusters" [appChangedValue]="adjuster.activeClaims" [changeTone]="adjuster.utilizationPercentage >= 85 ? 'warning' : 'healthy'">
             <span>{{ adjuster.displayName }}</span><strong>{{ adjuster.activeClaims }} / {{ adjuster.capacity }}</strong>
             <i><b [style.width.%]="adjuster.utilizationPercentage"></b></i>
-            <small>{{ adjuster.team }} · {{ adjuster.utilizationPercentage }}% utilized</small>
+            <small>{{ adjuster.team }} · {{ adjuster.utilizationPercentage }}% selected workload utilization</small>
           </article>
         </div>
       </article>
 
       <article class="operational-panel chart-half">
-        <header><div><strong>Escalations</strong><span>Overdue, imminent-SLA, then critical-priority work</span></div></header>
-        @if (!operations.escalations.length) {<div class="operational-empty"><strong>No escalations match the filters.</strong></div>}
+        <header><div><strong>Escalations</strong><span>Overdue, imminent-SLA, then critical-priority open work</span></div></header>
+        @if (!operations.escalations.length) {<div class="operational-empty"><strong>No escalations match the filters.</strong><span>The selected open workload has no overdue, imminent-SLA, or critical-priority claims.</span></div>}
         <div class="escalation-list">
           <a *ngFor="let item of operations.escalations" class="escalation-card" [attr.data-tone]="item.tone" [routerLink]="['/app/claims', item.claimId]">
             <strong>{{ item.claimNumber }} · {{ item.claimantName }}</strong>
@@ -76,14 +76,14 @@
       </article>
 
       <article class="operational-panel chart-full" [appChangedValue]="operations.integrity.overall" [changeTone]="integrityTone(operations.integrity.overall)">
-        <header><div><strong>Operational integrity</strong><span>40% SLA compliance · 30% evidence readiness · 30% assignment coverage</span></div></header>
+        <header><div><strong>Operational integrity score</strong><span>40% resolved-claim SLA compliance · 30% average evidence readiness · 30% open-claim assignment coverage</span></div></header>
         <div class="integrity-score">
           <div class="integrity-orb" [style.--score]="operations.integrity.overall + '%'" [attr.data-tone]="integrityTone(operations.integrity.overall)"><strong><app-animated-number [value]="operations.integrity.overall" /></strong></div>
           <div class="integrity-detail">
             <div><span>Overall</span><b>{{ operations.integrity.label }}</b></div>
-            <div><span>SLA compliance</span><b>{{ operations.integrity.slaCompliance }}%</b></div>
-            <div><span>Evidence readiness</span><b>{{ operations.integrity.evidenceReadiness }}%</b></div>
-            <div><span>Assignment coverage</span><b>{{ operations.integrity.assignmentCoverage }}%</b></div>
+            <div><span>Resolved-claim SLA compliance</span><b>{{ operations.integrity.slaCompliance }}%</b></div>
+            <div><span>Average evidence readiness</span><b>{{ operations.integrity.evidenceReadiness }}%</b></div>
+            <div><span>Open-claim assignment coverage</span><b>{{ operations.integrity.assignmentCoverage }}%</b></div>
           </div>
         </div>
       </article>
