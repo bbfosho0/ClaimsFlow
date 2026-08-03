@@ -4,10 +4,17 @@
     <div class="header-actions"><span class="cf-chip" data-tone="advisory">Advisory only</span><a class="button secondary" routerLink="/app/claims">Open claims queue</a></div>
   </header>
 
+  <section class="mv-kpi-grid intelligence-kpi-grid" aria-label="Intelligence review summary" appGsapReveal="metrics">
+    <app-metric-card label="Review queue" [value]="reviewCount()" variant="compact" tone="brand" helper="Complete loaded review set" />
+    <app-metric-card label="Critical attention" [value]="criticalAttentionCount()" variant="compact" tone="critical" helper="Critical-priority claims" />
+    <app-metric-card label="Evidence blocked" [value]="evidenceBlockedCount()" variant="compact" tone="warning" helper="Claims below 100% completeness" />
+    <app-metric-card label="Ready for decision" [value]="readyForDecisionCount()" variant="compact" tone="healthy" helper="Backend workflow state" />
+  </section>
+
   <div *ngIf="error()" class="alert" role="alert">{{ error() }}</div>
   <div *ngIf="confirmationMessage()" class="confirmation-banner" role="status"><span aria-hidden="true">✓</span><strong>{{ confirmationMessage() }}</strong></div>
 
-  <div class="intelligence-layout">
+  <div class="intelligence-layout" appAutoAnimate="subtle">
     <app-intelligence-review-queue
       [items]="queue()"
       [selectedId]="selectedId()"
@@ -21,6 +28,7 @@
 
     <app-intelligence-dossier
       *ngIf="workspace() as data"
+      appGsapReveal="panel"
       [selectedItem]="selectedQueueItem()"
       [workspace]="data"
       [reasoningNodes]="reasoningNodes()"
@@ -32,6 +40,7 @@
 
     <app-claim-assistant-panel
       *ngIf="workspace() as data"
+      appGsapReveal="panel"
       [workspace]="data"
       [mode]="mode()"
       [answer]="assistant()!"
