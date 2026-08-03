@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { OperationalDataStore } from '../../core/operational-data/operational-data.store';
 import { PortalClaim } from '../models/portal.models';
 import { PortalApiService } from './portal-api.service';
 
@@ -25,10 +26,16 @@ const claim: PortalClaim = {
 describe('PortalApiService', () => {
   let service: PortalApiService;
   let http: HttpTestingController;
+  let operational: jasmine.SpyObj<OperationalDataStore>;
 
   beforeEach(() => {
+    operational = jasmine.createSpyObj<OperationalDataStore>('OperationalDataStore', ['invalidate']);
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: OperationalDataStore, useValue: operational },
+      ],
     });
     service = TestBed.inject(PortalApiService);
     http = TestBed.inject(HttpTestingController);
@@ -44,7 +51,7 @@ describe('PortalApiService', () => {
     request.flush(claim);
   });
 
-  it('updates one evidence kind with the exact bounded request', () => {
+  it('updates one evidence kind and invalidates operational snapshots after success', () => {
     service.updateEvidence('claim-1', 'PHOTOS', true).subscribe();
 
     const request = http.expectOne('/api/portal/claims/claim-1/evidence');
@@ -55,6 +62,18 @@ describe('PortalApiService', () => {
       actor: 'Taylor Reed',
     });
     request.flush(claim);
+
+    expect(operational.invalidate).toHaveBeenCalledWith(
+      ['dashboard', 'queue', 'analytics', 'team', 'evidence'],
+      ['claim-1'],
+    );
+  });
+
+  it('does not invalidate when the evidence request fails', () => {
+    service.updateEvidence('claim-1', 'PHOTOS', true).subscribe({ error: () => undefined });
+    const request = http.expectOne('/api/portal/claims/claim-1/evidence');
+    request.flush({ message: 'failure' }, { status: 500, statusText: 'Failure' });
+    expect(operational.invalidate).not.toHaveBeenCalled();
   });
 
   it('reads claimant-visible messages from the portal endpoint', () => {
