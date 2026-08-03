@@ -36,4 +36,9 @@ export class MetricCardComponent {
   isNumeric(value: number | string): value is number {
     return typeof value === 'number';
   }
+
+  numericValue(): number {
+    const current = this.value();
+    return typeof current === 'number' ? current : 0;
+  }
 }
