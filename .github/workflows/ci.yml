@@ -48,6 +48,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --silent
         working-directory: frontend
+      - name: Test source audit rules
+        run: npm run audit:source:test
+        working-directory: frontend
+      - name: Audit deployed source contracts
+        run: npm run audit:source
+        working-directory: frontend
       - name: Run frontend tests
         shell: bash
         run: |
