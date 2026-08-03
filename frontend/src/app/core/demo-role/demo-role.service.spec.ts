@@ -53,16 +53,20 @@ describe('demo role contract', () => {
     expect(parseDemoRole(null)).toBeNull();
   });
 
-  it('exposes the approved permanent navigation per role', () => {
+  it('exposes only completed employer-facing navigation per role', () => {
     expect(DEMO_ROLES.manager.navigation.map(item => item.label)).toEqual([
-      'Overview', 'Claim Queue', 'Analytics', 'AI Insights', 'Team Operations', 'Reports',
+      'Overview', 'Claim Queue', 'Analytics', 'AI Insights', 'Team Operations',
     ]);
     expect(DEMO_ROLES.adjuster.navigation.map(item => item.label)).toEqual([
-      'My Work', 'Claim Queue', 'Documents', 'Reports',
+      'My Work', 'Claim Queue', 'Evidence Operations',
     ]);
     expect(DEMO_ROLES.admin.navigation.map(item => item.label)).toEqual([
-      'Workflow Automation', 'Reports', 'Settings',
+      'Workflow Automation',
     ]);
+
+    const allIds = Object.values(DEMO_ROLES).flatMap(role => role.navigation.map(item => item.id));
+    expect(allIds).not.toContain('reports');
+    expect(allIds).not.toContain('settings');
   });
 
   it('uses a valid query role before stored state and persists it', () => {
