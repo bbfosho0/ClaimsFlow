@@ -11,6 +11,7 @@ import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimRegion;
 import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.operations.api.OperationalResponses;
+import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalQueryService;
 import java.math.BigDecimal;
@@ -27,8 +28,10 @@ class AnalyticsServiceTest {
     private static final LocalDate TO = LocalDate.of(2026, 7, 7);
 
     private final OperationalQueryService query = mock(OperationalQueryService.class);
+    private final OperationalFilterOptionsService filterOptions = mock(OperationalFilterOptionsService.class);
     private final AnalyticsService service = new AnalyticsService(
         query,
+        filterOptions,
         Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
@@ -57,7 +60,7 @@ class AnalyticsServiceTest {
             OperationalFilters requested = invocation.getArgument(0);
             return requested.from().equals(FROM) ? List.of(resolved, open) : List.of();
         });
-        when(query.options()).thenReturn(OperationalResponses.options(List.of()));
+        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of()));
 
         AnalyticsSnapshot snapshot = service.snapshot(filters);
 
@@ -95,7 +98,7 @@ class AnalyticsServiceTest {
         LocalDate day = LocalDate.of(2026, 8, 3);
         OperationalFilters filters = filters(day, day);
         when(query.find(any())).thenReturn(List.of());
-        when(query.options()).thenReturn(OperationalResponses.options(List.of()));
+        when(filterOptions.options()).thenReturn(OperationalResponses.options(List.of()));
 
         AnalyticsSnapshot snapshot = service.snapshot(filters);
 
