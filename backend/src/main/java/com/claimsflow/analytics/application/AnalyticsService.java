@@ -8,6 +8,9 @@ import com.claimsflow.analytics.api.AnalyticsResponses.DistributionPoint;
 import com.claimsflow.analytics.api.AnalyticsResponses.MetricChangeResponse;
 import com.claimsflow.analytics.api.AnalyticsResponses.TimePoint;
 import com.claimsflow.claim.domain.Claim;
+import com.claimsflow.claim.domain.ClaimPriority;
+import com.claimsflow.claim.domain.ClaimRegion;
+import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.operations.application.MetricChange;
 import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalMetrics;
@@ -25,7 +28,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.Function;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -87,9 +89,9 @@ public class AnalyticsService {
             comparison,
             timeSeries(filters.from(), filters.to(), claims, Claim::getCreatedAt),
             timeSeries(filters.from(), filters.to(), claims, Claim::getResolvedAt),
-            enumDistribution(claims, Claim::getStatus, com.claimsflow.claim.domain.ClaimStatus.values()),
-            enumDistribution(claims, Claim::getPriority, com.claimsflow.claim.domain.ClaimPriority.values()),
-            enumDistribution(claims, Claim::getRegion, com.claimsflow.claim.domain.ClaimRegion.values()),
+            enumDistribution(claims, Claim::getStatus, ClaimStatus.values()),
+            enumDistribution(claims, Claim::getPriority, ClaimPriority.values()),
+            enumDistribution(claims, Claim::getRegion, ClaimRegion.values()),
             agingBands(claims),
             cohorts(claims));
     }
