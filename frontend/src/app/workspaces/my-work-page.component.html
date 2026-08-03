@@ -8,15 +8,17 @@
     <a class="button secondary" routerLink="/app/claims">Open claim queue →</a>
   </header>
 
+  <div class="my-work-refresh"><app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" /></div>
+
   <div class="my-work-metrics" aria-label="Adjuster workload summary">
-    <article><span>ASSIGNED CLAIMS</span><strong>{{ assignedClaims().length }}</strong><small>API-backed</small></article>
-    <article><span>HIGH ATTENTION</span><strong>{{ urgentCount() }}</strong><small>High or critical priority</small></article>
-    <article><span>EVIDENCE GAPS</span><strong>{{ evidenceGapCount() }}</strong><small>Below 100% completeness</small></article>
+    <article [appChangedValue]="assignedClaims().length"><span>ASSIGNED CLAIMS</span><strong><app-animated-number [value]="assignedClaims().length" /></strong><small>API-backed</small></article>
+    <article [appChangedValue]="urgentCount()" changeTone="warning"><span>HIGH ATTENTION</span><strong><app-animated-number [value]="urgentCount()" /></strong><small>High or critical priority</small></article>
+    <article [appChangedValue]="evidenceGapCount()" changeTone="warning"><span>EVIDENCE GAPS</span><strong><app-animated-number [value]="evidenceGapCount()" /></strong><small>Below 100% completeness</small></article>
     <article><span>ACTIVE ADJUSTER</span><strong>Jordan Lee</strong><small>{{ adjusterId() ? 'Seeded UUID resolved' : 'Reset required' }}</small></article>
   </div>
 
-  <div *ngIf="loading()" class="workspace-panel my-work-state" role="status">Loading Jordan Lee’s assigned claims…</div>
-  <div *ngIf="error()" class="my-work-alert" role="alert">{{ error() }}</div>
+  <div *ngIf="loading()" class="workspace-panel my-work-state cf-skeleton" role="status">Loading Jordan Lee’s assigned claims…</div>
+  <div *ngIf="error()" class="my-work-alert" role="alert"><span>{{ error() }}</span><button type="button" class="button secondary" (click)="refresh()">Retry</button></div>
 
   <section class="workspace-panel assigned-claims-panel" *ngIf="!loading()">
     <header>
@@ -35,7 +37,7 @@
     </div>
 
     <div class="assigned-claim-list" *ngIf="assignedClaims().length">
-      <a *ngFor="let claim of assignedClaims()" [routerLink]="['/app/claims', claim.id]" class="assigned-claim-card" [class.golden]="isGoldenJourney(claim)">
+      <a *ngFor="let claim of assignedClaims()" [routerLink]="['/app/claims', claim.id]" class="assigned-claim-card" [class.golden]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" [changeTone]="claim.priority === 'CRITICAL' ? 'critical' : claim.completenessPercentage < 100 ? 'warning' : 'healthy'">
         <div class="claim-card-heading">
           <div>
             <span>{{ claim.claimNumber }}</span>
@@ -48,18 +50,13 @@
           <app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" icon="•" />
         </div>
         <dl>
-          <div><dt>Evidence</dt><dd>{{ claim.completenessPercentage }}%</dd></div>
+          <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
           <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
           <div><dt>Type</dt><dd>{{ label(claim.claimType) }}</dd></div>
+          <div><dt>Region</dt><dd>{{ claim.region ? label(claim.region) : 'Not assigned' }}</dd></div>
         </dl>
         <span class="open-claim">Open claim workspace →</span>
       </a>
     </div>
-  </section>
-
-  <section class="demo-workload" aria-label="Secondary demo workload">
-    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Follow-up review block</strong><p>Three secondary claims are reserved for visual workload context. They are intentionally not presented as API-backed records.</p></article>
-    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Decision preparation</strong><p>Two recommendations are awaiting explicit operator review. No claim status changes automatically.</p></article>
-    <article class="workspace-panel"><span>DEMO WORKLOAD</span><strong>Daily commitment</strong><p>Complete claimant evidence requests before the final SLA review window.</p></article>
   </section>
 </section>
