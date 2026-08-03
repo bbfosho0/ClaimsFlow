@@ -59,12 +59,12 @@ The **Priya Shah** role exposes only **Workflow Automation**.
 
 It can load the real reserved claim and run a deterministic local routing preview. Save Draft and Validate are local-only. Production activation is disabled at the action point with an exact explanation. The simulation cannot approve, deny, pay, close, assign, or otherwise mutate a consequential claim state.
 
-### Not exposed in deployed navigation
+### Not exposed in the deployed product
 
 - Reports
 - Settings
 
-The source-only preview routes may remain for future development, but they are absent from the role rails and employer tour.
+These placeholder surfaces are neither routed nor shown in the employee navigation or employer walkthrough.
 
 ## Reactive operational data
 
@@ -80,6 +80,8 @@ It provides:
 - Cached data during background refresh
 - Last-valid-data retention and a nonblocking stale warning after a transient failure
 - Brief changed-claim and changed-value feedback
+
+A shared visibility-aware operational clock updates countdowns and refresh-age text without page-owned one-second timers.
 
 The application does not require WebSockets or server-sent events for the portfolio demonstration.
 
@@ -363,9 +365,13 @@ mvn verify
 ```bash
 cd frontend
 npm ci
+npm run audit:source:test
+npm run audit:source
 npm run test:ci
 npm run build
 ```
+
+The source-contract audit prevents placeholder routes, role-navigation leaks, page-coupled workspace utilities, unfinished markers, browser-console debugging, unsupported deployed capability copy, and uninjected backend wall-clock usage from returning silently.
 
 ### Visual QA
 
@@ -376,7 +382,7 @@ cd frontend
 CHROME_EXECUTABLE=/path/to/chrome node scripts/capture-operational-visual-qa.mjs
 ```
 
-The workflow validates and uploads **18 screenshots** covering:
+The workflow validates and uploads a machine-readable manifest plus **18 screenshots** covering:
 
 - Claimant, Adjuster, Manager, Administrator, and tour surfaces
 - Dashboard baseline and evidence-changed states
@@ -384,9 +390,11 @@ The workflow validates and uploads **18 screenshots** covering:
 - Default and region-filtered Analytics
 - Default and team-filtered Team Operations
 - Evidence Operations before and after evidence mutation
-- A failed background refresh retaining the last valid Dashboard snapshot
+- A deliberately failed background refresh retaining the last valid Dashboard snapshot
 - Reduced-motion rendering
 - Mobile claimant, Manager, and Evidence Operations layouts
+
+For every scenario, the harness checks the expected route and query state, required and forbidden page copy, a page-level heading, absence of visible alerts or loading residue, screenshot dimensions and minimum payload size, and distinct hashes for states that must visibly differ. It also fails on browser exceptions, console errors, and unexpected API request failures. The stale-data scenario requires exactly scoped evidence of the intentionally blocked Dashboard request.
 
 ## Explicit limitations
 
@@ -397,7 +405,7 @@ The workflow validates and uploads **18 screenshots** covering:
 - No email, SMS, payment, carrier, or policy-administration integration
 - Workflow draft, validation, and simulation are local-only
 - Production workflow activation is disabled
-- Reports and Settings are not deployed navigation surfaces
+- Reports and Settings are not routed or deployed
 - The operating portfolio is deterministic fictional data
 - No cloud deployment configuration is included
 
@@ -409,6 +417,7 @@ These boundaries are explicit so the project demonstrates real state, backend ag
 - `docs/superpowers/plans/2026-08-02-role-aware-claims-journey-implementation.md`
 - `docs/superpowers/specs/2026-08-03-deployment-truthful-employer-mvp-design.md`
 - `docs/superpowers/plans/2026-08-03-deployment-truthful-employer-mvp.md`
+- `docs/superpowers/plans/2026-08-03-deep-design-audit-implementation-review.md`
 - `docs/demo-script.md`
 
-Figma remains an art-direction source. The Angular application, Spring API, automated tests, and exact-head rendered screenshots define the implemented product.
+Figma remains an art-direction source. The Angular application, Spring API, automated tests, source-contract audit, and exact-head rendered evidence define the implemented product.
