@@ -96,3 +96,8 @@
     </main>
   </section>
 </div>
+
+<app-demo-reset-dialog
+  *ngIf="resetDialogOpen()"
+  (closed)="closeDemoReset()"
+  (completed)="completeDemoReset($event)" />

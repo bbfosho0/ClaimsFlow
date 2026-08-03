@@ -3,13 +3,15 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, comp
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, startWith } from 'rxjs';
+import { DemoJourneySnapshot } from '../../demo/demo-journey.models';
+import { DemoResetDialogComponent } from '../../demo/demo-reset-dialog.component';
 import { DemoRoleService } from '../demo-role/demo-role.service';
 import { RoleSwitcherComponent } from './role-switcher/role-switcher.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RoleSwitcherComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, RoleSwitcherComponent, DemoResetDialogComponent],
   templateUrl: './app-shell.component.html',
   styleUrls: ['./app-shell.component.css', './app-shell-role-aware.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,6 +27,7 @@ export class AppShellComponent {
   readonly shellSubtitle = signal('Operations performance at a glance.');
   readonly mobileDrawerOpen = signal(false);
   readonly roleNotice = signal<string | null>(null);
+  readonly resetDialogOpen = signal(false);
   readonly navigation = this.demoRole.navigation;
   readonly operator = this.demoRole.definition;
   readonly mobileSecondaryNavigation = computed(() => this.navigation().slice(4));
@@ -54,7 +57,16 @@ export class AppShellComponent {
   }
 
   requestDemoReset(): void {
-    this.roleNotice.set('Demo reset is not connected yet. The completed journey will reset only the reserved demo claim.');
+    this.resetDialogOpen.set(true);
+  }
+
+  closeDemoReset(): void {
+    this.resetDialogOpen.set(false);
+  }
+
+  completeDemoReset(_snapshot: DemoJourneySnapshot): void {
+    this.resetDialogOpen.set(false);
+    this.roleNotice.set('Demo journey reset.');
   }
 
   private syncRouteContext(): void {
