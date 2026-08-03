@@ -23,9 +23,15 @@ export class ClaimsApiService {
   list(filters: ClaimFilters): Observable<ClaimPage> {
     let params = new HttpParams().set('page', filters.page).set('size', filters.size).set('sort', filters.sort);
     if (filters.q) params = params.set('q', filters.q);
+    if (filters.from) params = params.set('from', filters.from);
+    if (filters.to) params = params.set('to', filters.to);
+    if (filters.claimType) params = params.set('claimType', filters.claimType);
     if (filters.status) params = params.set('status', filters.status);
     if (filters.priority) params = params.set('priority', filters.priority);
     if (filters.assignment) params = params.set('assignment', filters.assignment);
+    if (filters.adjusterId) params = params.set('adjusterId', filters.adjusterId);
+    if (filters.team) params = params.set('team', filters.team);
+    if (filters.region) params = params.set('region', filters.region);
     return this.http.get<ClaimPage>(`${API_BASE_URL}/claims`, { params });
   }
 
