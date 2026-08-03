@@ -11,6 +11,7 @@ import com.claimsflow.portal.domain.MessageAudience;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class DemoJourneyService {
     private final OperationalDemoDatasetService dataset;
     private final Clock clock;
 
+    @Autowired
     public DemoJourneyService(
             ClaimJpaRepository repository,
             ClaimApplicationService claims,
@@ -41,9 +43,17 @@ public class DemoJourneyService {
         this.clock = clock;
     }
 
+    public DemoJourneyService(
+            ClaimJpaRepository repository,
+            ClaimApplicationService claims,
+            AdjusterService adjusters,
+            PortalApplicationService portal) {
+        this(repository, claims, adjusters, portal, null, Clock.systemUTC());
+    }
+
     @Transactional
     public DemoResponses.DemoJourneySnapshot reset() {
-        dataset.ensureSeeded();
+        if (dataset != null) dataset.ensureSeeded();
         repository.deleteByClaimantEmail(CLAIMANT_EMAIL);
         repository.flush();
 
