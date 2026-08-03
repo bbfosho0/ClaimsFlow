@@ -13,6 +13,7 @@ import {
   AnalyticsSnapshot,
   DEFAULT_OPERATIONAL_FILTERS,
   EvidenceOperationsSnapshot,
+  MyWorkSnapshot,
   OperationalFamily,
   OperationalFilters,
   OperationalResource,
@@ -31,12 +32,14 @@ export class OperationalDataStore implements OnDestroy {
 
   private readonly dashboardController = new OperationalResourceController<DashboardSnapshot>();
   private readonly queueController = new OperationalResourceController<ClaimPage>();
+  private readonly myWorkController = new OperationalResourceController<MyWorkSnapshot>();
   private readonly analyticsController = new OperationalResourceController<AnalyticsSnapshot>();
   private readonly teamController = new OperationalResourceController<TeamOperationsSnapshot>();
   private readonly evidenceController = new OperationalResourceController<EvidenceOperationsSnapshot>();
 
   readonly dashboard = this.dashboardController.state;
   readonly queue = this.queueController.state;
+  readonly myWork = this.myWorkController.state;
   readonly analytics = this.analyticsController.state;
   readonly team = this.teamController.state;
   readonly evidence = this.evidenceController.state;
@@ -47,6 +50,7 @@ export class OperationalDataStore implements OnDestroy {
 
   private queueFilters: ClaimFilters | null = null;
   private queueFilterKey = '';
+  private myWorkAdjusterId = '';
   private analyticsFilters: OperationalFilters = DEFAULT_OPERATIONAL_FILTERS;
   private analyticsFilterKey = operationalFilterKey(DEFAULT_OPERATIONAL_FILTERS);
   private teamFilters: OperationalFilters = DEFAULT_OPERATIONAL_FILTERS;
@@ -67,6 +71,14 @@ export class OperationalDataStore implements OnDestroy {
       this.dirty.add('queue');
     }
     return this.activate('queue');
+  }
+
+  activateMyWork(adjusterId: string): () => void {
+    if (this.myWorkAdjusterId !== adjusterId) {
+      this.myWorkAdjusterId = adjusterId;
+      this.dirty.add('myWork');
+    }
+    return this.activate('myWork');
   }
 
   activateAnalytics(filters: OperationalFilters): () => void {
@@ -130,6 +142,7 @@ export class OperationalDataStore implements OnDestroy {
 
   private shouldLoad(family: OperationalFamily): boolean {
     if (family === 'queue' && !this.queueFilters) return false;
+    if (family === 'myWork' && !this.myWorkAdjusterId) return false;
     if (this.dirty.has(family)) return true;
     const state = this.readState(family);
     if (!state.value || !state.updatedAt) return true;
@@ -144,6 +157,7 @@ export class OperationalDataStore implements OnDestroy {
     switch (family) {
       case 'dashboard': return this.dashboard();
       case 'queue': return this.queue();
+      case 'myWork': return this.myWork();
       case 'analytics': return this.analytics();
       case 'team': return this.team();
       case 'evidence': return this.evidence();
@@ -158,6 +172,11 @@ export class OperationalDataStore implements OnDestroy {
       case 'queue':
         if (this.queueFilters) {
           this.loadResource(family, this.queueController, this.api.loadQueue(this.queueFilters), background);
+        }
+        break;
+      case 'myWork':
+        if (this.myWorkAdjusterId) {
+          this.loadResource(family, this.myWorkController, this.api.loadMyWork(this.myWorkAdjusterId), background);
         }
         break;
       case 'analytics':
@@ -225,6 +244,7 @@ export class OperationalDataStore implements OnDestroy {
     switch (family) {
       case 'dashboard': return this.dashboardController;
       case 'queue': return this.queueController;
+      case 'myWork': return this.myWorkController;
       case 'analytics': return this.analyticsController;
       case 'team': return this.teamController;
       case 'evidence': return this.evidenceController;
