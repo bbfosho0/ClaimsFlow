@@ -1,9 +1,9 @@
-<section class="cf-page page-enter dashboard-page">
+<section class="cf-page page-enter dashboard-page midnight-overview">
   <header class="cf-page-header operations-header">
     <div>
       <p class="eyebrow">PORTFOLIO COMMAND / {{ todayLabel }}</p>
       <h1>Operations Overview</h1>
-      <p>Read pressure across the active portfolio, intervene before SLA exposure becomes failure, and keep every decision traceable.</p>
+      <p>Read portfolio pressure, intervene before service-level deadlines fail, and keep every decision traceable.</p>
     </div>
     <div class="header-actions">
       <ng-container *ngIf="data() as dashboard; else loadingHealth">
@@ -18,11 +18,10 @@
     <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
   </div>
 
-  <div *ngIf="loading()" class="dashboard-skeleton" role="status" aria-label="Loading operational signals">
-    <div class="cf-skeleton skeleton-command"></div>
-    <div class="cf-skeleton skeleton-queue"></div>
-    <div class="cf-skeleton skeleton-band"></div>
+  <div *ngIf="loading()" class="overview-loading" role="status" aria-label="Loading operational portfolio">
+    <app-metric-card *ngFor="let item of [1,2,3,4]" label="Portfolio metric" [loading]="true" variant="hero" />
   </div>
+
   <div *ngIf="error()" class="alert dashboard-error" role="alert">
     <span>{{ error() }}</span>
     <button type="button" class="button secondary" (click)="refresh()">Retry</button>
@@ -32,98 +31,176 @@
     <div>
       <p class="eyebrow">GOLDEN JOURNEY / LIVE BACKEND CLAIM</p>
       <h2>{{ claim.claimNumber }} · {{ claim.claimantName }}</h2>
-      <p>The same reserved claim submitted in the claimant portal and handled by Jordan Lee is visible in Manager operations.</p>
+      <p>The same reserved claim submitted in the claimant portal and handled by Jordan Lee is visible in manager operations.</p>
     </div>
     <dl>
       <div><dt>Status</dt><dd>{{ label(claim.status) }}</dd></div>
       <div><dt>Priority</dt><dd>{{ label(claim.priority) }}</dd></div>
       <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
-      <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+      <div><dt>Deadline</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
     </dl>
     <a class="button secondary" [routerLink]="['/app/claims', claim.id]">Inspect claim →</a>
   </section>
 
   <ng-container *ngIf="data() as dashboard">
-    <div class="command-layout">
-      <section class="priority-command" data-tour-target="priority-command" aria-labelledby="priority-command-title">
-        <div class="surface-heading">
-          <div>
-            <p class="eyebrow">PRIORITY COMMAND FIELD</p>
-            <h2 id="priority-command-title"><app-animated-number [value]="activeSignals(dashboard)" /> displayed signals require attention</h2>
-          </div>
-          <span class="field-state cf-live-breathe"><i aria-hidden="true"></i> LIVE PORTFOLIO</span>
-        </div>
-        <app-command-field [signalCounts]="dashboard.signalCounts" variant="dashboard" />
-      </section>
+    <section class="mv-kpi-grid overview-kpi-grid" aria-label="Portfolio key performance indicators">
+      <app-metric-card
+        label="Open claims"
+        [value]="dashboard.openClaims"
+        variant="hero"
+        tone="brand"
+        helper="Currently active across the portfolio"
+        definition="Claims that are not resolved or closed."
+        [delta]="delta(dashboard, 'openClaims')"
+        currentPeriod="Current portfolio"
+        [previousPeriod]="comparisonPeriod(dashboard)"
+        [currentValue]="dashboard.openClaims + ' open claims'">
+        <app-metric-sparkline
+          metric-visual
+          label="Open claim inventory trend"
+          tone="brand"
+          [points]="(dashboard.openPortfolioTrend || []).map(point => ({ label: point.date, value: point.value }))" />
+      </app-metric-card>
 
-      <section class="intervention-panel panel" aria-labelledby="intervention-title">
+      <app-metric-card
+        label="Estimated exposure"
+        [value]="exposure(dashboard)"
+        format="currency"
+        variant="hero"
+        tone="advisory"
+        helper="Estimated loss across open claims"
+        definition="Sum of the current estimated loss for open claims."
+        [delta]="delta(dashboard, 'estimatedExposure')"
+        currentPeriod="Current portfolio"
+        [previousPeriod]="comparisonPeriod(dashboard)">
+        <app-metric-sparkline
+          metric-visual
+          label="Estimated exposure trend"
+          tone="advisory"
+          [points]="(dashboard.exposureTrend || []).map(point => ({ label: point.date, value: point.amount }))" />
+      </app-metric-card>
+
+      <app-metric-card
+        label="SLA pressure"
+        [value]="dashboard.slaRiskClaims + dashboard.overdueClaims"
+        variant="hero"
+        tone="warning"
+        [helper]="dashboard.slaRiskClaims + ' due <24h · ' + dashboard.overdueClaims + ' overdue'"
+        definition="Open claims due within 24 hours plus open claims past their service-level deadline."
+        [delta]="delta(dashboard, 'slaPressure')"
+        [inverseDelta]="true"
+        currentPeriod="Current portfolio"
+        [previousPeriod]="comparisonPeriod(dashboard)">
+        <app-metric-stacked-strip
+          metric-visual
+          label="SLA pressure composition"
+          [segments]="slaSegments(dashboard)" />
+      </app-metric-card>
+
+      <app-metric-card
+        label="Evidence readiness"
+        [value]="dashboard.evidenceReadinessPercentage"
+        format="percentage"
+        variant="hero"
+        tone="healthy"
+        helper="Average completeness across open claims"
+        definition="Average persisted evidence completeness across active claims."
+        [delta]="delta(dashboard, 'evidenceReadiness')"
+        currentPeriod="Current portfolio"
+        [previousPeriod]="comparisonPeriod(dashboard)">
+        <app-metric-radial
+          metric-visual
+          label="Evidence readiness"
+          tone="healthy"
+          [value]="dashboard.evidenceReadinessPercentage" />
+      </app-metric-card>
+    </section>
+
+    <section class="mv-dashboard-grid overview-primary-grid">
+      <app-chart-frame
+        class="mv-span-8"
+        title="Portfolio pulse"
+        subtitle="Active inventory, created claims, and resolved claims over the last 30 days"
+        [stale]="state().stale">
+        <div chart-metrics class="overview-chart-metrics">
+          <span class="mv-section-metric"><strong>{{ resolvedThisPeriod(dashboard) }}</strong> resolved in 30d</span>
+          <span class="mv-section-metric"><strong>{{ dashboard.highPriorityClaims }}</strong> high or critical</span>
+          <span class="mv-section-metric"><strong>{{ dashboard.unassignedClaims }}</strong> unassigned</span>
+        </div>
+        <app-line-area-chart
+          title="Portfolio pulse"
+          description="Violet shows active claim inventory, cyan shows created claims, and mint shows resolved claims by date."
+          [series]="portfolioSeries()" />
+      </app-chart-frame>
+
+      <section class="panel intervention-panel mv-span-4" aria-labelledby="intervention-title">
         <div class="surface-heading compact-heading">
           <div><p class="eyebrow">REVIEW NOW</p><h2 id="intervention-title">Intervention queue</h2></div>
           <a routerLink="/app/claims">Open queue →</a>
         </div>
         <div class="intervention-list">
-          <a *ngFor="let item of interventions(dashboard); let index = index" routerLink="/app/claims" [queryParams]="item.queryParams" [attr.data-tone]="item.tone" [appChangedValue]="item.count" [changeTone]="item.tone">
+          <a
+            *ngFor="let item of interventions(dashboard); let index = index"
+            routerLink="/app/claims"
+            [queryParams]="item.queryParams"
+            [attr.data-tone]="item.tone"
+            [appChangedValue]="item.count"
+            [changeTone]="item.tone">
             <span class="intervention-rank">0{{ index + 1 }}</span>
             <span class="intervention-copy"><strong>{{ item.label }}</strong><small>{{ item.detail }}</small></span>
             <span class="intervention-count"><app-animated-number [value]="item.count" /></span>
           </a>
         </div>
       </section>
-    </div>
-
-    <section class="instrument-band" aria-label="Portfolio instrument band">
-      <article class="instrument-cell" [appChangedValue]="dashboard.openClaims">
-        <span>ACTIVE PORTFOLIO</span><strong><app-animated-number [value]="dashboard.openClaims" /></strong><small>{{ dashboard.activePortfolioPercentage }}% of all claims open</small>
-        <i [style.--meter]="dashboard.activePortfolioPercentage + '%'"></i>
-      </article>
-      <article class="instrument-cell" data-tone="critical" [appChangedValue]="dashboard.highPriorityClaims" changeTone="critical">
-        <span>PRIORITY LOAD</span><strong><app-animated-number [value]="dashboard.highPriorityClaims" /></strong><small>High or critical</small>
-        <i [style.--meter]="percent(dashboard.highPriorityClaims, dashboard.openClaims) + '%'"></i>
-      </article>
-      <article class="instrument-cell" data-tone="healthy" [appChangedValue]="dashboard.evidenceReadinessPercentage" changeTone="healthy">
-        <span>EVIDENCE READY</span><strong><app-animated-number [value]="dashboard.evidenceReadinessPercentage" format="percentage" /></strong><small>Average portfolio completeness</small>
-        <i [style.--meter]="dashboard.evidenceReadinessPercentage + '%'"></i>
-      </article>
-      <article class="instrument-cell" data-tone="warning" [appChangedValue]="dashboard.unassignedClaims" changeTone="warning">
-        <span>OWNERSHIP GAP</span><strong><app-animated-number [value]="dashboard.unassignedClaims" /></strong><small>Unassigned claims</small>
-        <i [style.--meter]="percent(dashboard.unassignedClaims, dashboard.openClaims) + '%'"></i>
-      </article>
     </section>
 
-    <div class="operations-grid">
-      <section class="panel flow-panel">
+    <section class="mv-dashboard-grid overview-secondary-grid">
+      <app-chart-frame
+        class="mv-span-4"
+        title="SLA deadline profile"
+        subtitle="Open claims grouped by time remaining before their service-level deadline">
+        <app-stacked-bar-chart
+          title="SLA deadline profile"
+          description="Open claims split into overdue, due within 24 hours, due in one to three days, due in four to seven days, and due later."
+          [segments]="slaProfile(dashboard)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="mv-span-4"
+        title="Team capacity"
+        subtitle="Active claims against each reviewer’s configured capacity; target marker at 80%">
+        <app-horizontal-bar-chart
+          title="Team capacity"
+          description="Reviewer workload utilization with an 80 percent target marker."
+          suffix="%"
+          [data]="capacityBars(dashboard)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="mv-span-4"
+        title="Evidence readiness bands"
+        subtitle="Open claims grouped by persisted evidence completeness">
+        <app-horizontal-bar-chart
+          title="Evidence readiness bands"
+          description="Open claims grouped into zero to 49, 50 to 74, 75 to 99, and 100 percent evidence completeness."
+          [data]="evidenceBars(dashboard)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="mv-span-4"
+        title="Priority mix"
+        subtitle="Active portfolio composition by backend triage priority">
+        <app-stacked-bar-chart
+          title="Priority mix"
+          description="Active claims split by low, medium, high, and critical priority."
+          [segments]="prioritySegments(dashboard)" />
+      </app-chart-frame>
+
+      <section class="panel event-panel mv-span-8">
         <div class="surface-heading compact-heading">
-          <div><p class="eyebrow">PORTFOLIO FLOW</p><h2>Flow intelligence</h2></div>
+          <div><p class="eyebrow">IMMUTABLE TRACE</p><h2>Operational event feed</h2></div>
           <span class="cf-chip" [attr.data-tone]="state().stale ? 'warning' : 'live'">{{ state().stale ? 'Last valid snapshot' : 'Current snapshot' }}</span>
         </div>
-        <div class="flow-visual" role="img" [attr.aria-label]="dashboard.openClaims + ' active claims moving through intake, review, decision, and resolution'">
-          <div class="flow-line" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="flow-stage"><span>01</span><strong>Intake</strong><small>{{ dashboard.incompleteClaims }} evidence gaps</small></div>
-          <div class="flow-stage"><span>02</span><strong>Review</strong><small>{{ dashboard.highPriorityClaims }} priority reviews</small></div>
-          <div class="flow-stage"><span>03</span><strong>Decision</strong><small>{{ dashboard.slaRiskClaims + dashboard.overdueClaims }} SLA actions</small></div>
-          <div class="flow-stage"><span>04</span><strong>Resolved</strong><small>{{ dashboard.totalClaims - dashboard.openClaims }} claims retained</small></div>
-        </div>
-        <div class="flow-footer">
-          <span><b><app-animated-number [value]="dashboard.evidenceReadinessPercentage" format="percentage" /></b> evidence ready</span>
-          <span><b><app-animated-number [value]="dashboard.unassignedClaims" /></b> need ownership</span>
-          <span><b><app-animated-number [value]="dashboard.slaRiskClaims + dashboard.overdueClaims" /></b> require SLA action</span>
-        </div>
-      </section>
-
-      <section class="panel capacity-panel">
-        <div class="surface-heading compact-heading"><div><p class="eyebrow">ACTIVE REVIEWERS</p><h2>Team capacity</h2></div></div>
-        <div *ngIf="!dashboard.workload.length" class="empty">No active adjusters.</div>
-        <div class="capacity-list">
-          <article *ngFor="let item of dashboard.workload" [appChangedValue]="item.activeClaims" [changeTone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'">
-            <div class="capacity-avatar" aria-hidden="true">{{ item.displayName.slice(0, 2).toUpperCase() }}</div>
-            <div class="capacity-copy"><strong>{{ item.displayName }}</strong><span>{{ item.team }} · {{ item.activeClaims }} of {{ item.capacity }} active</span><i><b [style.width.%]="utilization(item.activeClaims, item.capacity)"></b></i></div>
-            <span class="capacity-value" [attr.data-tone]="utilization(item.activeClaims, item.capacity) >= 80 ? 'warning' : 'healthy'"><app-animated-number [value]="utilization(item.activeClaims, item.capacity)" format="percentage" /></span>
-          </article>
-        </div>
-      </section>
-
-      <section class="panel event-panel">
-        <div class="surface-heading compact-heading"><div><p class="eyebrow">IMMUTABLE TRACE</p><h2>Operational event feed</h2></div></div>
         <div *ngIf="!dashboard.recentActivity.length" class="empty">No activity recorded.</div>
         <ol class="event-list">
           <li *ngFor="let item of dashboard.recentActivity">
@@ -133,6 +210,6 @@
           </li>
         </ol>
       </section>
-    </div>
+    </section>
   </ng-container>
 </section>
