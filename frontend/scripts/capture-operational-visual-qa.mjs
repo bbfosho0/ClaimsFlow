@@ -104,27 +104,50 @@ async function capture(cdp, filename, url) {
 }
 
 async function navigate(cdp, url) {
-  const loaded = cdp.once('Page.loadEventFired', 20_000);
   const result = await cdp.send('Page.navigate', { url });
   if (result.errorText) throw new Error(`Navigation failed for ${url}: ${result.errorText}`);
-  await loaded;
-  await waitForStablePage(cdp);
+
+  const expected = new URL(url);
+  for (let attempt = 0; attempt < 100; attempt++) {
+    try {
+      const state = await cdp.send('Runtime.evaluate', {
+        expression: `({ href: location.href, readyState: document.readyState })`,
+        returnByValue: true,
+      });
+      const value = state.result?.value;
+      if (value?.readyState !== 'loading') {
+        const current = new URL(value.href);
+        if (current.origin === expected.origin && current.pathname === expected.pathname) {
+          await waitForStablePage(cdp);
+          return;
+        }
+      }
+    } catch {
+      // The JavaScript execution context is briefly replaced during navigation.
+    }
+    await delay(200);
+  }
+  throw new Error(`Timed out waiting for navigation to ${url}.`);
 }
 
 async function waitForStablePage(cdp) {
   for (let attempt = 0; attempt < 60; attempt++) {
-    const result = await cdp.send('Runtime.evaluate', {
-      expression: `({
-        ready: document.readyState === 'complete',
-        busy: document.querySelectorAll('[aria-busy="true"]').length,
-        loading: [...document.querySelectorAll('[role="status"]')].some(node => /loading/i.test(node.textContent || ''))
-      })`,
-      returnByValue: true,
-    });
-    const value = result.result?.value;
-    if (value?.ready && !value.busy && !value.loading) {
-      await delay(650);
-      return;
+    try {
+      const result = await cdp.send('Runtime.evaluate', {
+        expression: `({
+          ready: document.readyState === 'complete',
+          busy: document.querySelectorAll('[aria-busy="true"]').length,
+          loading: [...document.querySelectorAll('[role="status"]')].some(node => /loading/i.test(node.textContent || ''))
+        })`,
+        returnByValue: true,
+      });
+      const value = result.result?.value;
+      if (value?.ready && !value.busy && !value.loading) {
+        await delay(650);
+        return;
+      }
+    } catch {
+      // Continue while Angular replaces or stabilizes the document context.
     }
     await delay(200);
   }
