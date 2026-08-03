@@ -7,7 +7,7 @@ import {
 } from '../../shared/models/claim.models';
 import { DashboardSnapshot } from '../../shared/models/dashboard.models';
 
-export type OperationalFamily = 'dashboard' | 'queue' | 'analytics' | 'team' | 'evidence';
+export type OperationalFamily = 'dashboard' | 'queue' | 'myWork' | 'analytics' | 'team' | 'evidence';
 
 export interface OperationalResource<T> {
   readonly value: T | null;
@@ -64,6 +64,54 @@ export const EMPTY_OPERATIONAL_FILTER_OPTIONS: OperationalFilterOptions = {
   teams: [],
   adjusters: [],
 };
+
+export interface MyWorkClaim {
+  readonly id: string;
+  readonly claimNumber: string;
+  readonly claimantName: string;
+  readonly claimType: ClaimType;
+  readonly region: ClaimRegion;
+  readonly priority: ClaimPriority;
+  readonly status: ClaimStatus;
+  readonly slaDeadline: string;
+  readonly completenessPercentage: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface MyWorkTimelineItem {
+  readonly claimId: string;
+  readonly claimNumber: string;
+  readonly claimantName: string;
+  readonly priority: ClaimPriority;
+  readonly status: ClaimStatus;
+  readonly slaDeadline: string;
+  readonly completenessPercentage: number;
+  readonly group: 'NOW' | 'TODAY' | 'LATER';
+  readonly reason: string;
+  readonly tone: string;
+}
+
+export interface WorkloadPoint {
+  readonly date: string;
+  readonly activeClaims: number;
+}
+
+export interface MyWorkSnapshot {
+  readonly generatedAt: string;
+  readonly adjusterId: string;
+  readonly displayName: string;
+  readonly team: string;
+  readonly capacity: number;
+  readonly activeClaims: number;
+  readonly dueWithin24Hours: number;
+  readonly overdueClaims: number;
+  readonly evidenceBlockedClaims: number;
+  readonly utilizationPercentage: number;
+  readonly workloadTrend: readonly WorkloadPoint[];
+  readonly timeline: readonly MyWorkTimelineItem[];
+  readonly claims: readonly MyWorkClaim[];
+}
 
 export interface AnalyticsKpis {
   readonly estimatedExposure: number;
@@ -294,6 +342,7 @@ export interface EvidenceOperationsSnapshot {
 export type OperationalSnapshot =
   | DashboardSnapshot
   | ClaimPage
+  | MyWorkSnapshot
   | AnalyticsSnapshot
   | TeamOperationsSnapshot
   | EvidenceOperationsSnapshot;
