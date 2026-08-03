@@ -20,7 +20,7 @@
     } @else {
       <div class="metric-card-value" [attr.aria-label]="valueAriaLabel() || null">
         @if (isNumeric(value())) {
-          <app-animated-number [value]="value()" [format]="format()" [currency]="currency()" />
+          <app-animated-number [value]="numericValue()" [format]="format()" [currency]="currency()" />
         } @else {
           {{ value() }}
         }
