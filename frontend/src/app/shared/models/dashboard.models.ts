@@ -72,6 +72,8 @@ export interface DashboardSnapshot {
   resolvedThisPeriod?: number;
   comparison?: DashboardComparison;
   openPortfolioTrend?: DashboardTimePoint[];
+  createdTrend?: DashboardTimePoint[];
+  resolvedTrend?: DashboardTimePoint[];
   exposureTrend?: DashboardMonetaryTimePoint[];
   slaPressureTrend?: DashboardSlaPressurePoint[];
   evidenceReadinessBands?: DashboardDistributionPoint[];
