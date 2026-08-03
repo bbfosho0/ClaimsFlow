@@ -32,7 +32,6 @@ export const DEMO_ROLES: Record<DemoRoleId, DemoRoleDefinition> = {
       { id: 'analytics', label: 'Analytics', path: '/app/analytics', icon: '⌁' },
       { id: 'intelligence', label: 'AI Insights', path: '/app/intelligence', icon: '✦' },
       { id: 'team-ops', label: 'Team Operations', path: '/app/team-ops', icon: '◎' },
-      { id: 'reports', label: 'Reports', path: '/app/reports', icon: '▥' },
     ],
     contextualPrefixes: ['/app/claims/'],
   },
@@ -46,8 +45,7 @@ export const DEMO_ROLES: Record<DemoRoleId, DemoRoleDefinition> = {
     navigation: [
       { id: 'my-work', label: 'My Work', path: '/app/my-work', icon: '✓' },
       { id: 'queue', label: 'Claim Queue', path: '/app/claims', icon: '☷' },
-      { id: 'documents', label: 'Documents', path: '/app/documents', icon: '▤' },
-      { id: 'reports', label: 'Reports', path: '/app/reports', icon: '▥' },
+      { id: 'documents', label: 'Evidence Operations', path: '/app/documents', icon: '▤' },
     ],
     contextualPrefixes: ['/app/claims/'],
   },
@@ -60,8 +58,6 @@ export const DEMO_ROLES: Record<DemoRoleId, DemoRoleDefinition> = {
     defaultRoute: '/app/workflows',
     navigation: [
       { id: 'workflows', label: 'Workflow Automation', path: '/app/workflows', icon: '◇' },
-      { id: 'reports', label: 'Reports', path: '/app/reports', icon: '▥' },
-      { id: 'settings', label: 'Settings', path: '/app/settings', icon: '⚙' },
     ],
     contextualPrefixes: [],
   },
