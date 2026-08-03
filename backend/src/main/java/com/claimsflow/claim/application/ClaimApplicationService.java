@@ -5,10 +5,12 @@ import com.claimsflow.adjuster.domain.Adjuster;
 import com.claimsflow.audit.application.AuditService;
 import com.claimsflow.claim.domain.*;
 import com.claimsflow.claim.persistence.*;
+import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.portal.domain.EvidenceKind;
 import com.claimsflow.shared.error.*;
 import java.math.BigDecimal;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -69,6 +71,52 @@ public class ClaimApplicationService {
     @Transactional(readOnly = true)
     public Page<Claim> list(String query, ClaimStatus status, ClaimPriority priority, String assignment, Pageable pageable) {
         return claims.findAll(ClaimSpecifications.filters(query, status, priority, assignment), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Claim> list(
+            String query,
+            LocalDate from,
+            LocalDate to,
+            ClaimType claimType,
+            ClaimStatus status,
+            ClaimPriority priority,
+            String assignment,
+            UUID adjusterId,
+            String team,
+            ClaimRegion region,
+            Pageable pageable) {
+        LocalDate effectiveTo = to == null ? LocalDate.now(clock) : to;
+        LocalDate effectiveFrom = from == null ? effectiveTo.minusDays(365) : from;
+        if (effectiveFrom.isAfter(effectiveTo)) {
+            throw new IllegalArgumentException("from must not be after to");
+        }
+        if (ChronoUnit.DAYS.between(effectiveFrom, effectiveTo) > 366) {
+            throw new IllegalArgumentException("date range must not exceed 366 days");
+        }
+
+        boolean unassigned = "unassigned".equalsIgnoreCase(assignment);
+        UUID effectiveAdjusterId = adjusterId;
+        String legacyAssignment = null;
+        if (!unassigned && effectiveAdjusterId == null && assignment != null && !assignment.isBlank()) {
+            try {
+                effectiveAdjusterId = UUID.fromString(assignment);
+            } catch (IllegalArgumentException ignored) {
+                legacyAssignment = assignment;
+            }
+        }
+
+        OperationalFilters filters = new OperationalFilters(
+            effectiveFrom,
+            effectiveTo,
+            claimType,
+            priority,
+            status,
+            effectiveAdjusterId,
+            team == null || team.isBlank() ? null : team.trim(),
+            region,
+            unassigned);
+        return claims.findAll(ClaimSpecifications.queue(query, filters, legacyAssignment), pageable);
     }
 
     @Transactional
