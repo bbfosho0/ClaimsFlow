@@ -156,9 +156,13 @@ async function runStaleScenario(client, browserDiagnostics, scenario, records) {
   };
   await navigateAndAssert(client, warmScenario);
 
-  const releaseAllowedFailure = browserDiagnostics.allowApiFailure(failure =>
-    failure.url.includes('/api/dashboard')
-      && failure.errorText.includes('BLOCKED'));
+  const releaseAllowedFailure = browserDiagnostics.allowApiFailure(failure => {
+    try {
+      return new URL(failure.url).pathname === '/api/dashboard';
+    } catch {
+      return false;
+    }
+  });
   await client.send('Network.setBlockedURLs', {
     urls: [
       '*://127.0.0.1:4200/api/dashboard*',
