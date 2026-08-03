@@ -12,6 +12,7 @@ import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimRegion;
 import com.claimsflow.claim.domain.ClaimStatus;
 import com.claimsflow.operations.application.MetricChange;
+import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
 import com.claimsflow.operations.application.OperationalMetrics;
 import com.claimsflow.operations.application.OperationalQueryService;
@@ -41,10 +42,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AnalyticsService {
     private final OperationalQueryService query;
+    private final OperationalFilterOptionsService filterOptions;
     private final Clock clock;
 
-    public AnalyticsService(OperationalQueryService query, Clock clock) {
+    public AnalyticsService(
+            OperationalQueryService query,
+            OperationalFilterOptionsService filterOptions,
+            Clock clock) {
         this.query = query;
+        this.filterOptions = filterOptions;
         this.clock = clock;
     }
 
@@ -84,7 +90,7 @@ public class AnalyticsService {
 
         return new AnalyticsSnapshot(
             clock.instant(),
-            query.options(),
+            filterOptions.options(),
             current,
             comparison,
             timeSeries(filters.from(), filters.to(), claims, Claim::getCreatedAt),
