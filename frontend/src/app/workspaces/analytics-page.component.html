@@ -1,18 +1,21 @@
 <section class="operational-workspace analytics-workspace page-enter">
-  <h1 class="sr-only">Operational Analytics</h1>
+  <header class="analytics-header">
+    <div>
+      <p class="eyebrow">PORTFOLIO INTELLIGENCE</p>
+      <h1>Operational Analytics</h1>
+      <p>Understand how claim volume, exposure, resolution performance, and evidence readiness are changing across the filtered portfolio.</p>
+    </div>
+    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+  </header>
+
   <app-operational-filter-bar
     [filters]="filters()"
     [options]="options()"
     (filtersChange)="updateFilters($event)" />
 
-  <div class="operational-toolbar">
-    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
-  </div>
-
   @if (state().loading && !snapshot()) {
-    <div class="operational-loading-grid" role="status" aria-label="Loading analytics">
-      <i class="cf-skeleton"></i><i class="cf-skeleton"></i><i class="cf-skeleton"></i>
-      <i class="cf-skeleton"></i><i class="cf-skeleton"></i><i class="cf-skeleton"></i>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading analytics">
+      <app-metric-card *ngFor="let item of [1,2,3,4]" label="Analytics metric" [loading]="true" variant="hero" />
     </div>
   } @else if (!snapshot() && state().error) {
     <section class="operational-panel operational-error" role="alert">
@@ -23,134 +26,162 @@
   }
 
   @if (snapshot(); as analytics) {
-    <section class="operational-kpi-grid" aria-label="Analytics key performance indicators">
-      <article class="operational-kpi" [appChangedValue]="analytics.kpis.estimatedExposure">
-        <span>Estimated exposure</span>
-        <strong><app-animated-number [value]="analytics.kpis.estimatedExposure" format="currency" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.exposureChange)" [attr.data-negative]="comparisonTone(analytics.comparison.exposureChange) === 'false'">{{ comparisonLabel(analytics.comparison.exposureChange) }}</small>
-      </article>
-      <article class="operational-kpi" [appChangedValue]="analytics.kpis.totalClaims">
-        <span>Total claims</span>
-        <strong><app-animated-number [value]="analytics.kpis.totalClaims" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.claimVolumeChange)" [attr.data-negative]="comparisonTone(analytics.comparison.claimVolumeChange) === 'false'">{{ comparisonLabel(analytics.comparison.claimVolumeChange) }}</small>
-      </article>
-      <article class="operational-kpi" data-tone="warning" [appChangedValue]="analytics.kpis.openClaims" changeTone="warning">
-        <span>Open claims</span>
-        <strong><app-animated-number [value]="analytics.kpis.openClaims" /></strong>
-        <small>Current filtered portfolio</small>
-      </article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="analytics.kpis.resolvedClaims" changeTone="healthy">
-        <span>Resolved claims</span>
-        <strong><app-animated-number [value]="analytics.kpis.resolvedClaims" /></strong>
-        <small>Persisted resolution timestamps</small>
-      </article>
-      <article class="operational-kpi" data-tone="advisory" [appChangedValue]="analytics.kpis.averageResolutionHours" changeTone="advisory">
-        <span>Average resolution</span>
-        <strong><app-animated-number [value]="analytics.kpis.averageResolutionHours" format="hours" /></strong>
-        <small [attr.data-positive]="comparisonTone(analytics.comparison.resolutionTimeChange, true)" [attr.data-negative]="comparisonTone(analytics.comparison.resolutionTimeChange, true) === 'false'">{{ comparisonLabel(analytics.comparison.resolutionTimeChange) }}</small>
-      </article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="analytics.kpis.evidenceReadinessPercentage" changeTone="healthy">
-        <span>Evidence readiness</span>
-        <strong><app-animated-number [value]="analytics.kpis.evidenceReadinessPercentage" format="percentage" /></strong>
-        <small>Average persisted completeness</small>
-      </article>
-      <article class="operational-kpi" [attr.data-tone]="analytics.kpis.slaCompliancePercentage >= 90 ? 'healthy' : analytics.kpis.slaCompliancePercentage >= 75 ? 'warning' : 'critical'" [appChangedValue]="analytics.kpis.slaCompliancePercentage" [changeTone]="analytics.kpis.slaCompliancePercentage >= 90 ? 'healthy' : 'warning'">
-        <span>SLA compliance</span>
-        <strong><app-animated-number [value]="analytics.kpis.slaCompliancePercentage" format="percentage" /></strong>
-        <small>Resolved on or before deadline</small>
-      </article>
+    <section class="analytics-kpi-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Analytics key performance indicators" cfGsapReveal>
+      <app-metric-card
+        label="Estimated exposure"
+        [value]="analytics.kpis.estimatedExposure"
+        format="currency"
+        variant="hero"
+        tone="advisory"
+        helper="Estimated loss in the filtered period"
+        definition="Sum of estimated loss for claims matching the current filters."
+        [delta]="delta(analytics.comparison.exposureChange)"
+        currentPeriod="Selected period"
+        previousPeriod="Previous equal-length period" />
+
+      <app-metric-card
+        label="Claim volume"
+        [value]="analytics.kpis.totalClaims"
+        variant="hero"
+        tone="brand"
+        helper="Claims created in the filtered period"
+        definition="All claims created within the current date and portfolio filters."
+        [delta]="delta(analytics.comparison.claimVolumeChange)"
+        currentPeriod="Selected period"
+        previousPeriod="Previous equal-length period" />
+
+      <app-metric-card
+        label="Average resolution time"
+        [value]="analytics.kpis.averageResolutionHours"
+        format="hours"
+        variant="hero"
+        tone="live"
+        [helper]="resolutionHelper(analytics.kpis.averageResolutionHours)"
+        definition="Mean elapsed time from claim creation to persisted resolution."
+        [delta]="delta(analytics.comparison.resolutionTimeChange)"
+        [inverseDelta]="true"
+        currentPeriod="Selected period"
+        previousPeriod="Previous equal-length period"
+        [noData]="analytics.kpis.resolvedClaims === 0"
+        noDataLabel="No resolved claims in this filter." />
+
+      <app-metric-card
+        label="SLA compliance"
+        [value]="analytics.kpis.slaCompliancePercentage"
+        format="percentage"
+        variant="hero"
+        [tone]="analytics.kpis.slaCompliancePercentage >= 90 ? 'healthy' : analytics.kpis.slaCompliancePercentage >= 75 ? 'warning' : 'critical'"
+        helper="Resolved on or before deadline"
+        definition="Resolved claims completed on or before their service-level deadline.">
+        <app-metric-radial
+          metric-visual
+          label="SLA compliance"
+          [tone]="analytics.kpis.slaCompliancePercentage >= 90 ? 'healthy' : analytics.kpis.slaCompliancePercentage >= 75 ? 'warning' : 'critical'"
+          [value]="analytics.kpis.slaCompliancePercentage" />
+      </app-metric-card>
     </section>
+
+    <div class="analytics-context-strip" cfAutoAnimate>
+      <span><strong>{{ analytics.kpis.openClaims }}</strong> open claims</span>
+      <span><strong>{{ analytics.kpis.resolvedClaims }}</strong> resolved claims</span>
+      <span><strong>{{ analytics.kpis.evidenceReadinessPercentage }}%</strong> evidence readiness</span>
+      <span><strong>{{ analytics.priorityDistribution[2]?.percentage || 0 }}%</strong> high-priority share</span>
+    </div>
 
     @if (!analytics.kpis.totalClaims) {
       <section class="operational-panel operational-empty">
         <strong>No claims match these filters.</strong>
         <span>Reset the operational filters to restore the full deterministic portfolio.</span>
-        <button type="button" class="button secondary" (click)="updateFilters({ from: '', to: '', claimType: '', priority: '', status: '', adjusterId: '', team: '', region: '' })">Reset filters</button>
+        <button type="button" class="button secondary" (click)="resetFilters()">Reset filters</button>
       </section>
     } @else {
-      <section class="operational-grid">
-        <article class="operational-panel chart-wide" data-operational-chart>
-          <header><div><strong>Claim volume</strong><span>Created and resolved claims across the selected period</span></div></header>
-          <svg class="line-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-labelledby="volume-title volume-desc">
-            <title id="volume-title">Claim volume over time</title>
-            <desc id="volume-desc">Cyan shows created claims and green shows resolved claims for each date in the selected range.</desc>
-            <polyline [attr.points]="linePoints(analytics.claimVolume)" />
-            <polyline class="resolved" [attr.points]="linePoints(analytics.resolvedVolume)" />
-            @for (point of analytics.claimVolume; track point.date; let index = $index) {
-              <circle [attr.cx]="pointX(index, analytics.claimVolume.length)" [attr.cy]="pointY(point, analytics.claimVolume)" r="1.4" tabindex="0">
-                <title>{{ point.date }}: {{ point.count }} created claims</title>
-              </circle>
-            }
-            @for (point of analytics.resolvedVolume; track point.date; let index = $index) {
-              <circle class="resolved" [attr.cx]="pointX(index, analytics.resolvedVolume.length)" [attr.cy]="pointY(point, analytics.resolvedVolume)" r="1.4" tabindex="0">
-                <title>{{ point.date }}: {{ point.count }} resolved claims</title>
-              </circle>
-            }
-          </svg>
-          <table class="sr-only" data-chart-summary>
-            <caption>Exact created and resolved claims by date</caption>
-            <thead><tr><th>Date</th><th>Created</th><th>Resolved</th></tr></thead>
-            <tbody>@for (point of analytics.claimVolume; track point.date; let index = $index) {<tr><td>{{ point.date }}</td><td>{{ point.count }}</td><td>{{ analytics.resolvedVolume[index].count }}</td></tr>}</tbody>
-          </table>
-        </article>
+      <section class="analytics-grid" cfGsapReveal [gsapRevealDelay]="0.08">
+        <app-chart-frame
+          class="analytics-span-8"
+          title="Volume and inventory"
+          subtitle="Active inventory, created claims, and resolved claims across the selected period"
+          [stale]="state().stale">
+          <app-line-area-chart
+            title="Volume and inventory"
+            description="Violet shows active inventory, cyan shows created claims, and mint shows resolved claims by date."
+            [series]="volumeSeries()" />
+        </app-chart-frame>
 
-        <article class="operational-panel chart-medium" data-operational-chart>
-          <header><div><strong>Status distribution</strong><span>{{ analytics.kpis.totalClaims }} filtered claims</span></div></header>
-          <div class="distribution-list">
-            <div class="distribution-row" *ngFor="let point of analytics.statusDistribution; trackBy: trackDistribution">
-              <span>{{ point.label }}</span><i><b [style.width.%]="relativeWidth(point, analytics.statusDistribution)"></b></i><strong>{{ point.count }} · {{ point.percentage }}%</strong>
-            </div>
-          </div>
-          <table class="sr-only" data-chart-summary><caption>Status distribution</caption><tbody><tr *ngFor="let point of analytics.statusDistribution"><th>{{ point.label }}</th><td>{{ point.count }}</td><td>{{ point.percentage }}%</td></tr></tbody></table>
-        </article>
+        <app-chart-frame
+          class="analytics-span-4"
+          title="Status composition"
+          subtitle="Exact share of the filtered portfolio by claim status">
+          <app-distribution-ring
+            title="Status composition"
+            description="Filtered claims grouped by current backend status."
+            [segments]="statusSegments(analytics)"
+            [centerValue]="analytics.kpis.totalClaims"
+            centerLabel="Filtered claims" />
+        </app-chart-frame>
 
-        <article class="operational-panel chart-third" data-operational-chart>
-          <header><div><strong>Priority distribution</strong><span>Backend-derived triage state</span></div></header>
-          <div class="distribution-list">
-            <div class="distribution-row" *ngFor="let point of analytics.priorityDistribution; trackBy: trackDistribution">
-              <span>{{ point.label }}</span><i><b [style.width.%]="relativeWidth(point, analytics.priorityDistribution)"></b></i><strong>{{ point.count }}</strong>
-            </div>
-          </div>
-          <table class="sr-only" data-chart-summary><caption>Priority distribution</caption><tbody><tr *ngFor="let point of analytics.priorityDistribution"><th>{{ point.label }}</th><td>{{ point.count }}</td><td>{{ point.percentage }}%</td></tr></tbody></table>
-        </article>
+        <app-chart-frame
+          class="analytics-span-6"
+          title="Resolution by claim type"
+          subtitle="Average resolution hours with the resolved-claim denominator shown">
+          <app-horizontal-bar-chart
+            title="Resolution by claim type"
+            description="Average resolution hours by claim type. Claim types with no resolved claims are explicitly marked."
+            suffix="h"
+            [data]="resolutionBars(analytics)" />
+        </app-chart-frame>
 
-        <article class="operational-panel chart-third" data-operational-chart>
-          <header><div><strong>Regional distribution</strong><span>Fictional deterministic operating regions</span></div></header>
-          <div class="distribution-list">
-            <div class="distribution-row" *ngFor="let point of analytics.regionDistribution; trackBy: trackDistribution">
-              <span>{{ point.label }}</span><i><b [style.width.%]="relativeWidth(point, analytics.regionDistribution)"></b></i><strong>{{ point.count }}</strong>
-            </div>
-          </div>
-          <table class="sr-only" data-chart-summary><caption>Regional distribution</caption><tbody><tr *ngFor="let point of analytics.regionDistribution"><th>{{ point.label }}</th><td>{{ point.count }}</td><td>{{ point.percentage }}%</td></tr></tbody></table>
-        </article>
+        <app-chart-frame
+          class="analytics-span-6"
+          title="Exposure by claim type"
+          subtitle="Estimated loss and share of filtered exposure">
+          <app-horizontal-bar-chart
+            title="Exposure by claim type"
+            description="Estimated loss by claim type with exact claim counts and portfolio share."
+            prefix="$"
+            [data]="exposureBars(analytics)" />
+        </app-chart-frame>
 
-        <article class="operational-panel chart-third" data-operational-chart>
-          <header><div><strong>Open-claim aging</strong><span>Elapsed time since persisted creation</span></div></header>
-          <div class="distribution-list">
-            <div class="distribution-row" *ngFor="let point of analytics.agingBands; trackBy: trackDistribution">
-              <span>{{ point.label }}</span><i><b [style.width.%]="relativeWidth(point, analytics.agingBands)"></b></i><strong>{{ point.count }}</strong>
-            </div>
-          </div>
-          <table class="sr-only" data-chart-summary><caption>Open claim aging bands</caption><tbody><tr *ngFor="let point of analytics.agingBands"><th>{{ point.label }}</th><td>{{ point.count }}</td><td>{{ point.percentage }}%</td></tr></tbody></table>
-        </article>
+        <app-chart-frame
+          class="analytics-span-4"
+          title="Priority mix"
+          subtitle="Backend-derived triage composition">
+          <app-stacked-bar-chart
+            title="Priority mix"
+            description="Filtered claims split by low, medium, high, and critical priority."
+            [segments]="prioritySegments(analytics)" />
+        </app-chart-frame>
 
-        <article class="operational-panel chart-full" data-operational-chart>
-          <header><div><strong>Resolution cohorts</strong><span>Percentage resolved within 7, 14, and 30 days by creation week</span></div></header>
-          <div class="table-scroll">
-            <table class="cohort-table">
-              <thead><tr><th>Week</th><th>Claims</th><th>Within 7d</th><th>Within 14d</th><th>Within 30d</th></tr></thead>
-              <tbody>
-                <tr *ngFor="let row of analytics.cohorts">
-                  <td>{{ row.weekStart | date:'mediumDate' }}</td><td>{{ row.totalClaims }}</td>
-                  <td class="cohort-cell" [style.--cohort]="row.resolvedWithin7DaysPercentage + '%'">{{ row.resolvedWithin7DaysPercentage }}%</td>
-                  <td class="cohort-cell" [style.--cohort]="row.resolvedWithin14DaysPercentage + '%'">{{ row.resolvedWithin14DaysPercentage }}%</td>
-                  <td class="cohort-cell" [style.--cohort]="row.resolvedWithin30DaysPercentage + '%'">{{ row.resolvedWithin30DaysPercentage }}%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <table class="sr-only" data-chart-summary><caption>Resolution cohort exact values</caption><tbody><tr *ngFor="let row of analytics.cohorts"><th>{{ row.weekStart }}</th><td>{{ row.resolvedWithin7DaysPercentage }}%</td><td>{{ row.resolvedWithin14DaysPercentage }}%</td><td>{{ row.resolvedWithin30DaysPercentage }}%</td></tr></tbody></table>
-        </article>
+        <app-chart-frame
+          class="analytics-span-4"
+          title="Open-claim aging"
+          subtitle="Elapsed time since persisted creation">
+          <app-horizontal-bar-chart
+            title="Open-claim aging"
+            description="Open claims grouped by age since creation."
+            [data]="agingBars(analytics)" />
+        </app-chart-frame>
+
+        <app-chart-frame
+          class="analytics-span-4"
+          title="Evidence readiness bands"
+          subtitle="Filtered claims grouped by persisted completeness">
+          <app-horizontal-bar-chart
+            title="Evidence readiness bands"
+            description="Claims grouped by evidence completeness percentage."
+            [data]="evidenceBars(analytics)" />
+        </app-chart-frame>
+
+        <app-chart-frame
+          class="analytics-span-12"
+          title="Resolution cohort heatmap"
+          subtitle="Percentage resolved within 7, 14, and 30 days by creation week">
+          <app-heatmap-table
+            title="Resolution cohort heatmap"
+            description="Each row is a creation week and each cell is the percentage resolved within the stated time window."
+            rowHeader="Creation week"
+            [headers]="['Within 7d', 'Within 14d', 'Within 30d']"
+            [rows]="cohortRows(analytics)" />
+        </app-chart-frame>
       </section>
     }
   }

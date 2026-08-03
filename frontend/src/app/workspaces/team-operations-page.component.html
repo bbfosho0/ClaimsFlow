@@ -1,17 +1,21 @@
 <section class="operational-workspace team-workspace page-enter">
-  <h1 class="sr-only">Team Operations</h1>
+  <header class="team-operations-header">
+    <div>
+      <p class="eyebrow">WORKFORCE COMMAND</p>
+      <h1>Team Operations</h1>
+      <p>See workload distribution, deadline pressure, evidence readiness, and the exact teams that require manager intervention.</p>
+    </div>
+    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+  </header>
+
   <app-operational-filter-bar
     [filters]="filters()"
     [options]="options()"
     (filtersChange)="updateFilters($event)" />
 
-  <div class="operational-toolbar">
-    <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
-  </div>
-
   @if (state().loading && !snapshot()) {
-    <div class="operational-loading-grid" role="status" aria-label="Loading team operations">
-      <i class="cf-skeleton"></i><i class="cf-skeleton"></i><i class="cf-skeleton"></i>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading team operations">
+      <app-metric-card *ngFor="let item of [1,2,3,4]" label="Team metric" [loading]="true" variant="hero" />
     </div>
   } @else if (!snapshot() && state().error) {
     <section class="operational-panel operational-error" role="alert">
@@ -21,73 +25,144 @@
   }
 
   @if (snapshot(); as operations) {
-    <section class="operational-kpi-grid" aria-label="Team operations key performance indicators">
-      <article class="operational-kpi" [appChangedValue]="operations.kpis.activeClaims"><span>Active claims</span><strong><app-animated-number [value]="operations.kpis.activeClaims" /></strong><small>Open claims in the selected filters</small></article>
-      <article class="operational-kpi" data-tone="warning" [appChangedValue]="operations.kpis.atRiskClaims" changeTone="warning"><span>SLA at risk</span><strong><app-animated-number [value]="operations.kpis.atRiskClaims" /></strong><small>Open claims due within 24 hours</small></article>
-      <article class="operational-kpi" data-tone="critical" [appChangedValue]="operations.kpis.overdueClaims" changeTone="critical"><span>Overdue</span><strong><app-animated-number [value]="operations.kpis.overdueClaims" /></strong><small>Open claims past their persisted deadline</small></article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.slaCompliancePercentage" changeTone="healthy"><span>SLA compliance</span><strong><app-animated-number [value]="operations.kpis.slaCompliancePercentage" format="percentage" /></strong><small>Resolved claims on or before deadline</small></article>
-      <article class="operational-kpi" data-tone="healthy" [appChangedValue]="operations.kpis.evidenceReadinessPercentage" changeTone="healthy"><span>Evidence readiness</span><strong><app-animated-number [value]="operations.kpis.evidenceReadinessPercentage" format="percentage" /></strong><small>Average completeness across selected claims</small></article>
-      <article class="operational-kpi" data-tone="advisory" [appChangedValue]="operations.kpis.assignmentCoveragePercentage" changeTone="advisory"><span>Assignment coverage</span><strong><app-animated-number [value]="operations.kpis.assignmentCoveragePercentage" format="percentage" /></strong><small>Open claims with an assigned reviewer</small></article>
-      <article class="operational-kpi" [attr.data-tone]="operations.kpis.overallUtilizationPercentage >= 85 ? 'warning' : 'healthy'" [appChangedValue]="operations.kpis.overallUtilizationPercentage"><span>Selected workload utilization</span><strong><app-animated-number [value]="operations.kpis.overallUtilizationPercentage" format="percentage" /></strong><small>Assigned open claims ÷ selected active reviewer capacity</small></article>
+    <section class="team-kpi-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Team operations key performance indicators" cfGsapReveal>
+      <app-metric-card
+        label="Active workload"
+        [value]="operations.kpis.activeClaims"
+        variant="hero"
+        tone="brand"
+        helper="Open claims in the selected team scope"
+        definition="Open claims matching the current team and operational filters." />
+
+      <app-metric-card
+        label="Capacity utilization"
+        [value]="operations.kpis.overallUtilizationPercentage"
+        format="percentage"
+        variant="hero"
+        [tone]="operations.kpis.overallUtilizationPercentage >= 85 ? 'warning' : 'brand'"
+        helper="Assigned open claims ÷ active reviewer capacity"
+        definition="Assigned open claims divided by the configured capacity of selected active reviewers.">
+        <app-metric-radial
+          metric-visual
+          label="Capacity utilization"
+          [tone]="operations.kpis.overallUtilizationPercentage >= 85 ? 'warning' : 'brand'"
+          [value]="operations.kpis.overallUtilizationPercentage" />
+      </app-metric-card>
+
+      <app-metric-card
+        label="SLA compliance"
+        [value]="operations.kpis.slaCompliancePercentage"
+        format="percentage"
+        variant="hero"
+        [tone]="operations.kpis.slaCompliancePercentage >= 90 ? 'healthy' : operations.kpis.slaCompliancePercentage >= 75 ? 'warning' : 'critical'"
+        helper="Resolved on or before deadline"
+        definition="Resolved claims completed on or before their service-level deadline." />
+
+      <app-metric-card
+        label="Overdue claims"
+        [value]="operations.kpis.overdueClaims"
+        variant="hero"
+        tone="critical"
+        helper="Open claims past their deadline"
+        definition="Open claims whose persisted service-level deadline has passed." />
     </section>
 
-    <section class="operational-grid">
-      <article class="operational-panel chart-wide">
-        <header><div><strong>Team workload and capacity</strong><span>Selected persisted assignments against active reviewer capacity</span></div></header>
-        @if (!operations.teams.length) {<div class="operational-empty"><strong>No team workload matches the filters.</strong><span>Choose a broader team or adjuster scope to restore capacity context.</span></div>}
-        <div class="workload-grid">
-          <article class="workload-card" *ngFor="let team of operations.teams" [appChangedValue]="team.activeClaims" [changeTone]="team.utilizationPercentage >= 85 ? 'warning' : 'healthy'">
-            <span>{{ team.name }}</span><strong>{{ team.activeClaims }} / {{ team.capacity }}</strong>
-            <i><b [style.width.%]="team.utilizationPercentage"></b></i>
-            <small>{{ team.utilizationPercentage }}% selected workload · {{ team.slaCompliancePercentage }}% resolved-claim SLA · {{ team.evidenceReadinessPercentage }}% average evidence</small>
-          </article>
-        </div>
-      </article>
+    <div class="team-context-strip" cfAutoAnimate>
+      <span><strong>{{ operations.kpis.atRiskClaims }}</strong> due &lt;24h</span>
+      <span><strong>{{ operations.kpis.assignmentCoveragePercentage }}%</strong> assignment coverage</span>
+      <span><strong>{{ operations.kpis.evidenceReadinessPercentage }}%</strong> evidence readiness</span>
+      <span><strong>{{ operations.integrity.overall }}</strong> integrity score</span>
+    </div>
 
-      <article class="operational-panel chart-medium">
-        <header><div><strong>Recommendations and intelligence</strong><span>Advisory links only—no silent staffing or claim mutation</span></div></header>
-        <div class="advisory-list">
-          <a *ngFor="let advisory of operations.advisories" class="advisory-card" [attr.data-tone]="advisory.tone" [routerLink]="advisory.route" [queryParams]="advisory.queryParams">
-            <strong>{{ advisory.title }}</strong><span>{{ advisory.detail }}</span><small>Open relevant work →</small>
-          </a>
-        </div>
-      </article>
+    <section class="team-operations-grid" cfGsapReveal [gsapRevealDelay]="0.08">
+      <app-chart-frame
+        class="team-span-8"
+        title="Adjuster load matrix"
+        subtitle="Active load, capacity, deadline pressure, and evidence readiness by reviewer"
+        [stale]="state().stale">
+        <app-workload-matrix
+          title="Adjuster load matrix"
+          description="Selected active reviewers with active claims, configured capacity, utilization, claims due within 24 hours, overdue claims, and evidence readiness."
+          [rows]="workloadRows(operations)" />
+      </app-chart-frame>
 
-      <article class="operational-panel chart-half">
-        <header><div><strong>Adjuster capacity</strong><span>Assigned open claims against each selected active reviewer’s configured capacity</span></div></header>
-        <div class="workload-grid">
-          <article class="workload-card" *ngFor="let adjuster of operations.adjusters" [appChangedValue]="adjuster.activeClaims" [changeTone]="adjuster.utilizationPercentage >= 85 ? 'warning' : 'healthy'">
-            <span>{{ adjuster.displayName }}</span><strong>{{ adjuster.activeClaims }} / {{ adjuster.capacity }}</strong>
-            <i><b [style.width.%]="adjuster.utilizationPercentage"></b></i>
-            <small>{{ adjuster.team }} · {{ adjuster.utilizationPercentage }}% selected workload utilization</small>
-          </article>
+      <section class="panel team-escalations team-span-4" aria-labelledby="team-escalations-title">
+        <div class="surface-heading compact-heading">
+          <div><p class="eyebrow">REVIEW NOW</p><h2 id="team-escalations-title">Escalations</h2></div>
         </div>
-      </article>
-
-      <article class="operational-panel chart-half">
-        <header><div><strong>Escalations</strong><span>Overdue, imminent-SLA, then critical-priority open work</span></div></header>
-        @if (!operations.escalations.length) {<div class="operational-empty"><strong>No escalations match the filters.</strong><span>The selected open workload has no overdue, imminent-SLA, or critical-priority claims.</span></div>}
-        <div class="escalation-list">
+        @if (!operations.escalations.length) {
+          <div class="operational-empty"><strong>No escalations match the filters.</strong><span>The selected workload has no overdue, imminent-deadline, or critical-priority claims.</span></div>
+        }
+        <div class="escalation-list" cfAutoAnimate>
           <a *ngFor="let item of operations.escalations" class="escalation-card" [attr.data-tone]="item.tone" [routerLink]="['/app/claims', item.claimId]">
             <strong>{{ item.claimNumber }} · {{ item.claimantName }}</strong>
             <span>{{ item.reason }} · {{ item.priority }} · {{ item.status }}</span>
             <small [attr.data-tone]="countdown(item.slaDeadline).tone">{{ countdown(item.slaDeadline).label }}</small>
           </a>
         </div>
-      </article>
+      </section>
 
-      <article class="operational-panel chart-full" [appChangedValue]="operations.integrity.overall" [changeTone]="integrityTone(operations.integrity.overall)">
-        <header><div><strong>Operational integrity score</strong><span>40% resolved-claim SLA compliance · 30% average evidence readiness · 30% open-claim assignment coverage</span></div></header>
-        <div class="integrity-score">
-          <div class="integrity-orb" [style.--score]="operations.integrity.overall + '%'" [attr.data-tone]="integrityTone(operations.integrity.overall)"><strong><app-animated-number [value]="operations.integrity.overall" /></strong></div>
-          <div class="integrity-detail">
-            <div><span>Overall</span><b>{{ operations.integrity.label }}</b></div>
-            <div><span>Resolved-claim SLA compliance</span><b>{{ operations.integrity.slaCompliance }}%</b></div>
-            <div><span>Average evidence readiness</span><b>{{ operations.integrity.evidenceReadiness }}%</b></div>
-            <div><span>Open-claim assignment coverage</span><b>{{ operations.integrity.assignmentCoverage }}%</b></div>
-          </div>
+      <app-chart-frame
+        class="team-span-7"
+        title="SLA by team"
+        subtitle="Resolved-claim compliance with a 90% target and explicit denominator">
+        <app-horizontal-bar-chart
+          title="SLA by team"
+          description="Each team’s resolved-claim service-level compliance with a target marker at 90 percent."
+          suffix="%"
+          [data]="teamSlaBars(operations)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="team-span-5"
+        title="Work mix"
+        subtitle="Selected active workload by triage priority">
+        <app-stacked-bar-chart
+          title="Work mix"
+          description="Selected active workload split by low, medium, high, and critical priority."
+          [segments]="prioritySegments(operations)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="team-span-4"
+        title="Integrity components"
+        subtitle="40% SLA compliance · 30% evidence readiness · 30% assignment coverage">
+        <div class="integrity-summary">
+          <app-metric-radial
+            label="Operational integrity"
+            [tone]="integrityTone(operations.integrity.overall)"
+            [value]="operations.integrity.overall" />
+          <strong>{{ operations.integrity.label }}</strong>
         </div>
-      </article>
+        <app-horizontal-bar-chart
+          title="Integrity components"
+          description="Weighted operational integrity components and their target markers."
+          suffix="%"
+          [data]="integrityBars(operations)" />
+      </app-chart-frame>
+
+      <app-chart-frame
+        class="team-span-8"
+        title="Capacity trend"
+        subtitle="Selected reviewer utilization over the last reporting window">
+        <app-line-area-chart
+          title="Capacity trend"
+          description="Overall selected reviewer utilization percentage over time."
+          suffix="%"
+          [series]="capacitySeries()" />
+      </app-chart-frame>
+
+      <section class="panel team-advisories team-span-12">
+        <div class="surface-heading compact-heading">
+          <div><p class="eyebrow">ADVISORY ONLY</p><h2>Recommendations and intelligence</h2></div>
+          <span>Links prepare work; they do not silently mutate assignments.</span>
+        </div>
+        <div class="advisory-list" cfAutoAnimate>
+          <a *ngFor="let advisory of operations.advisories" class="advisory-card" [attr.data-tone]="advisory.tone" [routerLink]="advisory.route" [queryParams]="advisory.queryParams">
+            <strong>{{ advisory.title }}</strong><span>{{ advisory.detail }}</span><small>Open relevant work →</small>
+          </a>
+        </div>
+      </section>
     </section>
   }
 </section>

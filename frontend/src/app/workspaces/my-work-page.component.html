@@ -1,62 +1,140 @@
 <section class="workspace-page my-work-page page-enter">
   <header class="my-work-hero">
     <div>
-      <p class="eyebrow">ADJUSTER DESK / JORDAN LEE</p>
+      <p class="eyebrow">ADJUSTER DESK / {{ snapshot()?.displayName || 'JORDAN LEE' }}</p>
       <h1>My Work</h1>
-      <p>Assigned claims, evidence gaps, and the next human action—grounded in the real ClaimsFlow API.</p>
+      <p>See the exact claims that need action now, today, and later—grounded in Jordan Lee’s dedicated backend workload snapshot.</p>
     </div>
-    <a class="button secondary" routerLink="/app/claims">Open claim queue →</a>
+    <div class="my-work-actions">
+      <app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" />
+      <a class="button secondary" routerLink="/app/claims">Open claim queue →</a>
+    </div>
   </header>
 
-  <div class="my-work-refresh"><app-operational-refresh-status [resource]="state()" (refreshRequested)="refresh()" /></div>
-
-  <div class="my-work-metrics" aria-label="Adjuster workload summary">
-    <article [appChangedValue]="assignedClaims().length"><span>ASSIGNED CLAIMS</span><strong><app-animated-number [value]="assignedClaims().length" /></strong><small>API-backed</small></article>
-    <article [appChangedValue]="urgentCount()" changeTone="warning"><span>HIGH ATTENTION</span><strong><app-animated-number [value]="urgentCount()" /></strong><small>High or critical priority</small></article>
-    <article [appChangedValue]="evidenceGapCount()" changeTone="warning"><span>EVIDENCE GAPS</span><strong><app-animated-number [value]="evidenceGapCount()" /></strong><small>Below 100% completeness</small></article>
-    <article><span>ACTIVE ADJUSTER</span><strong>Jordan Lee</strong><small>{{ adjusterId() ? 'Seeded UUID resolved' : 'Reset required' }}</small></article>
+  <div *ngIf="loading()" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" role="status" aria-label="Loading adjuster workload">
+    <app-metric-card *ngFor="let item of [1,2,3,4]" label="Workload metric" [loading]="true" variant="hero" />
   </div>
 
-  <div *ngIf="loading()" class="workspace-panel my-work-state cf-skeleton" role="status">Loading Jordan Lee’s assigned claims…</div>
   <div *ngIf="error()" class="my-work-alert" role="alert"><span>{{ error() }}</span><button type="button" class="button secondary" (click)="refresh()">Retry</button></div>
 
-  <section class="workspace-panel assigned-claims-panel" *ngIf="!loading()">
-    <header>
-      <div><span>PERSONAL QUEUE</span><strong>Assigned claims</strong></div>
-      <span>{{ assignedClaims().length }} returned by the backend</span>
-    </header>
+  @if (snapshot(); as work) {
+    <section class="my-work-kpi-grid grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Adjuster workload summary" cfGsapReveal>
+      <app-metric-card
+        label="Assigned claims"
+        [value]="work.activeClaims"
+        variant="hero"
+        tone="brand"
+        helper="Active claims assigned to this adjuster"
+        definition="Open claims assigned to the current adjuster.">
+        <app-metric-sparkline metric-visual label="Seven-day assigned workload trend" tone="brand" [points]="workloadSpark()" />
+      </app-metric-card>
 
-    <div *ngIf="!adjusterId()" class="my-work-empty">
-      <strong>Reset the golden journey to resolve Jordan Lee’s adjuster ID.</strong>
-      <p>Use the profile menu, choose <b>Reset Demo Journey</b>, then return to My Work.</p>
-    </div>
+      <app-metric-card
+        label="Due within 24 hours"
+        [value]="work.dueWithin24Hours"
+        variant="hero"
+        tone="warning"
+        helper="Service-level deadlines at risk"
+        definition="Assigned open claims due within the next 24 hours." />
 
-    <div *ngIf="adjusterId() && !assignedClaims().length && !error()" class="my-work-empty">
-      <strong>No assigned claims were returned.</strong>
-      <p>The workspace is connected; assign a claim to Jordan Lee or reset the demo journey.</p>
-    </div>
+      <app-metric-card
+        label="Evidence blocked"
+        [value]="work.evidenceBlockedClaims"
+        variant="hero"
+        tone="advisory"
+        helper="Assigned claims below 100% completeness"
+        definition="Assigned open claims with one or more persisted evidence categories missing." />
 
-    <div class="assigned-claim-list" *ngIf="assignedClaims().length">
-      <a *ngFor="let claim of assignedClaims()" [routerLink]="['/app/claims', claim.id]" class="assigned-claim-card" [class.golden]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" [changeTone]="claim.priority === 'CRITICAL' ? 'critical' : claim.completenessPercentage < 100 ? 'warning' : 'healthy'">
-        <div class="claim-card-heading">
-          <div>
-            <span>{{ claim.claimNumber }}</span>
-            <strong>{{ claim.claimantName }}</strong>
+      <app-metric-card
+        label="Capacity utilization"
+        [value]="work.utilizationPercentage"
+        format="percentage"
+        variant="hero"
+        [tone]="work.utilizationPercentage >= 85 ? 'warning' : 'healthy'"
+        [helper]="work.activeClaims + ' of ' + work.capacity + ' configured capacity'"
+        definition="Assigned open claims divided by this adjuster’s configured workload capacity.">
+        <app-metric-radial
+          metric-visual
+          label="Capacity utilization"
+          [tone]="work.utilizationPercentage >= 85 ? 'warning' : 'healthy'"
+          [value]="work.utilizationPercentage" />
+      </app-metric-card>
+    </section>
+
+    <section class="my-work-command-grid" cfGsapReveal [gsapRevealDelay]="0.08">
+      <section class="workspace-panel personal-timeline" aria-labelledby="personal-timeline-title">
+        <header>
+          <div><span>DEADLINE MAP</span><strong id="personal-timeline-title">Personal work timeline</strong></div>
+          <span>{{ work.overdueClaims }} overdue · {{ work.dueWithin24Hours }} due &lt;24h</span>
+        </header>
+        <div class="timeline-axis" aria-hidden="true">
+          <span>Overdue</span><span>Now</span><span>24h</span><span>3d</span><span>7d</span>
+        </div>
+        <div class="timeline-items" cfAutoAnimate>
+          <a
+            *ngFor="let item of work.timeline"
+            [routerLink]="['/app/claims', item.claimId]"
+            class="timeline-item"
+            [attr.data-tone]="item.tone"
+            [attr.data-group]="item.group">
+            <span>{{ item.claimNumber }}</span>
+            <strong>{{ item.claimantName }}</strong>
+            <small>{{ item.reason }}</small>
+            <em>{{ sla(item.slaDeadline).label }}</em>
+          </a>
+        </div>
+      </section>
+
+      <aside class="workspace-panel next-actions" aria-labelledby="next-actions-title">
+        <header><div><span>RANKED WORK</span><strong id="next-actions-title">Next actions</strong></div></header>
+        <div class="next-action-groups" cfAutoAnimate>
+          <section *ngFor="let group of ['NOW','TODAY','LATER']">
+            <h2>{{ groupLabel($any(group)) }}</h2>
+            <a *ngFor="let item of actions($any(group))" [routerLink]="['/app/claims', item.claimId]" [attr.data-tone]="item.tone">
+              <span>{{ item.claimNumber }}</span>
+              <strong>{{ item.reason }}</strong>
+              <small>{{ sla(item.slaDeadline).detail }}</small>
+            </a>
+          </section>
+        </div>
+      </aside>
+    </section>
+
+    <section class="workspace-panel assigned-claims-panel">
+      <header>
+        <div><span>PERSONAL QUEUE</span><strong>Assigned claims</strong></div>
+        <span>{{ assignedClaims().length }} active claims · {{ work.team }}</span>
+      </header>
+
+      <div *ngIf="!adjusterId()" class="my-work-empty">
+        <strong>Reset the golden journey to resolve Jordan Lee’s adjuster ID.</strong>
+        <p>Use the profile menu, choose <b>Reset Demo Journey</b>, then return to My Work.</p>
+      </div>
+
+      <div *ngIf="adjusterId() && !assignedClaims().length && !error()" class="my-work-empty">
+        <strong>No assigned claims were returned.</strong>
+        <p>The workspace is connected; assign a claim to Jordan Lee or reset the demo journey.</p>
+      </div>
+
+      <div class="assigned-claim-list" cfAutoAnimate *ngIf="assignedClaims().length">
+        <a *ngFor="let claim of assignedClaims()" [routerLink]="['/app/claims', claim.id]" class="assigned-claim-card" [class.golden]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" [changeTone]="claim.priority === 'CRITICAL' ? 'critical' : claim.completenessPercentage < 100 ? 'warning' : 'healthy'">
+          <div class="claim-card-heading">
+            <div><span>{{ claim.claimNumber }}</span><strong>{{ claim.claimantName }}</strong></div>
+            <span *ngIf="isGoldenJourney(claim)" class="golden-badge">Golden journey</span>
           </div>
-          <span *ngIf="isGoldenJourney(claim)" class="golden-badge">Golden journey</span>
-        </div>
-        <div class="claim-card-status">
-          <app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="claim.priority === 'CRITICAL' ? '!' : '•'" />
-          <app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" icon="•" />
-        </div>
-        <dl>
-          <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
-          <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
-          <div><dt>Type</dt><dd>{{ label(claim.claimType) }}</dd></div>
-          <div><dt>Region</dt><dd>{{ claim.region ? label(claim.region) : 'Not assigned' }}</dd></div>
-        </dl>
-        <span class="open-claim">Open claim workspace →</span>
-      </a>
-    </div>
-  </section>
+          <div class="claim-card-status">
+            <app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="claim.priority === 'CRITICAL' ? '!' : '•'" />
+            <app-status-badge [label]="label(claim.status)" [tone]="statusTone(claim.status)" icon="•" />
+          </div>
+          <dl>
+            <div><dt>Evidence</dt><dd><app-animated-number [value]="claim.completenessPercentage" format="percentage" /></dd></div>
+            <div><dt>SLA</dt><dd [attr.data-tone]="sla(claim.slaDeadline).tone">{{ sla(claim.slaDeadline).label }}</dd></div>
+            <div><dt>Type</dt><dd>{{ label(claim.claimType) }}</dd></div>
+            <div><dt>Region</dt><dd>{{ claim.region ? label(claim.region) : 'Not assigned' }}</dd></div>
+          </dl>
+          <span class="open-claim">Open claim workspace →</span>
+        </a>
+      </div>
+    </section>
+  }
 </section>

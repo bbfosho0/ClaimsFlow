@@ -12,8 +12,15 @@ public final class EvidenceOperationsResponses {
     public record EvidenceOperationsSnapshot(
         Instant generatedAt,
         OperationalFilterOptions options,
+        EvidenceOperationsKpis kpis,
         List<EvidenceClaimSummary> claims,
         EvidenceClaimDetail selected) {}
+
+    public record EvidenceOperationsKpis(
+        long claimsMissingEvidence,
+        int averageReadinessPercentage,
+        long atRiskWithEvidenceGap,
+        long fullyCompleteClaims) {}
 
     public record EvidenceClaimSummary(
         UUID id,
@@ -26,7 +33,8 @@ public final class EvidenceOperationsResponses {
         int completenessPercentage,
         Instant slaDeadline,
         String adjusterName,
-        String team) {}
+        String team,
+        List<EvidenceCategory> evidence) {}
 
     public record EvidenceClaimDetail(
         UUID id,

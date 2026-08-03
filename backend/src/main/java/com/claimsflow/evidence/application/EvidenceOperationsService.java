@@ -6,6 +6,7 @@ import com.claimsflow.evidence.api.EvidenceOperationsResponses.ClaimantMessage;
 import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceCategory;
 import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceClaimDetail;
 import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceClaimSummary;
+import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceOperationsKpis;
 import com.claimsflow.evidence.api.EvidenceOperationsResponses.EvidenceOperationsSnapshot;
 import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
@@ -57,9 +58,24 @@ public class EvidenceOperationsService {
             .findFirst()
             .orElse(filtered.isEmpty() ? null : filtered.getFirst());
 
+        long missingEvidence = filtered.stream()
+            .filter(claim -> claim.getCompletenessPercentage() < 100)
+            .count();
+        int averageReadiness = filtered.isEmpty()
+            ? 0
+            : (int) Math.round(filtered.stream().mapToInt(Claim::getCompletenessPercentage).average().orElse(0));
+        long atRiskWithGap = filtered.stream()
+            .filter(claim -> claim.getCompletenessPercentage() < 100)
+            .filter(claim -> OperationalMetrics.slaState(claim, now) == SlaState.AT_RISK)
+            .count();
+        long fullyComplete = filtered.stream()
+            .filter(claim -> claim.getCompletenessPercentage() == 100)
+            .count();
+
         return new EvidenceOperationsSnapshot(
             now,
             filterOptions.options(),
+            new EvidenceOperationsKpis(missingEvidence, averageReadiness, atRiskWithGap, fullyComplete),
             filtered.stream().map(this::summary).toList(),
             selected == null ? null : detail(selected));
     }
@@ -76,7 +92,8 @@ public class EvidenceOperationsService {
             claim.getCompletenessPercentage(),
             claim.getSlaDeadline(),
             claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getDisplayName(),
-            claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getTeam());
+            claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getTeam(),
+            categories(claim));
     }
 
     private EvidenceClaimDetail detail(Claim claim) {
@@ -106,12 +123,16 @@ public class EvidenceOperationsService {
             claim.getCreatedAt(),
             claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getDisplayName(),
             claim.getAssignedAdjuster() == null ? null : claim.getAssignedAdjuster().getTeam(),
-            List.of(
-                category("INCIDENT_REPORT", "Incident report", claim.isIncidentReportPresent()),
-                category("PHOTOS", "Photos", claim.isPhotosPresent()),
-                category("PROOF_OF_OWNERSHIP", "Proof of ownership", claim.isProofOfOwnershipPresent()),
-                category("MEDICAL_DOCUMENTATION", "Medical documentation", claim.isMedicalDocumentationPresent())),
+            categories(claim),
             claimantMessages);
+    }
+
+    private List<EvidenceCategory> categories(Claim claim) {
+        return List.of(
+            category("INCIDENT_REPORT", "Incident report", claim.isIncidentReportPresent()),
+            category("PHOTOS", "Photos", claim.isPhotosPresent()),
+            category("PROOF_OF_OWNERSHIP", "Proof of ownership", claim.isProofOfOwnershipPresent()),
+            category("MEDICAL_DOCUMENTATION", "Medical documentation", claim.isMedicalDocumentationPresent()));
     }
 
     private EvidenceCategory category(String kind, String label, boolean present) {

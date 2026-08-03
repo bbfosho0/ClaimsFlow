@@ -6,11 +6,14 @@ import com.claimsflow.analytics.api.AnalyticsResponses.AnalyticsSnapshot;
 import com.claimsflow.analytics.api.AnalyticsResponses.CohortRow;
 import com.claimsflow.analytics.api.AnalyticsResponses.DistributionPoint;
 import com.claimsflow.analytics.api.AnalyticsResponses.MetricChangeResponse;
+import com.claimsflow.analytics.api.AnalyticsResponses.MonetaryDistributionPoint;
+import com.claimsflow.analytics.api.AnalyticsResponses.ResolutionByType;
 import com.claimsflow.analytics.api.AnalyticsResponses.TimePoint;
 import com.claimsflow.claim.domain.Claim;
 import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimRegion;
 import com.claimsflow.claim.domain.ClaimStatus;
+import com.claimsflow.claim.domain.ClaimType;
 import com.claimsflow.operations.application.MetricChange;
 import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
@@ -95,10 +98,14 @@ public class AnalyticsService {
             comparison,
             timeSeries(filters.from(), filters.to(), claims, Claim::getCreatedAt),
             timeSeries(filters.from(), filters.to(), claims, Claim::getResolvedAt),
+            openPortfolioTrend(filters.from(), filters.to(), claims),
             enumDistribution(claims, Claim::getStatus, ClaimStatus.values()),
             enumDistribution(claims, Claim::getPriority, ClaimPriority.values()),
             enumDistribution(claims, Claim::getRegion, ClaimRegion.values()),
             agingBands(claims),
+            evidenceReadinessBands(claims),
+            resolutionByClaimType(claims),
+            exposureByClaimType(claims),
             cohorts(claims));
     }
 
@@ -141,6 +148,19 @@ public class AnalyticsService {
             .toList();
     }
 
+    private List<TimePoint> openPortfolioTrend(LocalDate from, LocalDate to, List<Claim> claims) {
+        return from.datesUntil(to.plusDays(1))
+            .map(date -> {
+                Instant asOf = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusNanos(1);
+                long count = claims.stream()
+                    .filter(claim -> !claim.getCreatedAt().isAfter(asOf))
+                    .filter(claim -> claim.getResolvedAt() == null || claim.getResolvedAt().isAfter(asOf))
+                    .count();
+                return new TimePoint(date, count);
+            })
+            .toList();
+    }
+
     private <E extends Enum<E>> List<DistributionPoint> enumDistribution(
             List<Claim> claims,
             Function<Claim, E> classifier,
@@ -180,6 +200,59 @@ public class AnalyticsService {
                 OperationalMetrics.percent(counts[index], open)));
         }
         return List.copyOf(result);
+    }
+
+    private List<DistributionPoint> evidenceReadinessBands(List<Claim> claims) {
+        long[] counts = new long[4];
+        for (Claim claim : claims) {
+            int value = claim.getCompletenessPercentage();
+            int bucket = value < 50 ? 0 : value < 75 ? 1 : value < 100 ? 2 : 3;
+            counts[bucket]++;
+        }
+        String[] keys = {"0_49", "50_74", "75_99", "COMPLETE"};
+        String[] labels = {"0–49%", "50–74%", "75–99%", "100% complete"};
+        List<DistributionPoint> result = new ArrayList<>();
+        for (int index = 0; index < keys.length; index++) {
+            result.add(new DistributionPoint(
+                keys[index],
+                labels[index],
+                counts[index],
+                OperationalMetrics.percent(counts[index], claims.size())));
+        }
+        return List.copyOf(result);
+    }
+
+    private List<ResolutionByType> resolutionByClaimType(List<Claim> claims) {
+        return Arrays.stream(ClaimType.values()).map(type -> {
+            List<Claim> resolved = claims.stream()
+                .filter(claim -> claim.getClaimType() == type)
+                .filter(claim -> claim.getResolvedAt() != null)
+                .toList();
+            Double average = resolved.isEmpty() ? null : Math.round(
+                resolved.stream()
+                    .mapToLong(claim -> Duration.between(claim.getCreatedAt(), claim.getResolvedAt()).toHours())
+                    .average()
+                    .orElse(0) * 10.0) / 10.0;
+            return new ResolutionByType(type.name(), humanize(type.name()), average, resolved.size());
+        }).toList();
+    }
+
+    private List<MonetaryDistributionPoint> exposureByClaimType(List<Claim> claims) {
+        BigDecimal total = claims.stream().map(Claim::getEstimatedLoss).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return Arrays.stream(ClaimType.values()).map(type -> {
+            List<Claim> matching = claims.stream().filter(claim -> claim.getClaimType() == type).toList();
+            BigDecimal amount = matching.stream()
+                .map(Claim::getEstimatedLoss)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+            int percentage = total.signum() == 0
+                ? 0
+                : amount.multiply(BigDecimal.valueOf(100))
+                    .divide(total, 0, RoundingMode.HALF_UP)
+                    .intValue();
+            return new MonetaryDistributionPoint(
+                type.name(), humanize(type.name()), amount, matching.size(), percentage);
+        }).toList();
     }
 
     private List<CohortRow> cohorts(List<Claim> claims) {

@@ -10,6 +10,7 @@ import com.claimsflow.claim.domain.Claim;
 import com.claimsflow.claim.domain.ClaimPriority;
 import com.claimsflow.claim.domain.ClaimRegion;
 import com.claimsflow.claim.domain.ClaimStatus;
+import com.claimsflow.claim.domain.ClaimType;
 import com.claimsflow.operations.api.OperationalResponses;
 import com.claimsflow.operations.application.OperationalFilterOptionsService;
 import com.claimsflow.operations.application.OperationalFilters;
@@ -41,6 +42,7 @@ class AnalyticsServiceTest {
             Instant.parse("2026-07-01T10:00:00Z"),
             Instant.parse("2026-07-03T10:00:00Z"),
             Instant.parse("2026-07-04T10:00:00Z"),
+            ClaimType.PROPERTY,
             ClaimStatus.RESOLVED,
             ClaimPriority.HIGH,
             ClaimRegion.WEST,
@@ -50,6 +52,7 @@ class AnalyticsServiceTest {
             Instant.parse("2026-07-02T10:00:00Z"),
             null,
             Instant.parse("2026-08-04T10:00:00Z"),
+            ClaimType.AUTO,
             ClaimStatus.NEW,
             ClaimPriority.MEDIUM,
             ClaimRegion.SOUTHEAST,
@@ -84,6 +87,25 @@ class AnalyticsServiceTest {
             .singleElement()
             .extracting(point -> point.date())
             .isEqualTo(LocalDate.of(2026, 7, 3));
+        assertThat(snapshot.openPortfolioTrend()).hasSize(7);
+        assertThat(snapshot.openPortfolioTrend().getLast().count()).isEqualTo(1);
+        assertThat(snapshot.resolutionByClaimType()).filteredOn(point -> point.key().equals("PROPERTY"))
+            .singleElement()
+            .satisfies(point -> {
+                assertThat(point.resolvedClaims()).isEqualTo(1);
+                assertThat(point.averageHours()).isEqualTo(48.0);
+            });
+        assertThat(snapshot.resolutionByClaimType()).filteredOn(point -> point.key().equals("AUTO"))
+            .singleElement()
+            .satisfies(point -> {
+                assertThat(point.resolvedClaims()).isZero();
+                assertThat(point.averageHours()).isNull();
+            });
+        assertThat(snapshot.exposureByClaimType()).filteredOn(point -> point.key().equals("PROPERTY"))
+            .singleElement()
+            .satisfies(point -> assertThat(point.amount()).isEqualByComparingTo("1000.00"));
+        assertThat(snapshot.evidenceReadinessBands()).extracting(point -> point.key())
+            .containsExactly("0_49", "50_74", "75_99", "COMPLETE");
         assertThat(snapshot.statusDistribution()).extracting(point -> point.key())
             .containsExactly("NEW", "UNDER_REVIEW", "WAITING_FOR_INFORMATION", "READY_FOR_DECISION", "RESOLVED", "CLOSED");
         assertThat(snapshot.regionDistribution()).filteredOn(point -> point.count() > 0)
@@ -104,10 +126,13 @@ class AnalyticsServiceTest {
 
         assertThat(snapshot.claimVolume()).hasSize(1);
         assertThat(snapshot.claimVolume().getFirst().count()).isZero();
+        assertThat(snapshot.openPortfolioTrend()).hasSize(1);
         assertThat(snapshot.kpis().averageResolutionHours()).isZero();
         assertThat(snapshot.kpis().evidenceReadinessPercentage()).isZero();
         assertThat(snapshot.kpis().slaCompliancePercentage()).isEqualTo(100);
         assertThat(snapshot.agingBands()).allMatch(point -> point.count() == 0 && point.percentage() == 0);
+        assertThat(snapshot.resolutionByClaimType()).allMatch(point -> point.averageHours() == null);
+        assertThat(snapshot.exposureByClaimType()).allMatch(point -> point.amount().signum() == 0);
         assertThat(snapshot.cohorts()).isEmpty();
     }
 
@@ -119,6 +144,7 @@ class AnalyticsServiceTest {
             Instant createdAt,
             Instant resolvedAt,
             Instant slaDeadline,
+            ClaimType claimType,
             ClaimStatus status,
             ClaimPriority priority,
             ClaimRegion region,
@@ -128,6 +154,7 @@ class AnalyticsServiceTest {
         when(claim.getCreatedAt()).thenReturn(createdAt);
         when(claim.getResolvedAt()).thenReturn(resolvedAt);
         when(claim.getSlaDeadline()).thenReturn(slaDeadline);
+        when(claim.getClaimType()).thenReturn(claimType);
         when(claim.getStatus()).thenReturn(status);
         when(claim.getPriority()).thenReturn(priority);
         when(claim.getRegion()).thenReturn(region);

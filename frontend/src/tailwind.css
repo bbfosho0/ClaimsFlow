@@ -1,0 +1,21 @@
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-cf-canvas: var(--cf-color-canvas);
+  --color-cf-surface: var(--cf-color-surface-default);
+  --color-cf-elevated: var(--cf-color-surface-elevated);
+  --color-cf-violet: var(--cf-color-brand-violet);
+  --color-cf-lilac: var(--cf-color-brand-lilac);
+  --color-cf-live: var(--cf-color-activity-live);
+  --color-cf-success: var(--cf-color-success);
+  --color-cf-warning: var(--cf-color-risk-approaching);
+  --color-cf-critical: var(--cf-color-risk-critical);
+  --color-cf-text: var(--cf-color-text-primary);
+  --color-cf-muted: var(--cf-color-text-secondary);
+  --radius-cf-control: var(--cf-radius-control);
+  --radius-cf-card: var(--cf-radius-card);
+  --radius-cf-panel: var(--cf-radius-panel);
+  --shadow-cf-surface: var(--cf-shadow-surface);
+}

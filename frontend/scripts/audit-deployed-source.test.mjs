@@ -12,6 +12,7 @@ test('reports each high-risk deployed source pattern with a precise rule', () =>
     ['frontend/src/app/workspaces/team-operations-page.component.ts', "import { parseOperationalFilters } from './analytics-page.component';", 'page-coupled-utility'],
     ['frontend/src/app/dashboard/dashboard-page.component.ts', 'console.log(snapshot);', 'console-debugging'],
     ['frontend/src/app/workspaces/documents-page.component.html', '<button>Upload Documents</button>', 'unsupported-product-claim'],
+    ['frontend/src/app/claims/feature-detail/claim-detail-page.component.html', '<strong>Policy alignment</strong>', 'fabricated-metric'],
     ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'Instant now = Instant.now();', 'direct-wall-clock'],
     ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'LocalDate today = LocalDate.now();', 'direct-wall-clock'],
     ['backend/src/main/java/com/claimsflow/analytics/application/AnalyticsService.java', 'long now = System.currentTimeMillis();', 'direct-wall-clock'],
@@ -27,22 +28,11 @@ test('reports each high-risk deployed source pattern with a precise rule', () =>
 });
 
 test('does not report approved production patterns', () => {
-  assert.deepEqual(auditText(
-    'frontend/src/app/workspaces/team-operations-page.component.ts',
-    "import { parseOperationalFilters } from '../core/operational-data/operational-filter-codec';",
-  ), []);
-  assert.deepEqual(auditText(
-    'backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java',
-    'Instant now = clock.instant();',
-  ), []);
-  assert.deepEqual(auditText(
-    'backend/src/main/java/com/claimsflow/operations/application/OperationalFilterFactory.java',
-    'LocalDate today = LocalDate.now(clock);',
-  ), []);
-  assert.deepEqual(auditText(
-    'frontend/src/app/workspaces/documents-page.component.html',
-    '<strong>Evidence categories</strong>',
-  ), []);
+  assert.deepEqual(auditText('frontend/src/app/workspaces/team-operations-page.component.ts', "import { parseOperationalFilters } from '../core/operational-data/operational-filter-codec';"), []);
+  assert.deepEqual(auditText('backend/src/main/java/com/claimsflow/team/application/TeamOperationsService.java', 'Instant now = clock.instant();'), []);
+  assert.deepEqual(auditText('backend/src/main/java/com/claimsflow/operations/application/OperationalFilterFactory.java', 'LocalDate today = LocalDate.now(clock);'), []);
+  assert.deepEqual(auditText('frontend/src/app/workspaces/documents-page.component.html', '<strong>Evidence categories</strong>'), []);
+  assert.deepEqual(auditText('frontend/src/app/claims/feature-detail/claim-detail-page.component.html', '<strong>Recommendation confidence</strong>'), []);
 });
 
 test('scans deployed roots while ignoring tests and documentation', async () => {

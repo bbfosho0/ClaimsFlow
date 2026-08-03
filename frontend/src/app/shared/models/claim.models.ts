@@ -37,12 +37,29 @@ export interface ClaimSummary {
   updatedAt?: string;
 }
 
+export interface ClaimDistributionPoint {
+  key: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface QueueSummary {
+  totalMatching: number;
+  atRiskClaims: number;
+  overdueClaims: number;
+  unassignedClaims: number;
+  evidenceReadinessPercentage: number;
+  priorityDistribution: ClaimDistributionPoint[];
+}
+
 export interface ClaimPage {
   content: ClaimSummary[];
   page: number;
   size: number;
   totalElements: number;
   totalPages: number;
+  summary?: QueueSummary | null;
 }
 
 export interface ClaimDetail {

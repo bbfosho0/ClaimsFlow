@@ -33,9 +33,13 @@ public class ClaimController {
         @RequestParam(required = false) String team,
         @RequestParam(required = false) ClaimRegion region,
         @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ClaimResponses.page(service.list(
+        var page = service.list(
             q, from, to, claimType, status, priority, assignment,
-            adjusterId, team, region, pageable));
+            adjusterId, team, region, pageable);
+        var allMatching = service.listAllMatching(
+            q, from, to, claimType, status, priority, assignment,
+            adjusterId, team, region);
+        return ClaimResponses.page(page, allMatching, service.now());
     }
 
     @PostMapping

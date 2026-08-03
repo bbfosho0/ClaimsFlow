@@ -11,9 +11,11 @@ import com.claimsflow.shared.error.*;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,6 +97,38 @@ public class ClaimApplicationService {
             String team,
             ClaimRegion region,
             Pageable pageable) {
+        return claims.findAll(queueSpecification(
+            query, from, to, claimType, status, priority, assignment, adjusterId, team, region), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Claim> listAllMatching(
+            String query,
+            LocalDate from,
+            LocalDate to,
+            ClaimType claimType,
+            ClaimStatus status,
+            ClaimPriority priority,
+            String assignment,
+            UUID adjusterId,
+            String team,
+            ClaimRegion region) {
+        return claims.findAll(
+            queueSpecification(query, from, to, claimType, status, priority, assignment, adjusterId, team, region),
+            Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    private Specification<Claim> queueSpecification(
+            String query,
+            LocalDate from,
+            LocalDate to,
+            ClaimType claimType,
+            ClaimStatus status,
+            ClaimPriority priority,
+            String assignment,
+            UUID adjusterId,
+            String team,
+            ClaimRegion region) {
         LocalDate effectiveTo = to == null ? LocalDate.now(clock) : to;
         LocalDate effectiveFrom = from == null ? effectiveTo.minusDays(365) : from;
         if (effectiveFrom.isAfter(effectiveTo)) {
@@ -125,7 +159,7 @@ public class ClaimApplicationService {
             team == null || team.isBlank() ? null : team.trim(),
             region,
             unassigned);
-        return claims.findAll(ClaimSpecifications.queue(query, filters, legacyAssignment), pageable);
+        return ClaimSpecifications.queue(query, filters, legacyAssignment);
     }
 
     @Transactional

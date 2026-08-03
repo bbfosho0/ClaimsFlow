@@ -10,27 +10,46 @@ import {
 import {
   DEFAULT_OPERATIONAL_FILTERS,
   EMPTY_OPERATIONAL_FILTER_OPTIONS,
+  EvidenceClaimSummary,
   OperationalFilters,
 } from '../core/operational-data/operational-data.models';
 import { OperationalDataStore } from '../core/operational-data/operational-data.store';
+import { MetricCardComponent } from '../shared/metrics/metric-card.component';
+import { MetricRadialComponent } from '../shared/metrics/metric-radial.component';
+import { AutoAnimateDirective } from '../shared/motion/auto-animate.directive';
+import { GsapRevealDirective } from '../shared/motion/gsap-reveal.directive';
 import { AnimatedNumberComponent } from '../shared/operational/animated-number.component';
 import { ChangedValueDirective } from '../shared/operational/changed-value.directive';
 import { OperationalFilterBarComponent } from '../shared/operational/operational-filter-bar.component';
 import { OperationalRefreshStatusComponent } from '../shared/operational/operational-refresh-status.component';
 import { formatSla, humanizeEnum } from '../shared/presentation/claim-presentation';
+import {
+  EvidenceMatrixCell,
+  EvidenceMatrixComponent,
+  EvidenceMatrixRow,
+} from '../shared/visualizations/evidence-matrix.component';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
     RouterLink,
+    MetricCardComponent,
+    MetricRadialComponent,
+    AutoAnimateDirective,
+    GsapRevealDirective,
+    EvidenceMatrixComponent,
     AnimatedNumberComponent,
     ChangedValueDirective,
     OperationalFilterBarComponent,
     OperationalRefreshStatusComponent,
   ],
   templateUrl: './documents-page.component.html',
-  styleUrls: ['./workspace-pages.component.css', './operational-workspaces.css'],
+  styleUrls: [
+    './workspace-pages.component.css',
+    './operational-workspaces.css',
+    './documents-midnight-violet.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocumentsPageComponent implements OnInit, OnDestroy {
@@ -47,6 +66,12 @@ export class DocumentsPageComponent implements OnInit, OnDestroy {
   readonly selectedClaimId = signal('');
   readonly options = computed(() => this.snapshot()?.options ?? EMPTY_OPERATIONAL_FILTER_OPTIONS);
   readonly selected = computed(() => this.snapshot()?.selected ?? null);
+  readonly headers: readonly EvidenceMatrixCell[] = [
+    { key: 'INCIDENT_REPORT', label: 'Incident report', present: false },
+    { key: 'PHOTOS', label: 'Photos', present: false },
+    { key: 'PROOF_OF_OWNERSHIP', label: 'Proof of ownership', present: false },
+    { key: 'MEDICAL_DOCUMENTATION', label: 'Medical documentation', present: false },
+  ];
 
   label = humanizeEnum;
   sla = formatSla;
@@ -82,6 +107,10 @@ export class DocumentsPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  resetFilters(): void {
+    this.updateFilters(DEFAULT_OPERATIONAL_FILTERS);
+  }
+
   selectClaim(claimId: string): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -92,8 +121,29 @@ export class DocumentsPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  selectMatrixRow(row: EvidenceMatrixRow): void {
+    this.selectClaim(row.claimId);
+  }
+
   refresh(): void {
     this.operational.refresh('evidence');
+  }
+
+  matrixRows(claims: readonly EvidenceClaimSummary[]): readonly EvidenceMatrixRow[] {
+    return claims.map(claim => ({
+      claimId: claim.id,
+      claimNumber: claim.claimNumber,
+      claimantName: claim.claimantName,
+      priority: this.label(claim.priority),
+      slaLabel: this.sla(claim.slaDeadline).label,
+      slaTone: this.sla(claim.slaDeadline).tone,
+      completenessPercentage: claim.completenessPercentage,
+      cells: (claim.evidence ?? []).map(category => ({
+        key: category.kind,
+        label: category.label,
+        present: category.present,
+      })),
+    }));
   }
 
   isSelected(claimId: string): boolean {

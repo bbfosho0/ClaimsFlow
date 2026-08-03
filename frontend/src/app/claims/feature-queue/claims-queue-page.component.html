@@ -9,6 +9,40 @@
     <a [routerLink]="['/app/claims', demoClaimId()]">Open reserved claim →</a>
   </div>
 
+  <section *ngIf="data() as page" class="queue-kpi-grid grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Filtered queue key performance indicators" cfGsapReveal>
+    <app-metric-card
+      label="Matching claims"
+      [value]="summary(page).totalMatching"
+      tone="brand"
+      helper="Complete filtered result set"
+      definition="All claims matching the current filters, not only the visible page." />
+    <app-metric-card
+      label="SLA deadlines at risk"
+      [value]="summary(page).atRiskClaims"
+      tone="warning"
+      helper="Open claims due within 24 hours"
+      definition="Open claims whose service-level deadline falls within the next 24 hours." />
+    <app-metric-card
+      label="Overdue claims"
+      [value]="summary(page).overdueClaims"
+      tone="critical"
+      helper="Open claims past their deadline"
+      definition="Open claims whose service-level deadline has passed." />
+    <app-metric-card
+      label="Unassigned claims"
+      [value]="summary(page).unassignedClaims"
+      tone="live"
+      [helper]="summary(page).evidenceReadinessPercentage + '% average evidence readiness'"
+      definition="Filtered open claims without an assigned reviewer." />
+    <div class="queue-priority-strip">
+      <span>Filtered priority composition</span>
+      <app-stacked-bar-chart
+        title="Filtered priority composition"
+        description="The complete filtered result set split by low, medium, high, and critical priority."
+        [segments]="prioritySegments(page)" />
+    </div>
+  </section>
+
   <form class="queue-command panel" (ngSubmit)="apply()" aria-label="Claims queue filters">
     <div class="command-heading"><div><p class="eyebrow">COMMAND FILTERS</p><strong>Portfolio query</strong></div><span>{{ data()?.totalElements ?? 0 }} results</span></div>
     <div class="filter-grid">
@@ -25,7 +59,7 @@
       <div class="filter-actions"><button class="button primary" type="submit">Apply</button><button class="button secondary" type="button" (click)="reset()">Reset</button></div>
     </div>
     <div class="command-footer">
-      <div class="filter-chips" *ngIf="activeFilters().length" aria-label="Applied filters">
+      <div class="filter-chips" cfAutoAnimate *ngIf="activeFilters().length" aria-label="Applied filters">
         <span>Applied</span>
         <button class="filter-chip" type="button" *ngFor="let filter of activeFilters()" (click)="removeFilter(filter.key)" [attr.aria-label]="'Remove filter ' + filter.label">{{ filter.label }} <span aria-hidden="true">×</span></button>
       </div>
@@ -41,7 +75,7 @@
   <div *ngIf="loading()" class="panel loading-state cf-skeleton" role="status">Loading claims command data…</div>
   <div *ngIf="error()" class="alert queue-error" role="alert"><span>{{ error() }}</span><button type="button" class="button secondary" (click)="refresh()">Retry</button></div>
 
-  <div *ngIf="data() as page" class="queue-layout">
+  <div *ngIf="data() as page" class="queue-layout" cfGsapReveal [gsapRevealDelay]="0.08">
     <section class="panel table-panel" aria-labelledby="queue-table-title">
       <div class="table-meta"><div><p class="eyebrow">PRIORITIZED CLAIMS</p><h2 id="queue-table-title">{{ page.totalElements }} matching records</h2></div><span>{{ resultRange(page) }} · Page {{ page.page + 1 }} of {{ page.totalPages || 1 }}</span></div>
       <div *ngIf="!page.content.length" class="empty queue-empty"><strong>No claims match the selected command filters.</strong><button type="button" class="button secondary" (click)="reset()">Reset filters</button></div>
@@ -49,7 +83,7 @@
       <div class="table-wrap" *ngIf="page.content.length">
         <table aria-label="Claims work queue">
           <thead><tr><th>Claim</th><th>Claimant</th><th>Priority</th><th>Status</th><th>Owner</th><th>SLA</th><th>Evidence</th></tr></thead>
-          <tbody>
+          <tbody cfAutoAnimate>
             <tr *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" [changeTone]="claim.priority === 'CRITICAL' ? 'critical' : claim.completenessPercentage < 100 ? 'warning' : 'healthy'" (click)="selectClaim(claim)" (keydown.enter)="selectClaim(claim)" tabindex="0" [attr.data-tour-target]="isGoldenJourney(claim) ? 'urgent-claim' : null">
               <td><a [routerLink]="['/app/claims', claim.id]">{{ claim.claimNumber }}</a><small>{{ label(claim.claimType) }}<ng-container *ngIf="claim.region"> · {{ label(claim.region) }}</ng-container></small><span *ngIf="isGoldenJourney(claim)" class="cf-chip" data-tone="healthy">Golden journey</span></td>
               <td><strong>{{ claim.claimantName }}</strong><small>{{ claim.slaDeadline | date:'mediumDate' }} deadline</small></td>
@@ -63,7 +97,7 @@
         </table>
       </div>
 
-      <div class="mobile-claims" *ngIf="page.content.length">
+      <div class="mobile-claims" cfAutoAnimate *ngIf="page.content.length">
         <article class="claim-card" *ngFor="let claim of page.content" [class.selected]="selectedClaim()?.id === claim.id" [class.golden-journey]="isGoldenJourney(claim)" [class.state-changed]="isChanged(claim)" [appChangedValue]="claim.updatedAt || claim.completenessPercentage" (click)="selectClaim(claim)">
           <div class="claim-card-top"><a [routerLink]="['/app/claims', claim.id]">{{ claim.claimNumber }}</a><app-status-badge [label]="label(claim.priority)" [tone]="priorityTone(claim.priority)" [icon]="priorityIcon(claim.priority)" /></div>
           <span *ngIf="isGoldenJourney(claim)" class="cf-chip" data-tone="healthy">Golden journey</span>

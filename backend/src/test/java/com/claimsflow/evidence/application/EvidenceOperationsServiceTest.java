@@ -57,8 +57,15 @@ class EvidenceOperationsServiceTest {
 
         EvidenceOperationsSnapshot snapshot = service.snapshot(filters(), selected.getId());
 
+        assertThat(snapshot.kpis().claimsMissingEvidence()).isEqualTo(2);
+        assertThat(snapshot.kpis().averageReadinessPercentage()).isEqualTo(50);
+        assertThat(snapshot.kpis().atRiskWithEvidenceGap()).isZero();
+        assertThat(snapshot.kpis().fullyCompleteClaims()).isZero();
         assertThat(snapshot.claims()).extracting(item -> item.claimNumber())
             .containsExactly("CLM-OVERDUE", "CLM-SELECTED");
+        assertThat(snapshot.claims()).allSatisfy(item -> assertThat(item.evidence()).hasSize(4));
+        assertThat(snapshot.claims().getFirst().evidence()).extracting(item -> item.kind())
+            .containsExactly("INCIDENT_REPORT", "PHOTOS", "PROOF_OF_OWNERSHIP", "MEDICAL_DOCUMENTATION");
         assertThat(snapshot.selected().id()).isEqualTo(selected.getId());
         assertThat(snapshot.selected().adjusterName()).isEqualTo("Jordan Lee");
         assertThat(snapshot.selected().team()).isEqualTo("Claims Operations");
@@ -89,6 +96,8 @@ class EvidenceOperationsServiceTest {
         EvidenceOperationsSnapshot snapshot = service.snapshot(filters(), missingSelection);
 
         assertThat(snapshot.selected().claimNumber()).isEqualTo("CLM-RISK");
+        assertThat(snapshot.kpis().atRiskWithEvidenceGap()).isEqualTo(1);
+        assertThat(snapshot.kpis().fullyCompleteClaims()).isEqualTo(1);
     }
 
     @Test
@@ -101,6 +110,8 @@ class EvidenceOperationsServiceTest {
 
         assertThat(snapshot.claims()).isEmpty();
         assertThat(snapshot.selected()).isNull();
+        assertThat(snapshot.kpis().claimsMissingEvidence()).isZero();
+        assertThat(snapshot.kpis().averageReadinessPercentage()).isZero();
     }
 
     private OperationalFilters filters() {
