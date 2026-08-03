@@ -1,0 +1,38 @@
+name: Bootstrap motion dependencies
+
+on:
+  push:
+    branches:
+      - design/midnight-violet-operations
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: design/midnight-violet-operations
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install approved dependencies
+        working-directory: frontend
+        run: |
+          npm install --save-exact @formkit/auto-animate@0.10.0 gsap@3.15.0
+          npm install --save-dev --save-exact tailwindcss@4.3.3 @tailwindcss/postcss@4.3.3
+      - name: Commit generated package files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "build: add approved motion and utility dependencies"
+          git push origin HEAD:design/midnight-violet-operations
